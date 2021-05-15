@@ -27,18 +27,18 @@ reqwest = { version = "0.11", features = ["json"]}
 
 [dependencies.holochain]
 git = "https://github.com/holochain/holochain"
-rev = "8d6c4cd29bd17e8224aeffb87dc03eaf3ff33508"
+rev = "e0681530633b07c6cfe49948ef653a77a043bdbe"
 package = "holochain"
 default-features = false
 
 [dependencies.holochain_types]
 git = "https://github.com/holochain/holochain"
-rev = "8d6c4cd29bd17e8224aeffb87dc03eaf3ff33508"
+rev = "e0681530633b07c6cfe49948ef653a77a043bdbe"
 package = "holochain_types"
 
 [dependencies.holochain_websocket]
 git = "https://github.com/holochain/holochain"
-rev = "8d6c4cd29bd17e8224aeffb87dc03eaf3ff33508"
+rev = "e0681530633b07c6cfe49948ef653a77a043bdbe"
 package = "holochain_websocket"
 
 [dev-dependencies.cargo-husky]
@@ -49,6 +49,7 @@ features = ["run-cargo-fmt", "run-cargo-clippy"]
 [patch.crates-io]
 rkv = { git = "https://github.com/holochain/rkv.git", branch = "master" }
 lmdb-rkv = { git = "https://github.com/holochain/lmdb-rs.git" }
-holochain_zome_types = {git = "https://github.com/holochain/holochain", rev = "8d6c4cd29bd17e8224aeffb87dc03eaf3ff33508", package = "holochain_zome_types"}
-holo_hash = {git = "https://github.com/holochain/holochain", rev = "8d6c4cd29bd17e8224aeffb87dc03eaf3ff33508", package = "holo_hash"}
-hdk_derive = {git = "https://github.com/holochain/holochain", rev = "8d6c4cd29bd17e8224aeffb87dc03eaf3ff33508", package = "hdk_derive"}
+holochain_zome_types = {git = "https://github.com/holochain/holochain", rev = "e0681530633b07c6cfe49948ef653a77a043bdbe", package = "holochain_zome_types"}
+holo_hash = {git = "https://github.com/holochain/holochain", rev = "e0681530633b07c6cfe49948ef653a77a043bdbe", package = "holo_hash"}
+hdk_derive = {git = "https://github.com/holochain/holochain", rev = "e0681530633b07c6cfe49948ef653a77a043bdbe", package = "hdk_derive"}
+hdk = {git = "https://github.com/holochain/holochain", rev = "e0681530633b07c6cfe49948ef653a77a043bdbe", package = "hdk"}

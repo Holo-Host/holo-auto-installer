@@ -4,8 +4,9 @@ use anyhow::{anyhow, Context, Result};
 use holochain::conductor::api::{
     AdminRequest, AdminResponse, AppRequest, AppResponse, InstalledAppInfo, ZomeCall,
 };
+use holochain_types::prelude::MembraneProof;
 use holochain_types::{
-    app::{AppBundleSource, InstallAppBundlePayload, InstalledAppId, MembraneProof},
+    app::{AppBundleSource, InstallAppBundlePayload, InstalledAppId},
     dna::AgentPubKey,
 };
 use holochain_websocket::{connect, WebsocketConfig, WebsocketSender};
