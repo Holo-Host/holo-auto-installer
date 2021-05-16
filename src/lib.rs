@@ -34,11 +34,15 @@ pub async fn activate_holo_hosted_happs(core_happ: &Happ, config: &Config) -> Re
 }
 
 pub async fn install_holo_hosted_happs(
-    happs: impl Iterator<Item = WrappedHeaderHash>,
+    happs: Vec<WrappedHeaderHash>,
     mem_proof: HashMap<String, MembraneProof>,
     config: &Config,
 ) -> Result<()> {
     info!("Starting to install....");
+    if happs.is_empty() {
+        info!("No happs registered to be enabled for hosting.");
+        return Ok(());
+    }
 
     let mut admin_websocket = AdminWebsocket::connect(config.admin_port)
         .await
@@ -90,9 +94,7 @@ pub async fn install_holo_hosted_happs(
 }
 
 #[instrument(err)]
-pub async fn get_all_enabled_hosted_happs(
-    core_happ: &Happ,
-) -> Result<impl Iterator<Item = WrappedHeaderHash>> {
+pub async fn get_all_enabled_hosted_happs(core_happ: &Happ) -> Result<Vec<WrappedHeaderHash>> {
     let mut app_websocket = AppWebsocket::connect(42233)
         .await
         .context("failed to connect to holochain's app interface")?;
@@ -119,7 +121,8 @@ pub async fn get_all_enabled_hosted_happs(
                     info!("ZomeCall Response - Hosted happs List {:?}", r);
                     let happ_bundles: Vec<HappBundleDetails> =
                         rmp_serde::from_read_ref(r.as_bytes())?;
-                    let happ_bundle_ids = happ_bundles.into_iter().map(|happ| happ.happ_id);
+                    let happ_bundle_ids =
+                        happ_bundles.into_iter().map(|happ| happ.happ_id).collect();
                     Ok(happ_bundle_ids)
                 }
                 _ => Err(anyhow!("unexpected response: {:?}", response)),
