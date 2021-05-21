@@ -46,7 +46,13 @@ core_happs:
     version: 1
     dna_url: https://s3.eu-central-1.wasabisys.com/elemetal-chat-tests/hha.happ
 ```
+and file at `membrane-proof` is of a format:
 
+```yaml
+payload:
+  - cell_nick: "elemental-chat"
+    proof: "0o=="
+```
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).
