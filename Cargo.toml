@@ -1,5 +1,5 @@
 [package]
-name = "holo-auto-pilot"
+name = "holo-auto-installer"
 version = "0.1.0"
 authors = ["Joel U <joelulahanna@gmail.com>"]
 edition = "2018"
