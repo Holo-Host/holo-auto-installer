@@ -1,11 +1,11 @@
-# holo-auto-pilot
+# holo-auto-installer
 
 ## Usage
 
 ```
-$ holo-auto-pilot --help
+$ holo-auto-installer --help
 USAGE:
-    hpos-holo-auto-pilot [OPTIONS] <happ-list-path> <membrane-proofs>
+    hpos-holo-auto-installer [OPTIONS] <happ-list-path> <membrane-proofs>
 
 FLAGS:
     -h, --help       Prints help information

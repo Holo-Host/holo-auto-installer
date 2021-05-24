@@ -3,7 +3,7 @@
 
 use anyhow::{Context, Result};
 
-use holo_auto_pilot::{activate_holo_hosted_happs, load_happ_file, Config};
+use holo_auto_installer::{activate_holo_hosted_happs, load_happ_file, Config};
 use tracing::info;
 use tracing::instrument;
 use tracing_subscriber::EnvFilter;
