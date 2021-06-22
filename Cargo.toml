@@ -28,18 +28,18 @@ spinning_top = "=0.2.0"
 
 [dependencies.holochain]
 git = "https://github.com/holochain/holochain"
-rev = "24ceb63bdea374d1936b723e1966caf2e55ebfdc"
+rev = "363af6d8af8d18e4616f6aa56ad4d1f0fabaafb7"
 package = "holochain"
 default-features = false
 
 [dependencies.holochain_types]
 git = "https://github.com/holochain/holochain"
-rev = "24ceb63bdea374d1936b723e1966caf2e55ebfdc"
+rev = "363af6d8af8d18e4616f6aa56ad4d1f0fabaafb7"
 package = "holochain_types"
 
 [dependencies.holochain_websocket]
 git = "https://github.com/holochain/holochain"
-rev = "24ceb63bdea374d1936b723e1966caf2e55ebfdc"
+rev = "363af6d8af8d18e4616f6aa56ad4d1f0fabaafb7"
 package = "holochain_websocket"
 
 [dev-dependencies.cargo-husky]
@@ -50,7 +50,7 @@ features = ["run-cargo-fmt", "run-cargo-clippy"]
 [patch.crates-io]
 rkv = { git = "https://github.com/holochain/rkv.git", branch = "master" }
 lmdb-rkv = { git = "https://github.com/holochain/lmdb-rs.git" }
-holochain_zome_types = {git = "https://github.com/holochain/holochain", rev = "24ceb63bdea374d1936b723e1966caf2e55ebfdc", package = "holochain_zome_types"}
-holo_hash = {git = "https://github.com/holochain/holochain", rev = "24ceb63bdea374d1936b723e1966caf2e55ebfdc", package = "holo_hash"}
-hdk_derive = {git = "https://github.com/holochain/holochain", rev = "24ceb63bdea374d1936b723e1966caf2e55ebfdc", package = "hdk_derive"}
-hdk = {git = "https://github.com/holochain/holochain", rev = "24ceb63bdea374d1936b723e1966caf2e55ebfdc", package = "hdk"}
+holochain_zome_types = {git = "https://github.com/holochain/holochain", rev = "363af6d8af8d18e4616f6aa56ad4d1f0fabaafb7", package = "holochain_zome_types"}
+holo_hash = {git = "https://github.com/holochain/holochain", rev = "363af6d8af8d18e4616f6aa56ad4d1f0fabaafb7", package = "holo_hash"}
+hdk_derive = {git = "https://github.com/holochain/holochain", rev = "363af6d8af8d18e4616f6aa56ad4d1f0fabaafb7", package = "hdk_derive"}
+hdk = {git = "https://github.com/holochain/holochain", rev = "363af6d8af8d18e4616f6aa56ad4d1f0fabaafb7", package = "hdk"}
