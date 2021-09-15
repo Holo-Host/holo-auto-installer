@@ -14,8 +14,6 @@ pub struct Config {
     pub happ_port: u16,
     /// Path to a YAML file containing the lists of hApps to install
     pub happs_file_path: PathBuf,
-    /// Path to a YAML file containing hApp membrane proofs
-    pub membrane_proofs_file_path: PathBuf,
 }
 
 impl Config {
