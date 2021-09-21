@@ -27,7 +27,7 @@ use holochain_types::prelude::{zome_io::ExternIO, FunctionName, ZomeName};
 use holochain_types::prelude::{MembraneProof, UnsafeBytes};
 
 pub async fn activate_holo_hosted_happs(core_happ: &Happ, config: &Config) -> Result<()> {
-    let list_of_happs = get_all_enabled_hosted_happs(&core_happ).await?;
+    let list_of_happs = get_all_enabled_hosted_happs(core_happ).await?;
     let mem_proof = load_mem_proof_file(config.membrane_proofs_file_path.clone())?;
     install_holo_hosted_happs(list_of_happs, mem_proof, config).await?;
     Ok(())
@@ -173,7 +173,7 @@ pub(crate) async fn download_file(url: &Url) -> Result<PathBuf> {
         p
     } else {
         debug!("downloading");
-        let mut url = Url::clone(&url);
+        let mut url = Url::clone(url);
         url.set_scheme("https")
             .map_err(|_| anyhow!("failed to set scheme to https"))?;
         let client = HttpClient::builder()
