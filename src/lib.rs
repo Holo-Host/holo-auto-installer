@@ -28,14 +28,17 @@ use holochain_types::prelude::{MembraneProof, UnsafeBytes};
 
 pub async fn activate_holo_hosted_happs(core_happ: &Happ, config: &Config) -> Result<()> {
     let list_of_happs = get_all_enabled_hosted_happs(core_happ).await?;
+<<<<<<< HEAD
     let mem_proof = load_mem_proof_file(config.membrane_proofs_file_path.clone())?;
     install_holo_hosted_happs(list_of_happs, mem_proof, config).await?;
+=======
+    install_holo_hosted_happs(list_of_happs, config).await?;
+>>>>>>> main
     Ok(())
 }
 
 pub async fn install_holo_hosted_happs(
-    happs: Vec<WrappedHeaderHash>,
-    mem_proof: HashMap<String, MembraneProof>,
+    happs: Vec<(WrappedHeaderHash, Vec<DnaResource>)>,
     config: &Config,
 ) -> Result<()> {
     info!("Starting to install....");
@@ -71,10 +74,12 @@ pub async fn install_holo_hosted_happs(
     // iterate through the vec and
     // Call http://localhost/holochain-api/install_hosted_happ
     // for each WrappedHeaderHash to install the hosted_happ
-    for happ_id in happs {
+    for (happ_id, dnas) in happs {
         if active_happs.contains(&format!("{:?}", happ_id)) {
             info!("App {:?} already installed", happ_id);
         } else {
+            info!("Load mem-proofs for {:?}", happ_id);
+            let mem_proof: HashMap<String, MembraneProof> = load_mem_proof_file(dnas)?;
             info!("Installing happ-id {:?}", happ_id);
             let body = InstallHappBody {
                 happ_id: happ_id.0.to_string(),
@@ -93,8 +98,22 @@ pub async fn install_holo_hosted_happs(
     Ok(())
 }
 
+/// Temporary read-only mem-proofs solution
+/// should be replaced by calling the joining-code service and getting the appropriate proof for the agent
+pub fn load_mem_proof_file(dnas: Vec<DnaResource>) -> Result<HashMap<String, MembraneProof>> {
+    dnas.into_iter()
+        .map(|dna| {
+            base64::decode("AA==".to_string())
+                .map(|proof| (dna.nick, MembraneProof::from(UnsafeBytes::from(proof))))
+                .map_err(|e| anyhow!("failed to decode proof: {:?}", e))
+        })
+        .collect()
+}
+
 #[instrument(err)]
-pub async fn get_all_enabled_hosted_happs(core_happ: &Happ) -> Result<Vec<WrappedHeaderHash>> {
+pub async fn get_all_enabled_hosted_happs(
+    core_happ: &Happ,
+) -> Result<Vec<(WrappedHeaderHash, Vec<DnaResource>)>> {
     let mut app_websocket = AppWebsocket::connect(42233)
         .await
         .context("failed to connect to holochain's app interface")?;
@@ -121,8 +140,10 @@ pub async fn get_all_enabled_hosted_happs(core_happ: &Happ) -> Result<Vec<Wrappe
                     info!("ZomeCall Response - Hosted happs List {:?}", r);
                     let happ_bundles: Vec<HappBundleDetails> =
                         rmp_serde::from_read_ref(r.as_bytes())?;
-                    let happ_bundle_ids =
-                        happ_bundles.into_iter().map(|happ| happ.happ_id).collect();
+                    let happ_bundle_ids = happ_bundles
+                        .into_iter()
+                        .map(|happ| (happ.happ_id, happ.happ_bundle.dnas))
+                        .collect();
                     Ok(happ_bundle_ids)
                 }
                 _ => Err(anyhow!("unexpected response: {:?}", response)),
@@ -130,25 +151,6 @@ pub async fn get_all_enabled_hosted_happs(core_happ: &Happ) -> Result<Vec<Wrappe
         }
         None => Err(anyhow!("HHA is not installed")),
     }
-}
-
-#[instrument(err, fields(path = %path.as_ref().display()))]
-pub fn load_mem_proof_file(path: impl AsRef<Path>) -> Result<HashMap<String, MembraneProof>> {
-    use std::fs::File;
-
-    let file = File::open(path).context("failed to open file")?;
-    let proof: MembraneProofFile =
-        serde_yaml::from_reader(&file).context("failed to deserialize YAML as MembraneProof")?;
-    debug!(?proof);
-    proof
-        .payload
-        .into_iter()
-        .map(|p| {
-            base64::decode(p.proof.clone())
-                .map(|proof| (p.cell_nick, MembraneProof::from(UnsafeBytes::from(proof))))
-                .map_err(|e| anyhow!("failed to decode proof: {:?}", e))
-        })
-        .collect()
 }
 
 #[instrument(err, fields(path = %path.as_ref().display()))]

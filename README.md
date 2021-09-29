@@ -5,7 +5,7 @@
 ```
 $ holo-auto-installer --help
 USAGE:
-    hpos-holo-auto-installer [OPTIONS] <happ-list-path> <membrane-proofs>
+    hpos-holo-auto-installer [OPTIONS] <happ-list-path>
 
 FLAGS:
     -h, --help       Prints help information
@@ -17,8 +17,6 @@ OPTIONS:
 
 ARGS:
     <happ-list-path>    Path to a YAML file containing the list of hApps to install
-    <membrane-proof>    Path to a YAML file containing the list of mem_proof that is used to install
-
 ```
 
 where file at `happ-list-path` is of a format:
@@ -46,13 +44,7 @@ core_happs:
     version: 1
     dna_url: https://s3.eu-central-1.wasabisys.com/elemetal-chat-tests/hha.happ
 ```
-and file at `membrane-proof` is of a format:
 
-```yaml
-payload:
-  - cell_nick: "elemental-chat"
-    proof: "0o=="
-```
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).
