@@ -28,12 +28,7 @@ use holochain_types::prelude::{MembraneProof, UnsafeBytes};
 
 pub async fn activate_holo_hosted_happs(core_happ: &Happ, config: &Config) -> Result<()> {
     let list_of_happs = get_all_enabled_hosted_happs(core_happ).await?;
-<<<<<<< HEAD
-    let mem_proof = load_mem_proof_file(config.membrane_proofs_file_path.clone())?;
-    install_holo_hosted_happs(list_of_happs, mem_proof, config).await?;
-=======
     install_holo_hosted_happs(list_of_happs, config).await?;
->>>>>>> main
     Ok(())
 }
 
