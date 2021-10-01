@@ -84,9 +84,9 @@ impl AdminWebsocket {
 
     #[instrument(skip(self), err)]
     pub async fn list_active_happs(&mut self) -> Result<Vec<InstalledAppId>> {
-        let response = self.send(AdminRequest::ListActiveApps).await?;
+        let response = self.send(AdminRequest::ListEnabledApps).await?;
         match response {
-            AdminResponse::ActiveAppsListed(app_ids) => Ok(app_ids),
+            AdminResponse::EnabledAppsListed(app_ids) => Ok(app_ids),
             _ => Err(anyhow!("unexpected response: {:?}", response)),
         }
     }
@@ -155,7 +155,7 @@ impl AdminWebsocket {
 
     #[instrument(skip(self), err)]
     async fn activate_app(&mut self, happ: &Happ) -> Result<AdminResponse> {
-        let msg = AdminRequest::ActivateApp {
+        let msg = AdminRequest::EnableApp {
             installed_app_id: happ.id(),
         };
         self.send(msg).await
@@ -163,7 +163,7 @@ impl AdminWebsocket {
 
     #[instrument(skip(self), err)]
     pub async fn deactivate_app(&mut self, installed_app_id: &str) -> Result<AdminResponse> {
-        let msg = AdminRequest::DeactivateApp {
+        let msg = AdminRequest::DisableApp {
             installed_app_id: installed_app_id.to_string(),
         };
         self.send(msg).await
