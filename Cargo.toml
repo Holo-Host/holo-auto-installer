@@ -25,6 +25,7 @@ base64 = "0.13.0"
 hc_utils = {git = "https://github.com/holochain/hc-utils", branch = "v0.0.110", package = "hc_utils"}
 reqwest = { version = "0.11", features = ["json"]}
 spinning_top = "=0.2.0"
+holofuel_types = "0.1.0"
 
 [dependencies.holochain]
 version = "=0.0.110"
@@ -42,5 +43,3 @@ package = "holochain_websocket"
 [dev-dependencies.cargo-husky]
 version = "1"
 features = ["run-cargo-fmt", "run-cargo-clippy"]
-
-

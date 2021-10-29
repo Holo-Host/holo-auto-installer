@@ -5,7 +5,7 @@ mod config;
 pub use config::{Config, Happ, HappsFile, MembraneProofFile, ProofPayload};
 
 mod entries;
-pub use entries::{DnaResource, HappBundle, HappBundleDetails, InstallHappBody, Preferences};
+pub use entries::{DnaResource, InstallHappBody, Preferences, PresentedHappBundle};
 
 mod websocket;
 pub use websocket::{AdminWebsocket, AppWebsocket};
@@ -133,11 +133,11 @@ pub async fn get_all_enabled_hosted_happs(
                 // return Vec of happ_list.happ_id
                 AppResponse::ZomeCall(r) => {
                     info!("ZomeCall Response - Hosted happs List {:?}", r);
-                    let happ_bundles: Vec<HappBundleDetails> =
+                    let happ_bundles: Vec<PresentedHappBundle> =
                         rmp_serde::from_read_ref(r.as_bytes())?;
                     let happ_bundle_ids = happ_bundles
                         .into_iter()
-                        .map(|happ| (happ.happ_id, happ.happ_bundle.dnas))
+                        .map(|happ| (happ.id, happ.dnas))
                         .collect();
                     Ok(happ_bundle_ids)
                 }
