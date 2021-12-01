@@ -123,7 +123,7 @@ pub async fn get_all_enabled_hosted_happs(
                 zome_name: ZomeName::from("hha"),
                 fn_name: FunctionName::from("get_happs"),
                 payload: ExternIO::encode(())?,
-                cap: None,
+                cap_secret: None,
                 provenance: cell_data[0].clone().into_id().into_dna_and_agent().1,
             };
             let response = app_websocket.zome_call(zome_call_payload).await?;
