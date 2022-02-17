@@ -11,12 +11,14 @@ pub struct DnaResource {
     pub src_url: String,
     pub nick: String,
 }
+#[allow(dead_code)]
 #[derive(Deserialize, Debug, Clone)]
 pub struct HostingPrices {
     cpu: Fuel,
     storage: Fuel,
     bandwidth: Fuel,
 }
+#[allow(dead_code)]
 #[derive(Deserialize, Debug, Clone)]
 pub struct LoginConfig {
     require_joining_code: bool,
