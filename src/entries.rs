@@ -42,6 +42,7 @@ pub struct PresentedHappBundle {
     pub jurisdictions: Vec<String>,
     pub hosting_prices: HostingPrices,
     pub login_config: LoginConfig,
+    pub special_installed_app_id: Option<String>,
 }
 
 #[derive(Serialize, Debug, Clone)]
