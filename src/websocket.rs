@@ -126,27 +126,25 @@ impl AdminWebsocket {
                 .await
                 .context("failed to download DNA archive")?,
         };
-
-        let payload;
-        if let Ok(id) = env::var("DEV_UID_OVERRIDE") {
+        let payload = if let Ok(id) = env::var("DEV_UID_OVERRIDE") {
             info!("using uid to install: {}", id);
-            payload = InstallAppBundlePayload {
+            InstallAppBundlePayload {
                 agent_key,
                 installed_app_id: Some(happ.id()),
                 source: AppBundleSource::Path(path),
                 membrane_proofs,
                 uid: Some(id),
-            };
+            }
         } else {
             info!("using default uid to install");
-            payload = InstallAppBundlePayload {
+            InstallAppBundlePayload {
                 agent_key,
                 installed_app_id: Some(happ.id()),
                 source: AppBundleSource::Path(path),
                 membrane_proofs,
                 uid: None,
-            };
-        }
+            }
+        };
 
         let msg = AdminRequest::InstallAppBundle(Box::new(payload));
         let response = self.send(msg).await?;

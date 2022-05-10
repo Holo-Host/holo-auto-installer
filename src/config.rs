@@ -69,9 +69,9 @@ impl Happ {
             "unreabable".to_string()
         };
         if let Ok(uid) = env::var("DEV_UID_OVERRIDE") {
-            format!("{}::{}", name.replace(".happ", "").replace(".", ":"), uid)
+            format!("{}::{}", name.replace(".happ", "").replace('.', ":"), uid)
         } else {
-            name.replace(".happ", "").replace(".", ":")
+            name.replace(".happ", "").replace('.', ":")
         }
     }
 }
