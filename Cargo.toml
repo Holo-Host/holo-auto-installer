@@ -2,7 +2,7 @@
 name = "holo-auto-installer"
 version = "0.1.0"
 authors = ["Joel U <joelulahanna@gmail.com>"]
-edition = "2021"
+edition = "2018"
 
 [dependencies]
 again = "0.1"
