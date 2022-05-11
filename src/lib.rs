@@ -11,12 +11,11 @@ mod websocket;
 use mr_bundle::Bundle;
 pub use websocket::{AdminWebsocket, AppWebsocket};
 
+use anyhow::{anyhow, Context, Result};
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-
-use anyhow::{anyhow, Context, Result};
 use tempfile::TempDir;
 use tracing::{debug, info, instrument, warn};
 use url::Url;
@@ -25,7 +24,7 @@ use hc_utils::WrappedHeaderHash;
 use holochain::conductor::api::ZomeCall;
 use holochain::conductor::api::{AppResponse, InstalledAppInfo};
 use holochain_types::prelude::{zome_io::ExternIO, FunctionName, ZomeName};
-use holochain_types::prelude::{AppBundleSource, AppManifest, MembraneProof, UnsafeBytes};
+use holochain_types::prelude::{AppManifest, MembraneProof, UnsafeBytes};
 
 pub async fn activate_holo_hosted_happs(core_happ: &Happ, config: &Config) -> Result<()> {
     let list_of_happs = get_all_enabled_hosted_happs(core_happ).await?;
@@ -109,14 +108,17 @@ pub async fn load_mem_proof_file(bundle_url: String) -> Result<HashMap<String, M
 
     let AppManifest::V1(manifest) = bundle.manifest();
 
-    manifest
+    Ok(manifest
         .roles
         .clone()
-        .into_iter()
+        .iter()
         .map(|role| {
-            (role.id, MembraneProof::from(UnsafeBytes::from([0].to_vec()))) // The read only memproof is [0] (or in base64 `AA==`)
+            (
+                role.id.clone(),
+                MembraneProof::from(UnsafeBytes::from([0].to_vec())),
+            ) // The read only memproof is [0] (or in base64 `AA==`)
         })
-        .collect()
+        .collect())
 }
 
 #[instrument(err)]
