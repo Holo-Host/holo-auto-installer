@@ -105,10 +105,7 @@ pub async fn load_mem_proof_file(bundle_url: String) -> Result<HashMap<String, M
 
     let path = download_file(&url).await?;
 
-    let bundle = match AppBundleSource::Path(path) {
-        AppBundleSource::Bundle(bundle) => bundle.into_inner(),
-        AppBundleSource::Path(path) => Bundle::read_from_file(&path).await.unwrap(),
-    };
+    let bundle = Bundle::read_from_file(&path).await.unwrap();
 
     let AppManifest::V1(manifest) = bundle.manifest();
 
