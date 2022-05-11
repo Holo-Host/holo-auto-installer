@@ -114,9 +114,7 @@ pub async fn load_mem_proof_file(bundle_url: String) -> Result<HashMap<String, M
         .clone()
         .into_iter()
         .map(|role| {
-            base64::decode("AA==")
-                .map(|proof| (role.id, MembraneProof::from(UnsafeBytes::from(proof))))
-                .map_err(|e| anyhow!("failed to decode proof: {:?}", e))
+            (role.id, MembraneProof::from(UnsafeBytes::from([0].to_vec()))) // The read only memproof is [0] (or in base64 `AA==`)
         })
         .collect()
 }
