@@ -1725,6 +1725,7 @@ dependencies = [
  "holochain_websocket",
  "holofuel_types",
  "isahc",
+ "mr_bundle",
  "observability",
  "reqwest",
  "rmp-serde 0.14.4",

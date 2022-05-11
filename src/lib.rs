@@ -8,14 +8,14 @@ mod entries;
 pub use entries::{DnaResource, InstallHappBody, Preferences, PresentedHappBundle};
 
 mod websocket;
+use mr_bundle::Bundle;
 pub use websocket::{AdminWebsocket, AppWebsocket};
 
+use anyhow::{anyhow, Context, Result};
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-
-use anyhow::{anyhow, Context, Result};
 use tempfile::TempDir;
 use tracing::{debug, info, instrument, warn};
 use url::Url;
@@ -24,7 +24,7 @@ use hc_utils::WrappedHeaderHash;
 use holochain::conductor::api::ZomeCall;
 use holochain::conductor::api::{AppResponse, InstalledAppInfo};
 use holochain_types::prelude::{zome_io::ExternIO, FunctionName, ZomeName};
-use holochain_types::prelude::{MembraneProof, UnsafeBytes};
+use holochain_types::prelude::{AppManifest, MembraneProof, UnsafeBytes};
 
 pub async fn activate_holo_hosted_happs(core_happ: &Happ, config: &Config) -> Result<()> {
     let list_of_happs = get_all_enabled_hosted_happs(core_happ).await?;
@@ -33,7 +33,7 @@ pub async fn activate_holo_hosted_happs(core_happ: &Happ, config: &Config) -> Re
 }
 
 pub async fn install_holo_hosted_happs(
-    happs: Vec<(WrappedHeaderHash, Vec<DnaResource>)>,
+    happs: Vec<(WrappedHeaderHash, String)>,
     config: &Config,
 ) -> Result<()> {
     info!("Starting to install....");
@@ -69,13 +69,17 @@ pub async fn install_holo_hosted_happs(
     // iterate through the vec and
     // Call http://localhost/holochain-api/install_hosted_happ
     // for each WrappedHeaderHash to install the hosted_happ
-    for (happ_id, dnas) in happs {
+    for (happ_id, bundle_url) in happs {
         if active_happs.contains(&format!("{:?}", happ_id)) {
             info!("App {:?} already installed", happ_id);
         } else {
             info!("Load mem-proofs for {:?}", happ_id);
-            let mem_proof: HashMap<String, MembraneProof> = load_mem_proof_file(dnas)?;
-            info!("Installing happ-id {:?}", happ_id);
+            let mem_proof: HashMap<String, MembraneProof> =
+                load_mem_proof_file(bundle_url).await.unwrap_or_default();
+            info!(
+                "Installing happ-id {:?} with mem_proof {:?}",
+                happ_id, mem_proof
+            );
             let body = InstallHappBody {
                 happ_id: happ_id.0.to_string(),
                 preferences: preferences.clone(),
@@ -95,20 +99,32 @@ pub async fn install_holo_hosted_happs(
 
 /// Temporary read-only mem-proofs solution
 /// should be replaced by calling the joining-code service and getting the appropriate proof for the agent
-pub fn load_mem_proof_file(dnas: Vec<DnaResource>) -> Result<HashMap<String, MembraneProof>> {
-    dnas.into_iter()
-        .map(|dna| {
-            base64::decode("AA==".to_string())
-                .map(|proof| (dna.nick, MembraneProof::from(UnsafeBytes::from(proof))))
-                .map_err(|e| anyhow!("failed to decode proof: {:?}", e))
+pub async fn load_mem_proof_file(bundle_url: String) -> Result<HashMap<String, MembraneProof>> {
+    let url = Url::parse(&bundle_url)?;
+
+    let path = download_file(&url).await?;
+
+    let bundle = Bundle::read_from_file(&path).await.unwrap();
+
+    let AppManifest::V1(manifest) = bundle.manifest();
+
+    Ok(manifest
+        .roles
+        .clone()
+        .iter()
+        .map(|role| {
+            (
+                role.id.clone(),
+                MembraneProof::from(UnsafeBytes::from([0].to_vec())),
+            ) // The read only memproof is [0] (or in base64 `AA==`)
         })
-        .collect()
+        .collect())
 }
 
 #[instrument(err)]
 pub async fn get_all_enabled_hosted_happs(
     core_happ: &Happ,
-) -> Result<Vec<(WrappedHeaderHash, Vec<DnaResource>)>> {
+) -> Result<Vec<(WrappedHeaderHash, String)>> {
     let mut app_websocket = AppWebsocket::connect(42233)
         .await
         .context("failed to connect to holochain's app interface")?;
@@ -134,10 +150,10 @@ pub async fn get_all_enabled_hosted_happs(
                 AppResponse::ZomeCall(r) => {
                     info!("ZomeCall Response - Hosted happs List {:?}", r);
                     let happ_bundles: Vec<PresentedHappBundle> =
-                        rmp_serde::from_read_ref(r.as_bytes())?;
+                        rmp_serde::from_slice(r.as_bytes())?;
                     let happ_bundle_ids = happ_bundles
                         .into_iter()
-                        .map(|happ| (happ.id, happ.dnas))
+                        .map(|happ| (happ.id, happ.bundle_url))
                         .collect();
                     Ok(happ_bundle_ids)
                 }
