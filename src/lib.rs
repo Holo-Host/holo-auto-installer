@@ -77,7 +77,10 @@ pub async fn install_holo_hosted_happs(
             info!("Load mem-proofs for {:?}", happ_id);
             let mem_proof: HashMap<String, MembraneProof> =
                 load_mem_proof_file(bundle_url).await.unwrap_or_default();
-            info!("Installing happ-id {:?}", happ_id);
+            info!(
+                "Installing happ-id {:?} with mem_proof {:?}",
+                happ_id, mem_proof
+            );
             let body = InstallHappBody {
                 happ_id: happ_id.0.to_string(),
                 preferences: preferences.clone(),
@@ -115,12 +118,7 @@ pub async fn load_mem_proof_file(bundle_url: String) -> Result<HashMap<String, M
         .into_iter()
         .map(|role| {
             base64::decode("AA==")
-                .map(|proof| {
-                    (
-                        format!("{:?}", role),
-                        MembraneProof::from(UnsafeBytes::from(proof)),
-                    )
-                })
+                .map(|proof| (role.id, MembraneProof::from(UnsafeBytes::from(proof))))
                 .map_err(|e| anyhow!("failed to decode proof: {:?}", e))
         })
         .collect()
