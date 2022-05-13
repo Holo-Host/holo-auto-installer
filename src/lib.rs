@@ -187,9 +187,9 @@ pub async fn get_all_enabled_hosted_happs(
                 // https://github.com/Holo-Host/holo-hosting-app-rsm/blob/develop/zomes/hha/src/lib.rs#L54
                 // return Vec of happ_list.happ_id
                 AppResponse::ZomeCall(r) => {
-                    info!("ZomeCall Response - Hosted happs List {:?}", r);
                     let happ_bundles: Vec<PresentedHappBundle> =
                         rmp_serde::from_slice(r.as_bytes())?;
+                    info!("ZomeCall Response - Hosted happs List {:?}", happ_bundles);
                     let happ_bundle_ids = happ_bundles
                         .into_iter()
                         .map(|happ| (happ.id, happ.bundle_url, happ.is_paused))
