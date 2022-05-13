@@ -108,7 +108,7 @@ pub async fn check_for_happs_to_be_uninstalled(
     happs: &[(WrappedHeaderHash, String, bool)],
     config: &Config,
 ) -> Result<()> {
-    info!("Starting to uninstall happs that were removed from the hosted list....");
+    info!("Checking to uninstall happs that were removed from the hosted list....");
 
     let mut admin_websocket = AdminWebsocket::connect(config.admin_port)
         .await
@@ -132,6 +132,7 @@ pub async fn check_for_happs_to_be_uninstalled(
         info!("Disabling {}", app);
         admin_websocket.uninstall_app(&app).await?;
     }
+    info!("Done uninstall happs that were removed from the hosted list.");
 
     Ok(())
 }
@@ -189,10 +190,15 @@ pub async fn get_all_enabled_hosted_happs(
                 AppResponse::ZomeCall(r) => {
                     let happ_bundles: Vec<PresentedHappBundle> =
                         rmp_serde::from_slice(r.as_bytes())?;
-                    info!("ZomeCall Response - Hosted happs List {:?}", happ_bundles);
                     let happ_bundle_ids = happ_bundles
                         .into_iter()
-                        .map(|happ| (happ.id, happ.bundle_url, happ.is_paused))
+                        .map(|happ| {
+                            info!(
+                                "{} with happ-id: {:?} and bundle: {}, is-paused={}",
+                                happ.name, happ.id, happ.bundle_url, happ.is_paused
+                            );
+                            (happ.id, happ.bundle_url, happ.is_paused)
+                        })
                         .collect();
                     Ok(happ_bundle_ids)
                 }
