@@ -34,7 +34,7 @@ pub async fn activate_holo_hosted_happs(core_happ: &Happ, config: &Config) -> Re
 }
 
 pub async fn install_holo_hosted_happs(
-    happs: &Vec<(WrappedHeaderHash, String, bool)>,
+    happs: &[(WrappedHeaderHash, String, bool)],
     config: &Config,
 ) -> Result<()> {
     info!("Starting to install....");
@@ -82,7 +82,7 @@ pub async fn install_holo_hosted_happs(
         } else {
             info!("Load mem-proofs for {:?}", happ_id);
             let mem_proof: HashMap<String, MembraneProof> =
-                load_mem_proof_file(&bundle_url).await.unwrap_or_default();
+                load_mem_proof_file(bundle_url).await.unwrap_or_default();
             info!(
                 "Installing happ-id {:?} with mem_proof {:?}",
                 happ_id, mem_proof
@@ -105,7 +105,7 @@ pub async fn install_holo_hosted_happs(
 }
 
 pub async fn check_for_happs_to_be_uninstalled(
-    happs: &Vec<(WrappedHeaderHash, String, bool)>,
+    happs: &[(WrappedHeaderHash, String, bool)],
     config: &Config,
 ) -> Result<()> {
     info!("Starting to uninstall happs that were removed from the hosted list....");
@@ -138,8 +138,8 @@ pub async fn check_for_happs_to_be_uninstalled(
 
 /// Temporary read-only mem-proofs solution
 /// should be replaced by calling the joining-code service and getting the appropriate proof for the agent
-pub async fn load_mem_proof_file(bundle_url: &String) -> Result<HashMap<String, MembraneProof>> {
-    let url = Url::parse(&bundle_url)?;
+pub async fn load_mem_proof_file(bundle_url: &str) -> Result<HashMap<String, MembraneProof>> {
+    let url = Url::parse(bundle_url)?;
 
     let path = download_file(&url).await?;
 
