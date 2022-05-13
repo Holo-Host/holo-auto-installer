@@ -28,12 +28,13 @@ use holochain_types::prelude::{AppManifest, MembraneProof, UnsafeBytes};
 
 pub async fn activate_holo_hosted_happs(core_happ: &Happ, config: &Config) -> Result<()> {
     let list_of_happs = get_all_enabled_hosted_happs(core_happ).await?;
-    install_holo_hosted_happs(list_of_happs, config).await?;
+    install_holo_hosted_happs(&list_of_happs, config).await?;
+    check_for_happs_to_be_uninstalled(&list_of_happs, config).await?;
     Ok(())
 }
 
 pub async fn install_holo_hosted_happs(
-    happs: Vec<(WrappedHeaderHash, String)>,
+    happs: &Vec<(WrappedHeaderHash, String, bool)>,
     config: &Config,
 ) -> Result<()> {
     info!("Starting to install....");
@@ -52,7 +53,7 @@ pub async fn install_holo_hosted_happs(
 
     let active_happs = Arc::new(
         admin_websocket
-            .list_active_happs()
+            .list_enabled_happs()
             .await
             .context("failed to get installed hApps")?,
     );
@@ -60,7 +61,7 @@ pub async fn install_holo_hosted_happs(
     let client = reqwest::Client::new();
     // Note: Tmp preferences
     let preferences = Preferences {
-        max_fuel_before_invoice: 1.0,
+        max_fuel_before_invoice: 9999999999.0,
         max_time_before_invoice: vec![86400, 0],
         price_compute: 1.0,
         price_storage: 1.0,
@@ -69,13 +70,19 @@ pub async fn install_holo_hosted_happs(
     // iterate through the vec and
     // Call http://localhost/holochain-api/install_hosted_happ
     // for each WrappedHeaderHash to install the hosted_happ
-    for (happ_id, bundle_url) in happs {
+    for (happ_id, bundle_url, is_paused) in happs {
         if active_happs.contains(&format!("{:?}", happ_id)) {
             info!("App {:?} already installed", happ_id);
+            if is_paused.to_owned() {
+                info!("Pausing {:?}", happ_id);
+                admin_websocket
+                    .deactivate_app(&happ_id.0.to_string())
+                    .await?;
+            }
         } else {
             info!("Load mem-proofs for {:?}", happ_id);
             let mem_proof: HashMap<String, MembraneProof> =
-                load_mem_proof_file(bundle_url).await.unwrap_or_default();
+                load_mem_proof_file(&bundle_url).await.unwrap_or_default();
             info!(
                 "Installing happ-id {:?} with mem_proof {:?}",
                 happ_id, mem_proof
@@ -97,9 +104,41 @@ pub async fn install_holo_hosted_happs(
     Ok(())
 }
 
+pub async fn check_for_happs_to_be_uninstalled(
+    happs: &Vec<(WrappedHeaderHash, String, bool)>,
+    config: &Config,
+) -> Result<()> {
+    info!("Starting to uninstall happs that were removed from the hosted list....");
+
+    let mut admin_websocket = AdminWebsocket::connect(config.admin_port)
+        .await
+        .context("failed to connect to holochain's admin interface")?;
+
+    let active_apps = admin_websocket
+        .list_enabled_happs()
+        .await
+        .context("failed to get installed hApps")?;
+
+    let ano_happ = filter_for_hosted_happ(active_apps.to_vec());
+
+    let still_active_apps = ano_happ
+        .into_iter()
+        .filter(|h| !happs.iter().any(|(e, _, _)| &e.0.to_string() == h))
+        .collect();
+
+    let happ_to_uninstall = filter_for_hosted_happ_to_uninstall(still_active_apps, active_apps);
+
+    for app in happ_to_uninstall {
+        info!("Disabling {}", app);
+        admin_websocket.uninstall_app(&app).await?;
+    }
+
+    Ok(())
+}
+
 /// Temporary read-only mem-proofs solution
 /// should be replaced by calling the joining-code service and getting the appropriate proof for the agent
-pub async fn load_mem_proof_file(bundle_url: String) -> Result<HashMap<String, MembraneProof>> {
+pub async fn load_mem_proof_file(bundle_url: &String) -> Result<HashMap<String, MembraneProof>> {
     let url = Url::parse(&bundle_url)?;
 
     let path = download_file(&url).await?;
@@ -124,7 +163,7 @@ pub async fn load_mem_proof_file(bundle_url: String) -> Result<HashMap<String, M
 #[instrument(err)]
 pub async fn get_all_enabled_hosted_happs(
     core_happ: &Happ,
-) -> Result<Vec<(WrappedHeaderHash, String)>> {
+) -> Result<Vec<(WrappedHeaderHash, String, bool)>> {
     let mut app_websocket = AppWebsocket::connect(42233)
         .await
         .context("failed to connect to holochain's app interface")?;
@@ -153,7 +192,7 @@ pub async fn get_all_enabled_hosted_happs(
                         rmp_serde::from_slice(r.as_bytes())?;
                     let happ_bundle_ids = happ_bundles
                         .into_iter()
-                        .map(|happ| (happ.id, happ.bundle_url))
+                        .map(|happ| (happ.id, happ.bundle_url, happ.is_paused))
                         .collect();
                     Ok(happ_bundle_ids)
                 }
@@ -221,6 +260,26 @@ pub(crate) async fn download_file(url: &Url) -> Result<PathBuf> {
 // Returns true if app should be kept active in holochain
 fn _keep_app_active(installed_app_id: &str, happs_to_keep: Vec<String>) -> bool {
     happs_to_keep.contains(&installed_app_id.to_string()) || installed_app_id.contains("uhCkk")
+}
+
+fn filter_for_hosted_happ_to_uninstall(
+    hosted_app_to_uninstall: Vec<String>,
+    active_apps: Vec<String>,
+) -> Vec<String> {
+    active_apps
+        .into_iter()
+        .filter(|app| {
+            hosted_app_to_uninstall.iter().any(|h| app.starts_with(h))
+                && !app.ends_with("servicelogger")
+        })
+        .collect()
+}
+
+fn filter_for_hosted_happ(active_apps: Vec<String>) -> Vec<String> {
+    active_apps
+        .into_iter()
+        .filter(|app| app.starts_with("uhCkk") && (app.len() == 53))
+        .collect()
 }
 
 #[cfg(test)]
