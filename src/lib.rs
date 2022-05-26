@@ -73,7 +73,7 @@ pub async fn install_holo_hosted_happs(
     for (happ_id, bundle_url, is_paused) in happs {
         if active_happs.contains(&format!("{:?}", happ_id)) {
             info!("App {:?} already installed", happ_id);
-            if is_paused.to_owned() {
+            if *is_paused {
                 info!("Pausing {:?}", happ_id);
                 admin_websocket
                     .deactivate_app(&happ_id.0.to_string())
