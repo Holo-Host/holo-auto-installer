@@ -284,7 +284,7 @@ fn filter_for_hosted_happ_to_uninstall(
         .filter(|installed_app_id| {
             happ_ids
                 .iter()
-                .any(|happ_id| is_instance_of_happ(happ_id, &installed_app_id))
+                .any(|happ_id| is_instance_of_happ(happ_id, installed_app_id))
         })
         .collect()
 }
@@ -305,7 +305,7 @@ fn filter_for_hosted_happ(active_apps: Vec<String>) -> Vec<String> {
         .collect()
 }
 
-fn is_anonymous(app: &String) -> bool {
+fn is_anonymous(app: &str) -> bool {
     app.starts_with("uhCkk") && app.len() == 53
 }
 
