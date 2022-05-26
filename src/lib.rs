@@ -1,17 +1,17 @@
 // TODO: https://github.com/tokio-rs/tracing/issues/843
 #![allow(clippy::unit_arg)]
-
 mod config;
 pub use config::{Config, Happ, HappsFile, MembraneProofFile, ProofPayload};
-
 mod entries;
 pub use entries::{DnaResource, InstallHappBody, Preferences, PresentedHappBundle};
-
 mod websocket;
-use mr_bundle::Bundle;
-pub use websocket::{AdminWebsocket, AppWebsocket};
-
 use anyhow::{anyhow, Context, Result};
+use hc_utils::WrappedHeaderHash;
+use holochain::conductor::api::ZomeCall;
+use holochain::conductor::api::{AppResponse, InstalledAppInfo};
+use holochain_types::prelude::{zome_io::ExternIO, FunctionName, ZomeName};
+use holochain_types::prelude::{AppManifest, MembraneProof, UnsafeBytes};
+use mr_bundle::Bundle;
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -19,24 +19,22 @@ use std::sync::Arc;
 use tempfile::TempDir;
 use tracing::{debug, info, instrument, warn};
 use url::Url;
-
-use hc_utils::WrappedHeaderHash;
-use holochain::conductor::api::ZomeCall;
-use holochain::conductor::api::{AppResponse, InstalledAppInfo};
-use holochain_types::prelude::{zome_io::ExternIO, FunctionName, ZomeName};
-use holochain_types::prelude::{AppManifest, MembraneProof, UnsafeBytes};
+pub use websocket::{AdminWebsocket, AppWebsocket};
 
 pub async fn activate_holo_hosted_happs(core_happ: &Happ, config: &Config) -> Result<()> {
     let list_of_happs = get_all_enabled_hosted_happs(core_happ).await?;
     install_holo_hosted_happs(&list_of_happs, config).await?;
-    check_for_happs_to_be_uninstalled(&list_of_happs, config).await?;
+    uninstall_removed_happs(&list_of_happs, config).await?;
     Ok(())
 }
 
-pub async fn install_holo_hosted_happs(
-    happs: &[(WrappedHeaderHash, String, bool)],
-    config: &Config,
-) -> Result<()> {
+pub struct HappPkg {
+    happ_id: WrappedHeaderHash,
+    bundle_url: String,
+    is_paused: bool,
+}
+
+pub async fn install_holo_hosted_happs(happs: &[HappPkg], config: &Config) -> Result<()> {
     info!("Starting to install....");
     if happs.is_empty() {
         info!("No happs registered to be enabled for hosting.");
@@ -53,7 +51,7 @@ pub async fn install_holo_hosted_happs(
 
     let active_happs = Arc::new(
         admin_websocket
-            .list_enabled_happs()
+            .list_enabled_app()
             .await
             .context("failed to get installed hApps")?,
     );
@@ -70,7 +68,12 @@ pub async fn install_holo_hosted_happs(
     // iterate through the vec and
     // Call http://localhost/holochain-api/install_hosted_happ
     // for each WrappedHeaderHash to install the hosted_happ
-    for (happ_id, bundle_url, is_paused) in happs {
+    for HappPkg {
+        happ_id,
+        bundle_url,
+        is_paused,
+    } in happs
+    {
         if active_happs.contains(&format!("{:?}", happ_id)) {
             info!("App {:?} already installed", happ_id);
             if *is_paused {
@@ -104,10 +107,7 @@ pub async fn install_holo_hosted_happs(
     Ok(())
 }
 
-pub async fn check_for_happs_to_be_uninstalled(
-    happs: &[(WrappedHeaderHash, String, bool)],
-    config: &Config,
-) -> Result<()> {
+pub async fn uninstall_removed_happs(happs: &[HappPkg], config: &Config) -> Result<()> {
     info!("Checking to uninstall happs that were removed from the hosted list....");
 
     let mut admin_websocket = AdminWebsocket::connect(config.admin_port)
@@ -115,18 +115,22 @@ pub async fn check_for_happs_to_be_uninstalled(
         .context("failed to connect to holochain's admin interface")?;
 
     let active_apps = admin_websocket
-        .list_enabled_happs()
+        .list_enabled_app()
         .await
         .context("failed to get installed hApps")?;
 
     let ano_happ = filter_for_hosted_happ(active_apps.to_vec());
 
-    let still_active_apps = ano_happ
+    let happ_ids_to_uninstall = ano_happ
         .into_iter()
-        .filter(|h| !happs.iter().any(|(e, _, _)| &e.0.to_string() == h))
+        .filter(|h| {
+            !happs
+                .iter()
+                .any(|HappPkg { happ_id, .. }| &happ_id.0.to_string() == h)
+        })
         .collect();
 
-    let happ_to_uninstall = filter_for_hosted_happ_to_uninstall(still_active_apps, active_apps);
+    let happ_to_uninstall = filter_for_hosted_happ_to_uninstall(happ_ids_to_uninstall, active_apps);
 
     for app in happ_to_uninstall {
         info!("Disabling {}", app);
@@ -162,9 +166,7 @@ pub async fn load_mem_proof_file(bundle_url: &str) -> Result<HashMap<String, Mem
 }
 
 #[instrument(err)]
-pub async fn get_all_enabled_hosted_happs(
-    core_happ: &Happ,
-) -> Result<Vec<(WrappedHeaderHash, String, bool)>> {
+pub async fn get_all_enabled_hosted_happs(core_happ: &Happ) -> Result<Vec<HappPkg>> {
     let mut app_websocket = AppWebsocket::connect(42233)
         .await
         .context("failed to connect to holochain's app interface")?;
@@ -197,7 +199,11 @@ pub async fn get_all_enabled_hosted_happs(
                                 "{} with happ-id: {:?} and bundle: {}, is-paused={}",
                                 happ.name, happ.id, happ.bundle_url, happ.is_paused
                             );
-                            (happ.id, happ.bundle_url, happ.is_paused)
+                            HappPkg {
+                                happ_id: happ.id,
+                                bundle_url: happ.bundle_url,
+                                is_paused: happ.is_paused,
+                            }
                         })
                         .collect();
                     Ok(happ_bundle_ids)
@@ -268,24 +274,39 @@ fn _keep_app_active(installed_app_id: &str, happs_to_keep: Vec<String>) -> bool 
     happs_to_keep.contains(&installed_app_id.to_string()) || installed_app_id.contains("uhCkk")
 }
 
+/// Takes a list of hApp IDs and returns a list of `installed_app_id`s corresponding with the anonymous and identified instances of those hApps.
 fn filter_for_hosted_happ_to_uninstall(
-    hosted_app_to_uninstall: Vec<String>,
-    active_apps: Vec<String>,
+    happ_ids: Vec<String>,
+    active_installed_app_ids: Vec<String>,
 ) -> Vec<String> {
-    active_apps
+    active_installed_app_ids
         .into_iter()
-        .filter(|app| {
-            hosted_app_to_uninstall.iter().any(|h| app.starts_with(h))
-                && !app.ends_with("servicelogger")
+        .filter(|installed_app_id| {
+            happ_ids
+                .iter()
+                .any(|happ_id| is_instance_of_happ(happ_id, &installed_app_id))
         })
         .collect()
+}
+/// Returns true if `installed_app_id` represents an anonymous or identified instance of `happ_id`
+fn is_instance_of_happ(happ_id: &str, installed_app_id: &str) -> bool {
+    // An `installed_app_id` is one of
+    // - A core hApp (e.g. `servicelogger:0_2_1::251e7cc8-9c48-4841-9eb0-435f0bf97373`)
+    // - An anonymous instance with installed_app_id == happ_id
+    // - An identified instance matching /happ_id::agent_id/
+    // - A happ-specific servicelogger instance matching /happ_id::servicelogger/
+    !installed_app_id.ends_with("servicelogger") && installed_app_id.starts_with(happ_id)
 }
 
 fn filter_for_hosted_happ(active_apps: Vec<String>) -> Vec<String> {
     active_apps
         .into_iter()
-        .filter(|app| app.starts_with("uhCkk") && (app.len() == 53))
+        .filter(|app| is_anonymous(app))
         .collect()
+}
+
+fn is_anonymous(app: &String) -> bool {
+    app.starts_with("uhCkk") && app.len() == 53
 }
 
 #[cfg(test)]
