@@ -30,6 +30,7 @@ pub struct PresentedHappBundle {
     pub id: WrappedHeaderHash,
     pub provider_pubkey: WrappedAgentPubKey,
     pub is_draft: bool,
+    pub is_paused: bool,
     pub uid: Option<String>,
     pub bundle_url: String,
     pub ui_src_url: String,
