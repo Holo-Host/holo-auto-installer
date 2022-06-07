@@ -1,6 +1,5 @@
 use hc_utils::{WrappedAgentPubKey, WrappedHeaderHash};
 use holochain_types::prelude::MembraneProof;
-use holofuel_types::fuel::Fuel;
 use serde::Deserialize;
 use serde::Serialize;
 use std::collections::HashMap;
@@ -11,20 +10,7 @@ pub struct DnaResource {
     pub src_url: String,
     pub nick: String,
 }
-#[allow(dead_code)]
-#[derive(Deserialize, Debug, Clone)]
-pub struct HostingPrices {
-    cpu: Fuel,
-    storage: Fuel,
-    bandwidth: Fuel,
-}
-#[allow(dead_code)]
-#[derive(Deserialize, Debug, Clone)]
-pub struct LoginConfig {
-    require_joining_code: bool,
-    display_publisher_name: bool,
-    help_url: Option<String>,
-}
+
 #[derive(Deserialize, Debug, Clone)]
 pub struct PresentedHappBundle {
     pub id: WrappedHeaderHash,
@@ -34,15 +20,8 @@ pub struct PresentedHappBundle {
     pub uid: Option<String>,
     pub bundle_url: String,
     pub ui_src_url: String,
-    pub dnas: Vec<DnaResource>,
     pub hosted_url: String,
     pub name: String,
-    pub logo_url: String,
-    pub description: String,
-    pub categories: Vec<String>,
-    pub jurisdictions: Vec<String>,
-    pub hosting_prices: HostingPrices,
-    pub login_config: LoginConfig,
     pub special_installed_app_id: Option<String>,
 }
 
