@@ -51,7 +51,7 @@ pub async fn install_holo_hosted_happs(happs: &[HappPkg], config: &Config) -> Re
 
     let active_happs = Arc::new(
         admin_websocket
-            .list_enabled_app()
+            .list_running_app()
             .await
             .context("failed to get installed hApps")?,
     );
@@ -115,7 +115,7 @@ pub async fn uninstall_removed_happs(happs: &[HappPkg], config: &Config) -> Resu
         .context("failed to connect to holochain's admin interface")?;
 
     let active_apps = admin_websocket
-        .list_enabled_app()
+        .list_running_app()
         .await
         .context("failed to get installed hApps")?;
 
