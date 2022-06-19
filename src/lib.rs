@@ -10,7 +10,7 @@ use hc_utils::WrappedHeaderHash;
 use holochain::conductor::api::ZomeCall;
 use holochain::conductor::api::{AppResponse, InstalledAppInfo};
 use holochain_types::prelude::{zome_io::ExternIO, FunctionName, ZomeName};
-use holochain_types::prelude::{AppManifest, MembraneProof, UnsafeBytes};
+use holochain_types::prelude::{AppManifest, MembraneProof, Op, UnsafeBytes};
 use mr_bundle::Bundle;
 use std::collections::HashMap;
 use std::fs;
@@ -32,6 +32,7 @@ pub struct HappPkg {
     happ_id: WrappedHeaderHash,
     bundle_url: String,
     is_paused: bool,
+    special_installed_app_id: Option<String>,
 }
 
 pub async fn install_holo_hosted_happs(happs: &[HappPkg], config: &Config) -> Result<()> {
@@ -72,9 +73,20 @@ pub async fn install_holo_hosted_happs(happs: &[HappPkg], config: &Config) -> Re
         happ_id,
         bundle_url,
         is_paused,
+        special_installed_app_id,
     } in happs
     {
-        if active_happs.contains(&format!("{:?}", happ_id)) {
+        if special_installed_app_id.is_some() {
+            if active_happs.contains(&format!("{:?}", special_installed_app_id)) {
+                info!("App {:?} already installed", special_installed_app_id);
+                if *is_paused {
+                    info!("Pausing {:?}", special_installed_app_id);
+                    admin_websocket
+                        .deactivate_app(&special_installed_app_id.as_ref().unwrap().to_string())
+                        .await?;
+                }
+            }
+        } else if active_happs.contains(&format!("{:?}", happ_id)) {
             info!("App {:?} already installed", happ_id);
             if *is_paused {
                 info!("Pausing {:?}", happ_id);
@@ -203,6 +215,7 @@ pub async fn get_all_enabled_hosted_happs(core_happ: &Happ) -> Result<Vec<HappPk
                                 happ_id: happ.id,
                                 bundle_url: happ.bundle_url,
                                 is_paused: happ.is_paused,
+                                special_installed_app_id: happ.special_installed_app_id,
                             }
                         })
                         .collect();
