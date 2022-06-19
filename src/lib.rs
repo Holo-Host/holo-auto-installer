@@ -10,7 +10,7 @@ use hc_utils::WrappedHeaderHash;
 use holochain::conductor::api::ZomeCall;
 use holochain::conductor::api::{AppResponse, InstalledAppInfo};
 use holochain_types::prelude::{zome_io::ExternIO, FunctionName, ZomeName};
-use holochain_types::prelude::{AppManifest, MembraneProof, Op, UnsafeBytes};
+use holochain_types::prelude::{AppManifest, MembraneProof, UnsafeBytes};
 use mr_bundle::Bundle;
 use std::collections::HashMap;
 use std::fs;
