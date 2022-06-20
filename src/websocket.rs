@@ -1,6 +1,7 @@
 use anyhow::{anyhow, Context, Result};
 use holochain::conductor::api::{
-    AdminRequest, AdminResponse, AppRequest, AppResponse, InstalledAppInfo, ZomeCall,
+    AdminRequest, AdminResponse, AppRequest, AppResponse, AppStatusFilter, InstalledAppInfo,
+    ZomeCall,
 };
 use holochain_types::app::InstalledAppId;
 use holochain_websocket::{connect, WebsocketConfig, WebsocketSender};
@@ -34,12 +35,24 @@ impl AdminWebsocket {
         self.send(msg).await
     }
 
-    pub async fn list_enabled_app(&mut self) -> Result<Vec<InstalledAppId>> {
-        let response = self.send(AdminRequest::ListEnabledApps).await?;
+    pub async fn list_app(
+        &mut self,
+        status_filter: Option<AppStatusFilter>,
+    ) -> Result<Vec<InstalledAppId>> {
+        let response = self.send(AdminRequest::ListApps { status_filter }).await?;
         match response {
-            AdminResponse::EnabledAppsListed(app_ids) => Ok(app_ids),
+            AdminResponse::AppsListed(info) => {
+                Ok(info.iter().map(|i| i.installed_app_id.to_owned()).collect())
+            }
             _ => Err(anyhow!("unexpected response: {:?}", response)),
         }
+    }
+
+    pub async fn list_running_app(&mut self) -> Result<Vec<InstalledAppId>> {
+        let mut running = self.list_app(Some(AppStatusFilter::Running)).await?;
+        let mut enabled = self.list_app(Some(AppStatusFilter::Enabled)).await?;
+        running.append(&mut enabled);
+        Ok(running)
     }
 
     pub async fn deactivate_app(&mut self, installed_app_id: &str) -> Result<AdminResponse> {
