@@ -76,17 +76,18 @@ pub async fn install_holo_hosted_happs(happs: &[HappPkg], config: &Config) -> Re
         special_installed_app_id,
     } in happs
     {
-        if special_installed_app_id.is_some() {
-            if active_happs.contains(&format!("{:?}", special_installed_app_id)) {
-                info!("App {:?} already installed", special_installed_app_id);
-                if *is_paused {
-                    info!("Pausing {:?}", special_installed_app_id);
-                    admin_websocket
-                        .deactivate_app(&special_installed_app_id.as_ref().unwrap().to_string())
-                        .await?;
-                }
-            }
-        } else if active_happs.contains(&format!("{:?}", happ_id)) {
+        // if special happ is installed and do nothing if it is installed
+        if special_installed_app_id.is_some()
+            && active_happs.contains(&format!("{:?}::servicelogger", happ_id))
+        {
+            info!(
+                "Special App {:?} already installed",
+                special_installed_app_id
+            );
+            // We do not pause here because we do not want our core-app to be uninstalled ever
+        }
+        // Check if happ is already installed and deactivate it if happ is paused in hha
+        else if active_happs.contains(&format!("{:?}", happ_id)) {
             info!("App {:?} already installed", happ_id);
             if *is_paused {
                 info!("Pausing {:?}", happ_id);
@@ -94,7 +95,9 @@ pub async fn install_holo_hosted_happs(happs: &[HappPkg], config: &Config) -> Re
                     .deactivate_app(&happ_id.0.to_string())
                     .await?;
             }
-        } else {
+        }
+        // else installed the hosted happ read-only instance
+        else {
             info!("Load mem-proofs for {:?}", happ_id);
             let mem_proof: HashMap<String, MembraneProof> =
                 load_mem_proof_file(bundle_url).await.unwrap_or_default();
