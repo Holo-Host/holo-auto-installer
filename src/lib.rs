@@ -191,8 +191,14 @@ pub async fn get_all_enabled_hosted_happs(core_happ: &Happ) -> Result<Vec<HappPk
             cell_data,
             ..
         }) => {
+            let cell = cell_data
+                .iter()
+                .find(|c| c.as_role_id() == "core-app")
+                .context("core-app cell not found")
+                .unwrap();
+
             let zome_call_payload = ZomeCall {
-                cell_id: cell_data[0].as_id().clone(),
+                cell_id: cell.as_id().clone(),
                 zome_name: ZomeName::from("hha"),
                 fn_name: FunctionName::from("get_happs"),
                 payload: ExternIO::encode(())?,
