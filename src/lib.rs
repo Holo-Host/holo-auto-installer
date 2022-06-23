@@ -11,6 +11,7 @@ use holochain::conductor::api::ZomeCall;
 use holochain::conductor::api::{AppResponse, InstalledAppInfo};
 use holochain_types::prelude::{zome_io::ExternIO, FunctionName, ZomeName};
 use holochain_types::prelude::{AppManifest, MembraneProof, UnsafeBytes};
+use holochain_zome_types::SerializedBytes;
 use mr_bundle::Bundle;
 use std::collections::HashMap;
 use std::fs;
@@ -174,7 +175,7 @@ pub async fn load_mem_proof_file(bundle_url: &str) -> Result<HashMap<String, Mem
         .map(|role| {
             (
                 role.id.clone(),
-                MembraneProof::from(UnsafeBytes::from([0].to_vec())),
+                MembraneProof::from(Arc::new(SerializedBytes::from(UnsafeBytes::from([0].to_vec())))),
             ) // The read only memproof is [0] (or in base64 `AA==`)
         })
         .collect())

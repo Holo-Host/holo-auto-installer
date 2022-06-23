@@ -8,6 +8,7 @@ edition = "2018"
 again = "0.1"
 anyhow = "1.0"
 futures = "0.3"
+holochain_zome_types = "0.0.37"
 isahc = "0.9"
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.8"
@@ -25,19 +26,19 @@ base64 = "0.13.0"
 reqwest = { version = "0.11", features = ["json"]}
 spinning_top = "=0.2.0"
 hc_utils = "0.0.126"
-mr_bundle = "0.0.9"
+mr_bundle = "0.0.13"
 
 [dependencies.holochain]
-version = "0.0.131"
+version = "0.0.145"
 package = "holochain"
 default-features = false
 
 [dependencies.holochain_types]
-version = "0.0.31"
+version = "0.0.43"
 package = "holochain_types"
 
 [dependencies.holochain_websocket]
-version = "0.0.31"
+version = "0.0.39"
 package = "holochain_websocket"
 
 [dev-dependencies.cargo-husky]
