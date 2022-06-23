@@ -173,10 +173,9 @@ pub async fn load_mem_proof_file(bundle_url: &str) -> Result<HashMap<String, Mem
         .clone()
         .iter()
         .map(|role| {
-            (
-                role.id.clone(),
-                MembraneProof::from(Arc::new(SerializedBytes::from(UnsafeBytes::from([0].to_vec())))),
-            ) // The read only memproof is [0] (or in base64 `AA==`)
+            let read_only_mem_proof =
+                Arc::new(SerializedBytes::from(UnsafeBytes::from([0].to_vec())));
+            (role.id.clone(), read_only_mem_proof) // The read only memproof is [0] (or in base64 `AA==`)
         })
         .collect())
 }
