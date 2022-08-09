@@ -19,8 +19,8 @@ pub struct PresentedHappBundle {
     pub is_paused: bool,
     pub uid: Option<String>,
     pub bundle_url: String,
-    pub ui_src_url: String,
-    pub hosted_url: String,
+    pub ui_src_url: Option<String>,
+    pub hosted_url: Option<String>,
     pub name: String,
     pub special_installed_app_id: Option<String>,
 }
