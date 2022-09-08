@@ -6,11 +6,11 @@ mod entries;
 pub use entries::{DnaResource, InstallHappBody, Preferences, PresentedHappBundle};
 mod websocket;
 use anyhow::{anyhow, Context, Result};
-use hc_utils::WrappedHeaderHash;
-use holochain::conductor::api::ZomeCall;
-use holochain::conductor::api::{AppResponse, InstalledAppInfo};
+use hc_utils::WrappedActionHash;
+use holochain_conductor_api::ZomeCall;
+use holochain_conductor_api::{AppResponse, InstalledAppInfo};
 use holochain_types::prelude::{zome_io::ExternIO, FunctionName, ZomeName};
-use holochain_types::prelude::{AppManifest, MembraneProof, UnsafeBytes};
+use holochain_types::prelude::{AppManifest, MembraneProof, SerializedBytes, UnsafeBytes};
 use mr_bundle::Bundle;
 use std::collections::HashMap;
 use std::fs;
@@ -29,7 +29,7 @@ pub async fn activate_holo_hosted_happs(core_happ: &Happ, config: &Config) -> Re
 }
 
 pub struct HappPkg {
-    happ_id: WrappedHeaderHash,
+    happ_id: WrappedActionHash,
     bundle_url: String,
     is_paused: bool,
     special_installed_app_id: Option<String>,
@@ -68,7 +68,7 @@ pub async fn install_holo_hosted_happs(happs: &[HappPkg], config: &Config) -> Re
     };
     // iterate through the vec and
     // Call http://localhost/holochain-api/install_hosted_happ
-    // for each WrappedHeaderHash to install the hosted_happ
+    // for each WrappedActionHash to install the hosted_happ
     for HappPkg {
         happ_id,
         bundle_url,
@@ -174,7 +174,7 @@ pub async fn load_mem_proof_file(bundle_url: &str) -> Result<HashMap<String, Mem
         .map(|role| {
             (
                 role.id.clone(),
-                MembraneProof::from(UnsafeBytes::from([0].to_vec())),
+                Arc::new(SerializedBytes::from(UnsafeBytes::from(vec![0]))),
             ) // The read only memproof is [0] (or in base64 `AA==`)
         })
         .collect())
