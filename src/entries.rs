@@ -1,4 +1,4 @@
-use hc_utils::{WrappedAgentPubKey, WrappedHeaderHash};
+use hc_utils::{WrappedActionHash, WrappedAgentPubKey};
 use holochain_types::prelude::MembraneProof;
 use serde::Deserialize;
 use serde::Serialize;
@@ -13,7 +13,7 @@ pub struct DnaResource {
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct PresentedHappBundle {
-    pub id: WrappedHeaderHash,
+    pub id: WrappedActionHash,
     pub provider_pubkey: WrappedAgentPubKey,
     pub is_draft: bool,
     pub is_paused: bool,

@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Context, Result};
-use holochain::conductor::api::{
+use holochain_conductor_api::{
     AdminRequest, AdminResponse, AppRequest, AppResponse, AppStatusFilter, InstalledAppInfo,
     ZomeCall,
 };
