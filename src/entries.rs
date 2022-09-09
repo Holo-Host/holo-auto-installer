@@ -20,7 +20,7 @@ pub struct PresentedHappBundle {
     pub uid: Option<String>,
     pub bundle_url: String,
     pub ui_src_url: String,
-    pub hosted_url: String,
+    pub hosted_urls: Vec<String>,
     pub name: String,
     pub special_installed_app_id: Option<String>,
 }
