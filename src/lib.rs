@@ -185,17 +185,20 @@ pub async fn get_all_enabled_hosted_happs(core_happ: &Happ) -> Result<Vec<HappPk
     let mut app_websocket = AppWebsocket::connect(42233)
         .await
         .context("failed to connect to holochain's app interface")?;
+    println!("get app info for {:?}", core_happ.id());
     match app_websocket.get_app_info(core_happ.id()).await {
         Some(InstalledAppInfo {
             // This works on the assumption that the core happs has HHA in the first position of the vec
             cell_data,
             ..
         }) => {
+            println!("got app info");
             let cell = cell_data
                 .iter()
                 .find(|c| c.as_role_id() == "core-app")
                 .context("core-app cell not found")
                 .unwrap();
+            println!("got cell {:?}", cell);
 
             let zome_call_payload = ZomeCall {
                 cell_id: cell.as_id().clone(),
@@ -205,12 +208,15 @@ pub async fn get_all_enabled_hosted_happs(core_happ: &Happ) -> Result<Vec<HappPk
                 cap_secret: None,
                 provenance: cell_data[0].clone().into_id().into_dna_and_agent().1,
             };
+            println!("got cell payload: {:?}", zome_call_payload);
+
             let response = app_websocket.zome_call(zome_call_payload).await?;
             match response {
                 // This is the happs list that is returned from the hha DNA
                 // https://github.com/Holo-Host/holo-hosting-app-rsm/blob/develop/zomes/hha/src/lib.rs#L54
                 // return Vec of happ_list.happ_id
                 AppResponse::ZomeCall(r) => {
+                    println!("zome call response {:?}", r);
                     let happ_bundles: Vec<PresentedHappBundle> =
                         rmp_serde::from_slice(r.as_bytes())?;
                     let happ_bundle_ids = happ_bundles
@@ -228,6 +234,7 @@ pub async fn get_all_enabled_hosted_happs(core_happ: &Happ) -> Result<Vec<HappPk
                             }
                         })
                         .collect();
+                    println!("got happ bundles");
                     Ok(happ_bundle_ids)
                 }
                 _ => Err(anyhow!("unexpected response: {:?}", response)),
