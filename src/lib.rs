@@ -22,6 +22,7 @@ use url::Url;
 pub use websocket::{AdminWebsocket, AppWebsocket};
 
 pub async fn activate_holo_hosted_happs(core_happ: &Happ, config: &Config) -> Result<()> {
+    println!("activate_holo_hosted_happs");
     let list_of_happs = get_all_enabled_hosted_happs(core_happ).await?;
     install_holo_hosted_happs(&list_of_happs, config).await?;
     uninstall_removed_happs(&list_of_happs, config).await?;
@@ -182,6 +183,7 @@ pub async fn load_mem_proof_file(bundle_url: &str) -> Result<HashMap<String, Mem
 
 #[instrument(err)]
 pub async fn get_all_enabled_hosted_happs(core_happ: &Happ) -> Result<Vec<HappPkg>> {
+    println!("get_all_enabled_hosted_happs");
     let mut app_websocket = AppWebsocket::connect(42233)
         .await
         .context("failed to connect to holochain's app interface")?;
