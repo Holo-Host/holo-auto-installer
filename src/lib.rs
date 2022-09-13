@@ -210,7 +210,6 @@ pub async fn get_all_enabled_hosted_happs(core_happ: &Happ) -> Result<Vec<HappPk
                 cap_secret: None,
                 provenance: cell_data[0].clone().into_id().into_dna_and_agent().1,
             };
-            println!("got cell payload: {:?}", zome_call_payload);
 
             let response = app_websocket.zome_call(zome_call_payload).await?;
             match response {
