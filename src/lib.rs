@@ -61,7 +61,7 @@ pub async fn install_holo_hosted_happs(happs: &[HappPkg], config: &Config) -> Re
     let client = reqwest::Client::new();
     // Note: Tmp preferences
     let preferences = Preferences {
-        max_fuel_before_invoice: 9999999999.0,
+        max_fuel_before_invoice: 80000.0, // Iriggers invoice after roughly 20 signed messages
         max_time_before_invoice: vec![86400, 0],
         price_compute: 1.0,
         price_storage: 1.0,
