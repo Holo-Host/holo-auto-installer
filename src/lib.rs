@@ -17,6 +17,7 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
+use std::str::FromStr;
 use tempfile::TempDir;
 use tracing::{debug, info, instrument, warn};
 use url::Url;
@@ -62,11 +63,11 @@ pub async fn install_holo_hosted_happs(happs: &[HappPkg], config: &Config) -> Re
     let client = reqwest::Client::new();
     // Note: Tmp preferences
     let preferences = Preferences {
-        max_fuel_before_invoice: Fuel::from_str("80000"), // Iriggers invoice after roughly 20 signed messages
+        max_fuel_before_invoice: Fuel::from_str("80000")?, // Iriggers invoice after roughly 20 signed messages
         max_time_before_invoice: vec![86400, 0],
-        price_compute: Fuel::from_str("1"),
-        price_storage: Fuel::from_str("1"),
-        price_bandwidth: Fuel::from_str("1"),
+        price_compute: Fuel::from_str("1")?,
+        price_storage: Fuel::from_str("1")?,
+        price_bandwidth: Fuel::from_str("1")?,
     };
     // iterate through the vec and
     // Call http://localhost/holochain-api/install_hosted_happ
