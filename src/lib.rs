@@ -11,6 +11,7 @@ use holochain_conductor_api::ZomeCall;
 use holochain_conductor_api::{AppResponse, InstalledAppInfo};
 use holochain_types::prelude::{zome_io::ExternIO, FunctionName, ZomeName};
 use holochain_types::prelude::{AppManifest, MembraneProof, SerializedBytes, UnsafeBytes};
+use holofuel_types::fuel::Fuel;
 use mr_bundle::Bundle;
 use std::collections::HashMap;
 use std::fs;
@@ -61,11 +62,11 @@ pub async fn install_holo_hosted_happs(happs: &[HappPkg], config: &Config) -> Re
     let client = reqwest::Client::new();
     // Note: Tmp preferences
     let preferences = Preferences {
-        max_fuel_before_invoice: 80000.0, // Iriggers invoice after roughly 20 signed messages
+        max_fuel_before_invoice: Fuel::from_str("80000"), // Iriggers invoice after roughly 20 signed messages
         max_time_before_invoice: vec![86400, 0],
-        price_compute: 1.0,
-        price_storage: 1.0,
-        price_bandwidth: 1.0,
+        price_compute: Fuel::from_str("1"),
+        price_storage: Fuel::from_str("1"),
+        price_bandwidth: Fuel::from_str("1"),
     };
     // iterate through the vec and
     // Call http://localhost/holochain-api/install_hosted_happ
