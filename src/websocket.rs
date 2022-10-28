@@ -116,8 +116,7 @@ impl AppWebsocket {
 
     pub async fn zome_call(&mut self, msg: ZomeCall) -> Result<AppResponse> {
         let app_request = AppRequest::ZomeCall(Box::new(msg));
-        let response = self.send(app_request).await;
-        response
+        self.send(app_request).await
     }
 
     async fn send(&mut self, msg: AppRequest) -> Result<AppResponse> {

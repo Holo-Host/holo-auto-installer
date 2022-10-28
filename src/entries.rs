@@ -1,9 +1,9 @@
 use hc_utils::{WrappedActionHash, WrappedAgentPubKey};
 use holochain_types::prelude::MembraneProof;
+use holofuel_types::fuel::Fuel;
 use serde::Deserialize;
 use serde::Serialize;
 use std::collections::HashMap;
-use holofuel_types::fuel::Fuel;
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct DnaResource {
