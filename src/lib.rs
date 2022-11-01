@@ -63,7 +63,7 @@ pub async fn install_holo_hosted_happs(happs: &[HappPkg], config: &Config) -> Re
     let client = reqwest::Client::new();
     // Note: Tmp preferences
     let preferences = Preferences {
-        max_fuel_before_invoice: Fuel::from_str("80000")?, // Iriggers invoice after roughly 20 signed messages
+        max_fuel_before_invoice: Fuel::from_str("50000")?, // MAX_TX_AMT in holofuel is currently hard-coded to 50,000
         max_time_before_invoice: vec![86400, 0],
         price_compute: Fuel::from_str("1")?,
         price_storage: Fuel::from_str("1")?,
