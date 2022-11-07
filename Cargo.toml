@@ -24,12 +24,12 @@ observability = "0.1.3"
 base64 = "0.13.0"
 reqwest = { version = "0.11", features = ["json"]}
 spinning_top = "0.2.4"
-hc_utils = "0.0.157"
+hc_utils = "0.0.159"
 mr_bundle = "0.0.17"
-holochain_conductor_api = "0.0.66"
-holochain_types = "0.0.63"
+holochain_conductor_api = "0.0.68"
+holochain_types = "0.0.65"
 holochain_websocket = "0.0.39"
-holofuel_types = "0.3.2"
+holofuel_types = "0.4.0"
 
 [dev-dependencies.cargo-husky]
 version = "1"
