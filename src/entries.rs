@@ -35,16 +35,17 @@ pub struct Preferences {
     pub price_bandwidth: Fuel,
 }
 impl Preferences {
-    /// Save preferences to a file under {CONFIG_DIR}/default_servicelogger_prefs.yaml
+    /// Save preferences to a file under {SL_PREFS_PATH}
     /// which allows hpos-holochain-api to read current values
     pub fn save(self) -> Result<Self> {
-        let mut path = env::var("CONFIG_DIR").context("No CONFIG_DIR set.")?;
-        path.push_str("/default_servicelogger_prefs.yaml");
-
-        // create or overwrite to a file
-        let file = File::create(&path)?;
-        serde_yaml::to_writer(file, &self)
-            .context(format!("Failed writing memproof to file {}", path))?;
+        if let Ok(path) = env::var("SL_PREFS_PATH") {
+            // create or overwrite to a file
+            let file = File::create(&path)?;
+            serde_yaml::to_writer(file, &self).context(format!(
+                "Failed writing service logger preferences to file {}",
+                path
+            ))?;
+        };
         Ok(self)
     }
 }
