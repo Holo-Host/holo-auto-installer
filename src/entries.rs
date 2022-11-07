@@ -1,9 +1,11 @@
+use anyhow::{Context, Result};
 use hc_utils::{WrappedActionHash, WrappedAgentPubKey};
 use holochain_types::prelude::MembraneProof;
 use holofuel_types::fuel::Fuel;
 use serde::Deserialize;
 use serde::Serialize;
-use std::collections::HashMap;
+use std::fs::File;
+use std::{collections::HashMap, env};
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct DnaResource {
@@ -31,6 +33,20 @@ pub struct Preferences {
     pub price_compute: Fuel,
     pub price_storage: Fuel,
     pub price_bandwidth: Fuel,
+}
+impl Preferences {
+    /// Save preferences to a file under {CONFIG_DIR}/default_servicelogger_prefs.yaml
+    /// which allows hpos-holochain-api to read current values
+    pub fn save(self) -> Result<Self> {
+        let mut path = env::var("CONFIG_DIR").context("No CONFIG_DIR set.")?;
+        path.push_str("/default_servicelogger_prefs.yaml");
+
+        // create or overwrite to a file
+        let file = File::create(&path)?;
+        serde_yaml::to_writer(file, &self)
+            .context(format!("Failed writing memproof to file {}", path))?;
+        Ok(self)
+    }
 }
 
 #[derive(Serialize, Debug, Clone)]
