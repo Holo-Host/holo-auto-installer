@@ -1,5 +1,6 @@
 use hc_utils::{WrappedActionHash, WrappedAgentPubKey};
 use holochain_types::prelude::MembraneProof;
+use holofuel_types::fuel::Fuel;
 use serde::Deserialize;
 use serde::Serialize;
 use std::collections::HashMap;
@@ -25,11 +26,11 @@ pub struct PresentedHappBundle {
 
 #[derive(Serialize, Debug, Clone)]
 pub struct Preferences {
-    pub max_fuel_before_invoice: f64,
+    pub max_fuel_before_invoice: Fuel,
     pub max_time_before_invoice: Vec<u64>,
-    pub price_compute: f64,
-    pub price_storage: f64,
-    pub price_bandwidth: f64,
+    pub price_compute: Fuel,
+    pub price_storage: Fuel,
+    pub price_bandwidth: Fuel,
 }
 
 #[derive(Serialize, Debug, Clone)]

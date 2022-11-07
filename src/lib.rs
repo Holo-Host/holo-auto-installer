@@ -11,10 +11,12 @@ use holochain_conductor_api::ZomeCall;
 use holochain_conductor_api::{AppResponse, InstalledAppInfo};
 use holochain_types::prelude::{zome_io::ExternIO, FunctionName, ZomeName};
 use holochain_types::prelude::{AppManifest, MembraneProof, SerializedBytes, UnsafeBytes};
+use holofuel_types::fuel::Fuel;
 use mr_bundle::Bundle;
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::str::FromStr;
 use std::sync::Arc;
 use tempfile::TempDir;
 use tracing::{debug, info, instrument, warn};
@@ -61,11 +63,11 @@ pub async fn install_holo_hosted_happs(happs: &[HappPkg], config: &Config) -> Re
     let client = reqwest::Client::new();
     // Note: Tmp preferences
     let preferences = Preferences {
-        max_fuel_before_invoice: 9999999999.0,
+        max_fuel_before_invoice: Fuel::from_str("10000")?, // MAX_TX_AMT in holofuel is currently hard-coded to 50,000
         max_time_before_invoice: vec![86400, 0],
-        price_compute: 1.0,
-        price_storage: 1.0,
-        price_bandwidth: 1.0,
+        price_compute: Fuel::from_str("1")?,
+        price_storage: Fuel::from_str("1")?,
+        price_bandwidth: Fuel::from_str("1")?,
     };
     // iterate through the vec and
     // Call http://localhost/holochain-api/install_hosted_happ
