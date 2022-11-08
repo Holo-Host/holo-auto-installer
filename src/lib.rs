@@ -63,11 +63,11 @@ pub async fn install_holo_hosted_happs(happs: &[HappPkg], config: &Config) -> Re
     let client = reqwest::Client::new();
     // Hardcoded servicelogger preferences for all the hosted happs installed
     let preferences = Preferences {
-        max_fuel_before_invoice: Fuel::from_str("10000")?, // MAX_TX_AMT in holofuel is currently hard-coded to 50,000
+        max_fuel_before_invoice: Fuel::from_str("1000")?, // MAX_TX_AMT in holofuel is currently hard-coded to 50,000
         max_time_before_invoice: vec![86400, 0],
-        price_compute: Fuel::from_str("1")?,
-        price_storage: Fuel::from_str("1")?,
-        price_bandwidth: Fuel::from_str("1")?,
+        price_compute: Fuel::from_str("0.1")?,
+        price_storage: Fuel::from_str("0.1")?,
+        price_bandwidth: Fuel::from_str("0.1")?,
     }
     .save()?;
 
