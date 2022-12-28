@@ -1,7 +1,6 @@
 use anyhow::{anyhow, Context, Result};
 use holochain_conductor_api::{
-    AdminRequest, AdminResponse, AppRequest, AppResponse, AppStatusFilter, InstalledAppInfo,
-    ZomeCall,
+    AdminRequest, AdminResponse, AppInfo, AppRequest, AppResponse, AppStatusFilter, ZomeCall,
 };
 use holochain_types::app::InstalledAppId;
 use holochain_websocket::{connect, WebsocketConfig, WebsocketSender};
@@ -103,7 +102,7 @@ impl AppWebsocket {
         Ok(Self { tx })
     }
 
-    pub async fn get_app_info(&mut self, app_id: InstalledAppId) -> Option<InstalledAppInfo> {
+    pub async fn get_app_info(&mut self, app_id: InstalledAppId) -> Option<AppInfo> {
         let msg = AppRequest::AppInfo {
             installed_app_id: app_id,
         };
@@ -115,7 +114,7 @@ impl AppWebsocket {
     }
 
     pub async fn zome_call(&mut self, msg: ZomeCall) -> Result<AppResponse> {
-        let app_request = AppRequest::ZomeCall(Box::new(msg));
+        let app_request = AppRequest::CallZome(Box::new(msg));
         self.send(app_request).await
     }
 

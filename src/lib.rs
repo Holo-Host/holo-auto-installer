@@ -7,10 +7,13 @@ pub use entries::{DnaResource, InstallHappBody, Preferences, PresentedHappBundle
 mod websocket;
 use anyhow::{anyhow, Context, Result};
 use hc_utils::WrappedActionHash;
-use holochain_conductor_api::ZomeCall;
-use holochain_conductor_api::{AppResponse, InstalledAppInfo};
+use holochain_conductor_api::{AppInfo, AppResponse};
+use holochain_conductor_api::{CellInfo, ZomeCall};
 use holochain_types::prelude::{zome_io::ExternIO, FunctionName, ZomeName};
-use holochain_types::prelude::{AppManifest, MembraneProof, SerializedBytes, UnsafeBytes};
+use holochain_types::prelude::{
+    AppManifest, MembraneProof, Nonce256Bits, SerializedBytes, Signature, Timestamp, UnsafeBytes,
+    ZomeCallUnsigned,
+};
 use holofuel_types::fuel::Fuel;
 use mr_bundle::Bundle;
 use std::collections::HashMap;
@@ -22,6 +25,8 @@ use tempfile::TempDir;
 use tracing::{debug, info, instrument, warn};
 use url::Url;
 pub use websocket::{AdminWebsocket, AppWebsocket};
+mod agent;
+use ed25519_dalek::Signer;
 
 pub async fn activate_holo_hosted_happs(core_happ: &Happ, config: &Config) -> Result<()> {
     println!("activate_holo_hosted_happs");
@@ -180,7 +185,7 @@ pub async fn load_mem_proof_file(bundle_url: &str) -> Result<HashMap<String, Mem
         .iter()
         .map(|role| {
             (
-                role.id.clone(),
+                role.name.clone(),
                 Arc::new(SerializedBytes::from(UnsafeBytes::from(vec![0]))),
             ) // The read only memproof is [0] (or in base64 `AA==`)
         })
@@ -195,34 +200,51 @@ pub async fn get_all_enabled_hosted_happs(core_happ: &Happ) -> Result<Vec<HappPk
         .context("failed to connect to holochain's app interface")?;
     println!("get app info for {:?}", core_happ.id());
     match app_websocket.get_app_info(core_happ.id()).await {
-        Some(InstalledAppInfo {
+        Some(AppInfo {
             // This works on the assumption that the core happs has HHA in the first position of the vec
-            cell_data,
+            cell_info,
             ..
         }) => {
             println!("got app info");
-            let cell = cell_data
-                .iter()
-                .find(|c| c.as_role_id() == "core-app")
-                .context("core-app cell not found")
-                .unwrap();
-            println!("got cell {:?}", cell);
 
-            let zome_call_payload = ZomeCall {
-                cell_id: cell.as_id().clone(),
+            let cell = match &cell_info.get("core-app").unwrap()[0] {
+                CellInfo::Provisioned(c) => c.clone(),
+                _ => return Err(anyhow!("core-app cell not found")),
+            };
+            println!("got cell {:?}", cell);
+            let zome_call_unsigned = ZomeCallUnsigned {
+                cell_id: cell.cell_id.clone(),
                 zome_name: ZomeName::from("hha"),
                 fn_name: FunctionName::from("get_happs"),
                 payload: ExternIO::encode(())?,
                 cap_secret: None,
-                provenance: cell_data[0].clone().into_id().into_dna_and_agent().1,
+                provenance: cell.cell_id.agent_pubkey().clone(),
+                nonce: Nonce256Bits::from([0; 32]),
+                expires_at: Timestamp(Timestamp::now().as_micros() + 100000),
             };
+            let signing_keypair = agent::HostAgent::get().await?;
+            let signature = signing_keypair
+                .key
+                .sign(&zome_call_unsigned.data_to_sign().unwrap());
 
-            let response = app_websocket.zome_call(zome_call_payload).await?;
+            let response = app_websocket
+                .zome_call(ZomeCall {
+                    cell_id: zome_call_unsigned.cell_id,
+                    zome_name: zome_call_unsigned.zome_name,
+                    fn_name: zome_call_unsigned.fn_name,
+                    payload: zome_call_unsigned.payload,
+                    cap_secret: zome_call_unsigned.cap_secret,
+                    provenance: zome_call_unsigned.provenance,
+                    nonce: zome_call_unsigned.nonce,
+                    expires_at: zome_call_unsigned.expires_at,
+                    signature: Signature::from(signature.to_bytes()),
+                })
+                .await?;
             match response {
                 // This is the happs list that is returned from the hha DNA
                 // https://github.com/Holo-Host/holo-hosting-app-rsm/blob/develop/zomes/hha/src/lib.rs#L54
                 // return Vec of happ_list.happ_id
-                AppResponse::ZomeCall(r) => {
+                AppResponse::ZomeCalled(r) => {
                     println!("zome call response {:?}", r);
                     let happ_bundles: Vec<PresentedHappBundle> =
                         rmp_serde::from_slice(r.as_bytes())?;
