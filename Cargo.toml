@@ -1,8 +1,8 @@
 [package]
 name = "holo-auto-installer"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Joel U <joelulahanna@gmail.com>"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 again = "0.1"
@@ -32,6 +32,7 @@ holochain_types = "0.1.0-beta-rc.1"
 holochain_websocket = "0.1.0-beta-rc.0"
 holofuel_types = "0.4.0"
 ed25519-dalek = { version = "1.0.1", features = ["serde"] }
+getrandom = "0.2.7"
 
 [dependencies.hpos-config-core]
 git = "https://github.com/Holo-Host/hpos-config"

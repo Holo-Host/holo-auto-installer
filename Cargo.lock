@@ -1923,7 +1923,7 @@ dependencies = [
 
 [[package]]
 name = "holo-auto-installer"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "again",
  "anyhow",
@@ -1932,6 +1932,7 @@ dependencies = [
  "cargo-husky",
  "ed25519-dalek",
  "futures",
+ "getrandom 0.2.8",
  "hc_utils",
  "holochain_conductor_api",
  "holochain_types",

@@ -221,7 +221,7 @@ pub async fn get_all_enabled_hosted_happs(core_happ: &Happ) -> Result<Vec<HappPk
                 } else {
                     None
                 };
-
+            let (nonce, expires_at) = fresh_nonce()?;
             let zome_call_unsigned = ZomeCallUnsigned {
                 cell_id: cell.cell_id.clone(),
                 zome_name: ZomeName::from("hha"),
@@ -231,8 +231,8 @@ pub async fn get_all_enabled_hosted_happs(core_happ: &Happ) -> Result<Vec<HappPk
                 provenance: AgentPubKey::from_raw_32(
                     signing_keypair.key.public.to_bytes().to_vec(),
                 ),
-                nonce: Nonce256Bits::from([0; 32]),
-                expires_at: Timestamp(Timestamp::now().as_micros() + 100000),
+                nonce,
+                expires_at,
             };
             let signature = signing_keypair
                 .key
@@ -376,6 +376,14 @@ fn filter_for_hosted_happ(active_apps: Vec<String>) -> Vec<String> {
 
 fn is_anonymous(app: &str) -> bool {
     app.starts_with("uhCkk") && app.len() == 53
+}
+
+pub fn fresh_nonce() -> Result<(Nonce256Bits, Timestamp)> {
+    let mut bytes = [0; 32];
+    getrandom::getrandom(&mut bytes)?;
+    let nonce = Nonce256Bits::from(bytes);
+    let expires: Timestamp = Timestamp::MAX;
+    Ok((nonce, expires))
 }
 
 #[cfg(test)]
