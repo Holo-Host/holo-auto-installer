@@ -215,7 +215,7 @@ pub async fn get_all_enabled_hosted_happs(core_happ: &Happ) -> Result<Vec<HappPk
             println!("got cell {:?}", cell);
             let signing_keypair = agent::HostAgent::get().await?;
             let cap_secret =
-                if &env::var("FORCE_RANDOM_AGENT_KEY").unwrap_or("0".to_string()) == "1" {
+                if &env::var("FORCE_RANDOM_AGENT_KEY").unwrap_or_else(|_| "0".to_string()) == "1" {
                     let mut buf = arbitrary::Unstructured::new(&[0, 1, 6, 14, 26, 0]);
                     Some(CapSecret::arbitrary(&mut buf).unwrap())
                 } else {
