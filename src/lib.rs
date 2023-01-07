@@ -17,11 +17,14 @@ use holochain_types::prelude::{
 };
 use holofuel_types::fuel::Fuel;
 use mr_bundle::Bundle;
-use std::collections::HashMap;
-use std::path::{Path, PathBuf};
-use std::str::FromStr;
-use std::sync::Arc;
-use std::{env, fs};
+use std::{
+    collections::HashMap,
+    env, fs,
+    path::{Path, PathBuf},
+    str::FromStr,
+    sync::Arc,
+    time::Duration,
+};
 use tempfile::TempDir;
 use tracing::{debug, info, instrument, warn};
 use url::Url;
@@ -382,7 +385,6 @@ pub fn fresh_nonce() -> Result<(Nonce256Bits, Timestamp)> {
     let mut bytes = [0; 32];
     getrandom::getrandom(&mut bytes)?;
     let nonce = Nonce256Bits::from(bytes);
-    use std::time::Duration;
     // Rather arbitrary but we expire nonces after 5 mins.
     let expires: Timestamp = (Timestamp::now() + Duration::from_secs(60 * 5))?;
     Ok((nonce, expires))
