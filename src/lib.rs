@@ -1,5 +1,6 @@
 // TODO: https://github.com/tokio-rs/tracing/issues/843
 #![allow(clippy::unit_arg)]
+use arbitrary::Arbitrary;
 mod config;
 pub use config::{Config, Happ, HappsFile, MembraneProofFile, ProofPayload};
 mod entries;
@@ -11,16 +12,16 @@ use holochain_conductor_api::{AppInfo, AppResponse};
 use holochain_conductor_api::{CellInfo, ZomeCall};
 use holochain_types::prelude::{zome_io::ExternIO, FunctionName, ZomeName};
 use holochain_types::prelude::{
-    AppManifest, MembraneProof, Nonce256Bits, SerializedBytes, Signature, Timestamp, UnsafeBytes,
-    ZomeCallUnsigned,
+    AgentPubKey, AppManifest, CapSecret, MembraneProof, Nonce256Bits, SerializedBytes, Signature,
+    Timestamp, UnsafeBytes, ZomeCallUnsigned,
 };
 use holofuel_types::fuel::Fuel;
 use mr_bundle::Bundle;
 use std::collections::HashMap;
-use std::fs;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::sync::Arc;
+use std::{env, fs};
 use tempfile::TempDir;
 use tracing::{debug, info, instrument, warn};
 use url::Url;
@@ -212,17 +213,27 @@ pub async fn get_all_enabled_hosted_happs(core_happ: &Happ) -> Result<Vec<HappPk
                 _ => return Err(anyhow!("core-app cell not found")),
             };
             println!("got cell {:?}", cell);
+            let signing_keypair = agent::HostAgent::get().await?;
+            let cap_secret =
+                if &env::var("FORCE_RANDOM_AGENT_KEY").unwrap_or("0".to_string()) == "1" {
+                    let mut buf = arbitrary::Unstructured::new(&[0, 1, 6, 14, 26, 0]);
+                    Some(CapSecret::arbitrary(&mut buf).unwrap())
+                } else {
+                    None
+                };
+
             let zome_call_unsigned = ZomeCallUnsigned {
                 cell_id: cell.cell_id.clone(),
                 zome_name: ZomeName::from("hha"),
                 fn_name: FunctionName::from("get_happs"),
                 payload: ExternIO::encode(())?,
-                cap_secret: None,
-                provenance: cell.cell_id.agent_pubkey().clone(),
+                cap_secret,
+                provenance: AgentPubKey::from_raw_32(
+                    signing_keypair.key.public.to_bytes().to_vec(),
+                ),
                 nonce: Nonce256Bits::from([0; 32]),
                 expires_at: Timestamp(Timestamp::now().as_micros() + 100000),
             };
-            let signing_keypair = agent::HostAgent::get().await?;
             let signature = signing_keypair
                 .key
                 .sign(&zome_call_unsigned.data_to_sign().unwrap());
