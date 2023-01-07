@@ -382,7 +382,9 @@ pub fn fresh_nonce() -> Result<(Nonce256Bits, Timestamp)> {
     let mut bytes = [0; 32];
     getrandom::getrandom(&mut bytes)?;
     let nonce = Nonce256Bits::from(bytes);
-    let expires: Timestamp = Timestamp::MAX;
+    use std::time::Duration;
+    // Rather arbitrary but we expire nonces after 5 mins.
+    let expires: Timestamp = (Timestamp::now() + Duration::from_secs(60 * 5))?;
     Ok((nonce, expires))
 }
 
