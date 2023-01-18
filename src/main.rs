@@ -1,10 +1,8 @@
 // TODO: https://github.com/tokio-rs/tracing/issues/843
 #![allow(clippy::unit_arg)]
-
-use anyhow::{Context, Result};
-
-use holo_auto_installer::{activate_holo_hosted_happs, load_happ_file, Config};
-use tracing::info;
+use anyhow::{anyhow, Context, Result};
+use holo_auto_installer::{self, config};
+use tracing::error;
 use tracing::instrument;
 use tracing_subscriber::EnvFilter;
 
@@ -12,20 +10,20 @@ use tracing_subscriber::EnvFilter;
 async fn main() -> Result<()> {
     let filter = EnvFilter::from_default_env().add_directive("again=trace".parse().unwrap());
     tracing_subscriber::fmt().with_env_filter(filter).init();
-    run().await
+    spawn().await
 }
 
 #[instrument(err)]
-async fn run() -> Result<()> {
-    let config = Config::load();
-    let happ_file =
-        load_happ_file(&config.happs_file_path).context("failed to load hApps YAML config")?;
+async fn spawn() -> Result<()> {
+    let config = config::Config::load();
+    let happ_file = config::HappsFile::load_happ_file(&config.happs_file_path)
+        .context("failed to load hApps YAML config")?;
     let core_happ_list = happ_file.core_app();
     match &core_happ_list {
-        Some(core) => activate_holo_hosted_happs(core, &config).await,
+        Some(core) => holo_auto_installer::run(core, &config).await,
         None => {
-            info!("No Core apps found in configuration");
-            Ok(())
+            error!("No Core apps found in configuration");
+            Err(anyhow!("Please check that the happ config file is present. No Core apps found in configuration"))
         }
     }
 }

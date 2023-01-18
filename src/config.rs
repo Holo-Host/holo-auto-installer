@@ -1,8 +1,16 @@
+use anyhow::{Context, Result};
 use serde::Deserialize;
+use std::path::Path;
 use std::{env, path::PathBuf};
 use structopt::StructOpt;
 use tracing::debug;
+use tracing::instrument;
 use url::Url;
+
+pub fn default_password() -> Result<String> {
+    env::var("HOLOCHAIN_DEFAULT_PASSWORD")
+        .context("Failed to read HOLOCHAIN_DEFAULT_PASSWORD. Is it set in env?")
+}
 
 #[derive(Debug, StructOpt)]
 pub struct Config {
@@ -12,6 +20,9 @@ pub struct Config {
     /// hApp listening port
     #[structopt(long, env, default_value = "42233")]
     pub happ_port: u16,
+    /// URL at which lair-keystore is running
+    #[structopt(long)]
+    pub lair_url: String,
     /// Path to a YAML file containing the lists of hApps to install
     pub happs_file_path: PathBuf,
 }
@@ -76,7 +87,7 @@ impl Happ {
     }
 }
 
-/// hApps
+/// config with list of core happ for the holoport
 #[derive(Debug, Deserialize)]
 pub struct HappsFile {
     pub self_hosted_happs: Vec<Happ>,
@@ -90,6 +101,17 @@ impl HappsFile {
             .into_iter()
             .find(|x| x.id().contains("core-app"));
         core_app.clone()
+    }
+
+    #[instrument(err, fields(path = %path.as_ref().display()))]
+    pub fn load_happ_file(path: impl AsRef<Path>) -> Result<Self> {
+        use std::fs::File;
+
+        let file = File::open(path).context("failed to open file")?;
+        let happ_file =
+            serde_yaml::from_reader(&file).context("failed to deserialize YAML as HappsFile")?;
+        debug!(?happ_file);
+        Ok(happ_file)
     }
 }
 
