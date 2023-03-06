@@ -1,5 +1,10 @@
 # holo-auto-installer
 
+## Ownership Info
+Codeowner: @zo-el
+Consulted: @peeech
+Informed: None
+
 ## Usage
 
 ```
