@@ -3,8 +3,11 @@ pub use crate::get_apps;
 pub use crate::websocket::AdminWebsocket;
 use anyhow::{Context, Result};
 use tracing::info;
+use tracing::warn;
 
-/// uninstalled old happs that were disabled or deleted by providers
+/// uninstalled old hosted happs
+/// Currently this completely removes the happ
+/// This will be updated to checked enabled uninstalled and disable the happ accordingly
 pub async fn uninstall_removed_happs(
     happs: &[get_apps::HappBundle],
     config: &config::Config,
@@ -36,6 +39,13 @@ pub async fn uninstall_removed_happs(
     for app in happ_to_uninstall {
         info!("Disabling {}", app);
         admin_websocket.uninstall_app(&app).await?;
+        let sl_instance = format!("{}::servicelogger", app);
+        if let Err(e) = admin_websocket.uninstall_app(&sl_instance).await {
+            warn!(
+                "Unable to disable sl instance: {} with error: {}",
+                sl_instance, e
+            )
+        }
     }
     info!("Done uninstall happs that were removed from the hosted list.");
 
