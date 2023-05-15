@@ -5,6 +5,9 @@ pub use crate::AdminWebsocket;
 use anyhow::{anyhow, Context, Result};
 use holochain_types::prelude::{AppManifest, MembraneProof, SerializedBytes, UnsafeBytes};
 use holofuel_types::fuel::Fuel;
+use isahc::config::RedirectPolicy;
+use isahc::prelude::*;
+use isahc::HttpClient;
 use mr_bundle::Bundle;
 use std::{collections::HashMap, fs, path::PathBuf, str::FromStr, sync::Arc};
 use tempfile::TempDir;
@@ -70,8 +73,11 @@ pub async fn install_holo_hosted_happs(
             );
             // We do not pause here because we do not want our core-app to be uninstalled ever
         }
+        // Check if the servicelogger for the happ is installed
+        // this is due to the change that holofuel cannot be installed as an stand-alone happ on a conductor
+        // So the way to check if the happ is installed is to check if the servicelogger for the happ is installed
         // Check if happ is already installed and deactivate it if happ is paused in hha
-        else if active_happs.contains(&format!("{:?}", happ_id)) {
+        else if active_happs.contains(&format!("{:?}::servicelogger", happ_id)) {
             info!("App {:?} already installed", happ_id);
             if *is_paused {
                 info!("Pausing {:?}", happ_id);
@@ -132,9 +138,6 @@ pub async fn load_mem_proof_file(bundle_url: &str) -> Result<HashMap<String, Mem
 
 #[instrument(err, skip(url))]
 pub(crate) async fn download_file(url: &Url) -> Result<PathBuf> {
-    use isahc::config::RedirectPolicy;
-    use isahc::prelude::*;
-
     let path = if url.scheme() == "file" {
         let p = PathBuf::from(url.path());
         debug!("Using: {:?}", p);
