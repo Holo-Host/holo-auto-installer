@@ -64,6 +64,7 @@ pub async fn install_holo_hosted_happs(
     } in happs
     {
         // if special happ is installed and do nothing if it is installed
+        debug!("Trying to install {:?}::servicelogger", happ_id);
         if special_installed_app_id.is_some()
             && active_happs.contains(&format!("{:?}::servicelogger", happ_id))
         {
@@ -81,9 +82,7 @@ pub async fn install_holo_hosted_happs(
             info!("App {:?} already installed", happ_id);
             if *is_paused {
                 info!("Pausing {:?}", happ_id);
-                admin_websocket
-                    .deactivate_app(&happ_id.0.to_string())
-                    .await?;
+                admin_websocket.deactivate_app(&happ_id.to_string()).await?;
             }
         }
         // else installed the hosted happ read-only instance
@@ -96,7 +95,7 @@ pub async fn install_holo_hosted_happs(
                 happ_id, mem_proof
             );
             let body = entries::InstallHappBody {
-                happ_id: happ_id.0.to_string(),
+                happ_id: happ_id.to_string(),
                 preferences: preferences.clone(),
                 membrane_proofs: mem_proof.clone(),
             };

@@ -2,16 +2,16 @@ pub use crate::config;
 pub use crate::entries;
 pub use crate::websocket::{AdminWebsocket, AppWebsocket};
 use anyhow::{anyhow, Context, Result};
-use hc_utils::WrappedActionHash;
 use holochain_conductor_api::{AppInfo, AppResponse};
 use holochain_conductor_api::{CellInfo, ZomeCall};
+use holochain_types::prelude::ActionHashB64;
 use holochain_types::prelude::{zome_io::ExternIO, FunctionName, ZomeName};
 use holochain_types::prelude::{Nonce256Bits, Timestamp, ZomeCallUnsigned};
 use std::time::Duration;
 use tracing::{info, instrument};
 
 pub struct HappBundle {
-    pub happ_id: WrappedActionHash,
+    pub happ_id: ActionHashB64,
     pub bundle_url: String,
     pub is_paused: bool,
     pub special_installed_app_id: Option<String>,

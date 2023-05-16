@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
-use hc_utils::{WrappedActionHash, WrappedAgentPubKey};
+use holochain_types::prelude::ActionHashB64;
+use holochain_types::prelude::AgentPubKeyB64;
 use holochain_types::prelude::MembraneProof;
 use holofuel_types::fuel::Fuel;
 use serde::Deserialize;
@@ -17,8 +18,8 @@ pub struct DnaResource {
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct PresentedHappBundle {
-    pub id: WrappedActionHash,
-    pub provider_pubkey: WrappedAgentPubKey,
+    pub id: ActionHashB64,
+    pub provider_pubkey: AgentPubKeyB64,
     pub is_draft: bool,
     pub is_paused: bool,
     pub uid: Option<String>,

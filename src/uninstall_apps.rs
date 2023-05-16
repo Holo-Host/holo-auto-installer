@@ -30,7 +30,7 @@ pub async fn uninstall_removed_happs(
         .filter(|h| {
             !happs
                 .iter()
-                .any(|get_apps::HappBundle { happ_id, .. }| &happ_id.0.to_string() == h)
+                .any(|get_apps::HappBundle { happ_id, .. }| &happ_id.to_string() == h)
         })
         .collect();
 
