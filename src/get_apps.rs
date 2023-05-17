@@ -8,7 +8,7 @@ use holochain_types::prelude::ActionHashB64;
 use holochain_types::prelude::{zome_io::ExternIO, FunctionName, ZomeName};
 use holochain_types::prelude::{Nonce256Bits, Timestamp, ZomeCallUnsigned};
 use std::time::Duration;
-use tracing::{instrument, trace};
+use tracing::trace;
 
 pub struct HappBundle {
     pub happ_id: ActionHashB64,
@@ -17,7 +17,6 @@ pub struct HappBundle {
     pub special_installed_app_id: Option<String>,
 }
 
-#[instrument(err)]
 pub async fn get_all_enabled_hosted_happs(
     core_happ: &config::Happ,
     config: &config::Config,
