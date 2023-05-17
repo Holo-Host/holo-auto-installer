@@ -8,7 +8,7 @@ use holochain_types::prelude::ActionHashB64;
 use holochain_types::prelude::{zome_io::ExternIO, FunctionName, ZomeName};
 use holochain_types::prelude::{Nonce256Bits, Timestamp, ZomeCallUnsigned};
 use std::time::Duration;
-use tracing::{info, instrument};
+use tracing::{instrument, trace};
 
 pub struct HappBundle {
     pub happ_id: ActionHashB64,
@@ -22,24 +22,24 @@ pub async fn get_all_enabled_hosted_happs(
     core_happ: &config::Happ,
     config: &config::Config,
 ) -> Result<Vec<HappBundle>> {
-    println!("get_all_enabled_hosted_happs");
+    trace!("get_all_enabled_hosted_happs");
     let mut app_websocket = AppWebsocket::connect(42233)
         .await
         .context("failed to connect to holochain's app interface")?;
-    println!("get app info for {}", core_happ.id());
+    trace!("get app info for {}", core_happ.id());
     match app_websocket.get_app_info(core_happ.id()).await {
         Some(AppInfo {
             // This works on the assumption that the core happs has HHA in the first position of the vec
             cell_info,
             ..
         }) => {
-            println!("got app info");
+            trace!("got app info");
 
             let cell = match &cell_info.get("core-app").unwrap()[0] {
                 CellInfo::Provisioned(c) => c.clone(),
                 _ => return Err(anyhow!("core-app cell not found")),
             };
-            println!("got cell {:?}", cell);
+            trace!("got cell {:?}", cell);
 
             // connect to lair
             let passphrase =
@@ -71,15 +71,17 @@ pub async fn get_all_enabled_hosted_happs(
                 // https://github.com/Holo-Host/holo-hosting-app-rsm/blob/develop/zomes/hha/src/lib.rs#L54
                 // return Vec of happ_list.happ_id
                 AppResponse::ZomeCalled(r) => {
-                    println!("zome call response {:?}", r);
                     let happ_bundles: Vec<entries::PresentedHappBundle> =
                         rmp_serde::from_slice(r.as_bytes())?;
                     let happ_bundle_ids = happ_bundles
                         .into_iter()
                         .map(|happ| {
-                            info!(
+                            trace!(
                                 "{} with happ-id: {:?} and bundle: {}, is-paused={}",
-                                happ.name, happ.id, happ.bundle_url, happ.is_paused
+                                happ.name,
+                                happ.id,
+                                happ.bundle_url,
+                                happ.is_paused
                             );
                             HappBundle {
                                 happ_id: happ.id,
@@ -89,7 +91,7 @@ pub async fn get_all_enabled_hosted_happs(
                             }
                         })
                         .collect();
-                    println!("got happ bundles");
+                    trace!("got happ bundles");
                     Ok(happ_bundle_ids)
                 }
                 _ => Err(anyhow!("unexpected response: {:?}", response)),

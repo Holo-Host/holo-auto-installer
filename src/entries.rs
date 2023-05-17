@@ -7,7 +7,7 @@ use serde::Deserialize;
 use serde::Serialize;
 use std::fs::File;
 use std::{collections::HashMap, env};
-use tracing::info;
+use tracing::trace;
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct DnaResource {
@@ -41,7 +41,7 @@ impl Preferences {
     /// which allows hpos-holochain-api to read current values
     pub fn save(self) -> Result<Self> {
         if let Ok(path) = env::var("SL_PREFS_PATH") {
-            info!("Writing default servicelogger prefs to {}", &path);
+            trace!("Writing default servicelogger prefs to {}", &path);
             // create or overwrite to a file
             let file = File::create(&path)?;
             serde_yaml::to_writer(file, &self).context(format!(

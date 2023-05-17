@@ -11,7 +11,7 @@ use isahc::HttpClient;
 use mr_bundle::Bundle;
 use std::{collections::HashMap, fs, path::PathBuf, str::FromStr, sync::Arc};
 use tempfile::TempDir;
-use tracing::{debug, info, instrument, warn};
+use tracing::{info, instrument, trace, warn};
 use url::Url;
 
 /// installs a happs that are mented to be hosted
@@ -64,11 +64,11 @@ pub async fn install_holo_hosted_happs(
     } in happs
     {
         // if special happ is installed and do nothing if it is installed
-        debug!("Trying to install {}::servicelogger", happ_id);
+        trace!("Trying to install {}::servicelogger", happ_id);
         if special_installed_app_id.is_some()
             && active_happs.contains(&format!("{}::servicelogger", happ_id))
         {
-            info!(
+            trace!(
                 "Special App {:?} already installed",
                 special_installed_app_id
             );
@@ -79,20 +79,21 @@ pub async fn install_holo_hosted_happs(
         // So the way to check if the happ is installed is to check if the servicelogger for the happ is installed
         // Check if happ is already installed and deactivate it if happ is paused in hha
         else if active_happs.contains(&format!("{}::servicelogger", happ_id)) {
-            info!("App {} already installed", happ_id);
+            trace!("App {} already installed", happ_id);
             if *is_paused {
-                info!("Pausing {}", happ_id);
+                trace!("Pausing {}", happ_id);
                 admin_websocket.deactivate_app(&happ_id.to_string()).await?;
             }
         }
         // else installed the hosted happ read-only instance
         else {
-            info!("Load mem-proofs for {}", happ_id);
+            trace!("Load mem-proofs for {}", happ_id);
             let mem_proof: HashMap<String, MembraneProof> =
                 load_mem_proof_file(bundle_url).await.unwrap_or_default();
-            info!(
+            trace!(
                 "Installing happ-id {} with mem_proof {:?}",
-                happ_id, mem_proof
+                happ_id,
+                mem_proof
             );
             let body = entries::InstallHappBody {
                 happ_id: happ_id.to_string(),
@@ -105,7 +106,7 @@ pub async fn install_holo_hosted_happs(
                 .send()
                 .await?;
             info!("Installed happ-id {}", happ_id);
-            info!("Response {:?}", response);
+            trace!("Response {:?}", response);
         }
     }
     Ok(())
@@ -139,10 +140,10 @@ pub async fn load_mem_proof_file(bundle_url: &str) -> Result<HashMap<String, Mem
 pub(crate) async fn download_file(url: &Url) -> Result<PathBuf> {
     let path = if url.scheme() == "file" {
         let p = PathBuf::from(url.path());
-        debug!("Using: {:?}", p);
+        trace!("Using: {:?}", p);
         p
     } else {
-        debug!("downloading");
+        trace!("downloading");
         let mut url = Url::clone(url);
         url.set_scheme("https")
             .map_err(|_| anyhow!("failed to set scheme to https"))?;
@@ -169,7 +170,7 @@ pub(crate) async fn download_file(url: &Url) -> Result<PathBuf> {
         response
             .copy_to(&mut file)
             .context("failed to write response to file")?;
-        debug!("download successful");
+        trace!("download successful");
         path
     };
     Ok(path)
