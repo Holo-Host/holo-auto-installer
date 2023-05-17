@@ -26,7 +26,7 @@ pub async fn get_all_enabled_hosted_happs(
     let mut app_websocket = AppWebsocket::connect(42233)
         .await
         .context("failed to connect to holochain's app interface")?;
-    println!("get app info for {:?}", core_happ.id());
+    println!("get app info for {}", core_happ.id());
     match app_websocket.get_app_info(core_happ.id()).await {
         Some(AppInfo {
             // This works on the assumption that the core happs has HHA in the first position of the vec

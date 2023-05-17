@@ -64,9 +64,9 @@ pub async fn install_holo_hosted_happs(
     } in happs
     {
         // if special happ is installed and do nothing if it is installed
-        debug!("Trying to install {:?}::servicelogger", happ_id);
+        debug!("Trying to install {}::servicelogger", happ_id);
         if special_installed_app_id.is_some()
-            && active_happs.contains(&format!("{:?}::servicelogger", happ_id))
+            && active_happs.contains(&format!("{}::servicelogger", happ_id))
         {
             info!(
                 "Special App {:?} already installed",
@@ -78,20 +78,20 @@ pub async fn install_holo_hosted_happs(
         // this is due to the change that holofuel cannot be installed as an stand-alone happ on a conductor
         // So the way to check if the happ is installed is to check if the servicelogger for the happ is installed
         // Check if happ is already installed and deactivate it if happ is paused in hha
-        else if active_happs.contains(&format!("{:?}::servicelogger", happ_id)) {
-            info!("App {:?} already installed", happ_id);
+        else if active_happs.contains(&format!("{}::servicelogger", happ_id)) {
+            info!("App {} already installed", happ_id);
             if *is_paused {
-                info!("Pausing {:?}", happ_id);
+                info!("Pausing {}", happ_id);
                 admin_websocket.deactivate_app(&happ_id.to_string()).await?;
             }
         }
         // else installed the hosted happ read-only instance
         else {
-            info!("Load mem-proofs for {:?}", happ_id);
+            info!("Load mem-proofs for {}", happ_id);
             let mem_proof: HashMap<String, MembraneProof> =
                 load_mem_proof_file(bundle_url).await.unwrap_or_default();
             info!(
-                "Installing happ-id {:?} with mem_proof {:?}",
+                "Installing happ-id {} with mem_proof {:?}",
                 happ_id, mem_proof
             );
             let body = entries::InstallHappBody {
@@ -104,7 +104,7 @@ pub async fn install_holo_hosted_happs(
                 .json(&body)
                 .send()
                 .await?;
-            info!("Installed happ-id {:?}", happ_id);
+            info!("Installed happ-id {}", happ_id);
             info!("Response {:?}", response);
         }
     }
