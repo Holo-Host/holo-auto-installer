@@ -20,7 +20,7 @@ async fn spawn() -> Result<()> {
         .context("failed to load hApps YAML config")?;
     let core_happ_list = happ_file.core_app();
     match &core_happ_list {
-        Some(core) => holo_auto_installer::run(core, &config).await,
+        Some(_) => holo_auto_installer::run(&config).await,
         None => {
             error!("No Core apps found in configuration");
             Err(anyhow!("Please check that the happ config file is present. No Core apps found in configuration"))

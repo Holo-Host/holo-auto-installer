@@ -89,6 +89,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "250f629c0161ad8107cf89319e990051fae62832fd343083bea452d93e2205fd"
 
 [[package]]
+name = "android-tzdata"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e999941b234f3131b00bc13c22d06e8c5ff726d1b6318ac7eb276997bbb4fef0"
+
+[[package]]
 name = "android_system_properties"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -664,12 +670,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cargo-husky"
-version = "1.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7b02b629252fe8ef6460461409564e2c21d0c8e77e0944f3d189ff06c4e932ad"
-
-[[package]]
 name = "cargo-platform"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -728,18 +728,17 @@ dependencies = [
 
 [[package]]
 name = "chrono"
-version = "0.4.24"
+version = "0.4.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4e3c5919066adf22df73762e50cffcde3a758f2a848b113b586d1f86728b673b"
+checksum = "7f2c685bad3eb3d45a01354cedb7d5faa66194d1d58ba6e267a8de788f79db38"
 dependencies = [
+ "android-tzdata",
  "iana-time-zone",
  "js-sys",
- "num-integer",
  "num-traits",
  "serde",
- "time 0.1.45",
  "wasm-bindgen",
- "winapi",
+ "windows-targets 0.48.0",
 ]
 
 [[package]]
@@ -2125,7 +2124,7 @@ dependencies = [
  "anyhow",
  "arbitrary",
  "base64 0.13.1",
- "cargo-husky",
+ "chrono",
  "futures",
  "getrandom 0.2.9",
  "holochain_conductor_api",
@@ -2134,7 +2133,7 @@ dependencies = [
  "holochain_websocket",
  "holofuel_types",
  "hpos-config-core",
- "hpos-config-seed-bundle-explorer",
+ "hpos_hc_connect",
  "isahc",
  "mr_bundle",
  "observability",
@@ -2177,6 +2176,25 @@ dependencies = [
  "serde",
  "serde_bytes",
  "thiserror",
+]
+
+[[package]]
+name = "holochain_client"
+version = "0.5.0-rc.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6560eb661a7aa80959c7c438bd89454c03cdbddb830078049d0b3dfa52d750df"
+dependencies = [
+ "again",
+ "anyhow",
+ "ed25519-dalek",
+ "holo_hash",
+ "holochain_conductor_api",
+ "holochain_serialized_bytes 0.0.52",
+ "holochain_types",
+ "holochain_websocket",
+ "holochain_zome_types",
+ "serde",
+ "url",
 ]
 
 [[package]]
@@ -2675,19 +2693,24 @@ dependencies = [
 ]
 
 [[package]]
-name = "hpos-config-seed-bundle-explorer"
-version = "0.2.0"
-source = "git+https://github.com/Holo-Host/hpos-config?rev=bfaced6044ae570bf20d4528fa9aaafcc43ddeec#bfaced6044ae570bf20d4528fa9aaafcc43ddeec"
+name = "hpos_hc_connect"
+version = "0.1.0"
+source = "git+https://github.com/holo-host/holofuel-service-crates.git?rev=501fb62838499a21d8ca12594bc02861340d3d09#501fb62838499a21d8ca12594bc02861340d3d09"
 dependencies = [
- "base64 0.13.1",
- "ed25519-dalek",
- "hc_seed_bundle",
- "hpos-config-core",
- "one_err",
- "rmp-serde 1.1.1",
+ "anyhow",
+ "getrandom 0.2.9",
+ "holochain_client",
+ "holochain_conductor_api",
+ "holochain_keystore",
+ "holochain_types",
+ "lair_keystore_api",
+ "serde",
  "serde_json",
+ "serde_yaml 0.9.21",
  "sodoken",
- "thiserror",
+ "tokio",
+ "tracing",
+ "url2",
 ]
 
 [[package]]
@@ -3312,7 +3335,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_yaml 0.9.21",
- "time 0.3.23",
+ "time",
  "tokio",
  "toml 0.5.11",
  "toml 0.7.3",
@@ -4918,7 +4941,7 @@ checksum = "6413f3de1edee53342e6138e75b56d32e7bc6e332b3bd62d497b1929d4cfbcdd"
 dependencies = [
  "pem",
  "ring",
- "time 0.3.23",
+ "time",
  "yasna",
 ]
 
@@ -4930,7 +4953,7 @@ checksum = "ffbe84efe2f38dea12e9bfc1f65377fdf03e53a18cb3b995faedf7934c7e785b"
 dependencies = [
  "pem",
  "ring",
- "time 0.3.23",
+ "time",
  "yasna",
  "zeroize",
 ]
@@ -6138,17 +6161,6 @@ dependencies = [
 
 [[package]]
 name = "time"
-version = "0.1.45"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b797afad3f312d1c66a56d11d0316f916356d11bd158fbc6ca6389ff6bf805a"
-dependencies = [
- "libc",
- "wasi 0.10.0+wasi-snapshot-preview1",
- "winapi",
-]
-
-[[package]]
-name = "time"
 version = "0.3.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "59e399c068f43a5d116fedaf73b203fa4f9c519f17e2b34f63221d3792f81446"
@@ -6475,7 +6487,7 @@ dependencies = [
  "sharded-slab",
  "smallvec 1.10.0",
  "thread_local",
- "time 0.3.23",
+ "time",
  "tracing",
  "tracing-core",
  "tracing-log",
@@ -6860,12 +6872,6 @@ name = "wasi"
 version = "0.9.0+wasi-snapshot-preview1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cccddf32554fecc6acb585f82a32a72e28b48f8c4c1883ddfeeeaa96f7d8e519"
-
-[[package]]
-name = "wasi"
-version = "0.10.0+wasi-snapshot-preview1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1a143597ca7c7793eff794def352d41792a93c481eb1042423ff7ff72ba2c31f"
 
 [[package]]
 name = "wasi"
@@ -7579,7 +7585,7 @@ version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e17bb3549cc1321ae1296b9cdc2698e2b6cb1992adfa19a8c72e5b7a738f44cd"
 dependencies = [
- "time 0.3.23",
+ "time",
 ]
 
 [[package]]
