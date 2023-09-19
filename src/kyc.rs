@@ -17,11 +17,7 @@ pub async fn check_kyc_level() -> bool {
     match get_kyc().await {
         Ok(level) => {
             println!("Level found: {}", level);
-            if level.contains("level_2") {
-                true
-            } else {
-                false
-            }
+            level.contains("level_2")
         }
         Err(_) => false,
     }
