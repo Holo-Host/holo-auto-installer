@@ -14,6 +14,10 @@ struct KycPayload {
 
 /// Getting KYC level for the host
 pub async fn check_kyc_level() -> bool {
+    if env::var("NO_KYC_CHECK").is_ok() {
+        println!("WARNING: KYC not checked");
+        true
+    };
     match get_kyc().await {
         Ok(level) => {
             println!("Level found: {}", level);
@@ -38,7 +42,7 @@ pub async fn get_kyc() -> Result<String> {
     let request = client
         .request(
             reqwest::Method::POST,
-            "https://hbs.dev.holotest.net/auth/api/v1/holo-client",
+            format!("{}/auth/api/v1/holo-client", hbs_url()),
         )
         .headers(headers)
         .json(&json);
@@ -84,6 +88,11 @@ async fn get_agent_details() -> Result<(KycPayload, holochain_types::prelude::Si
         Config::V1 { .. } => panic!("Unsupported Config version"),
     }
 }
+
+pub fn hbs_url() -> Result<String> {
+    env::var("HBS_URL").context("Failed to read HBS_URL. Is it set in env?")
+}
+
 /// Reads hpos-config into a struct
 pub fn get_hpos_config() -> Result<Config> {
     let config_path = env::var("HPOS_CONFIG_PATH")
