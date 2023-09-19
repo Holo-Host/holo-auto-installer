@@ -6,6 +6,7 @@ use std::{env, fs};
 
 #[derive(Debug, Serialize, Deserialize, SerializedBytes, Clone)]
 #[serde(rename_all = "camelCase")]
+#[allow(non_snake_case)]
 struct KycPayload {
     email: String,
     timestamp: i64,
