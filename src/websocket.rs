@@ -109,7 +109,10 @@ impl AppWebsocket {
         let response = self.send(msg).await.ok()?;
         match response {
             AppResponse::AppInfo(app_info) => app_info,
-            _ => None,
+            _ => {
+                print!("unexpected response: {:?}", response);
+                None
+            }
         }
     }
 
