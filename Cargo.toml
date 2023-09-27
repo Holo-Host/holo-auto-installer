@@ -26,24 +26,24 @@ base64 = "0.13.0"
 reqwest = { version = "0.11", features = ["json"]}
 spinning_top = "0.2.4"
 hc_utils = "0.1.0"
-holochain_keystore = "0.1.0"
+holochain_keystore = "0.1.6"
 holochain_conductor_api = "0.1.0"
 holochain_types = "0.1.0"
 holochain_websocket = "0.1.0"
 holochain_zome_types = "0.1.0"
-mr_bundle = "0.1.0"
+mr_bundle = "0.1.2"
 holofuel_types = "0.4.0"
 getrandom = "0.2.7"
 url2 = "0.0.6"
-sodoken = "=0.0.7"
+sodoken = "0.0.9"
 
 [dependencies.hpos-config-core]
 git = "https://github.com/Holo-Host/hpos-config"
-rev = "607bdca7f3ee74749994642e197c18aca3eb8e43"
+rev = "bfaced6044ae570bf20d4528fa9aaafcc43ddeec"
 
 [dependencies.hpos-config-seed-bundle-explorer]
 git = "https://github.com/Holo-Host/hpos-config"
-rev = "607bdca7f3ee74749994642e197c18aca3eb8e43"
+rev = "bfaced6044ae570bf20d4528fa9aaafcc43ddeec"
 
 [dev-dependencies.cargo-husky]
 version = "1"
