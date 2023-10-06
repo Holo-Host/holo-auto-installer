@@ -11,6 +11,7 @@ use tracing::warn;
 pub async fn uninstall_removed_happs(
     happs: &[get_apps::HappBundle],
     config: &config::Config,
+    is_kyc_level_2: bool,
 ) -> Result<()> {
     info!("Checking to uninstall happs that were removed from the hosted list....");
 

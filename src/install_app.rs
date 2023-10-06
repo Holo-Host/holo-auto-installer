@@ -18,6 +18,7 @@ use url::Url;
 pub async fn install_holo_hosted_happs(
     happs: &[get_apps::HappBundle],
     config: &config::Config,
+    is_kyc_level_2: bool,
 ) -> Result<()> {
     info!("Starting to install....");
 
@@ -61,6 +62,7 @@ pub async fn install_holo_hosted_happs(
         bundle_url,
         is_paused,
         special_installed_app_id,
+        publisher_pricing_pref,
     } in happs
     {
         // if special happ is installed and do nothing if it is installed

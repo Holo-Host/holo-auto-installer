@@ -9,12 +9,26 @@ use holochain_types::prelude::{ExternIO, FunctionName, ZomeName};
 use holochain_types::prelude::{Nonce256Bits, Timestamp, ZomeCallUnsigned};
 use std::time::Duration;
 use tracing::trace;
+use holofuel_types::fuel::Fuel;
+
+pub struct PublisherPricingPref {
+    pub cpu: Fuel,
+    pub storage: Fuel,
+    pub bandwidth: Fuel,
+}
+impl PublisherPricingPref {
+    fn is_free(&self) -> bool {
+        let zero_fuel = Fuel::new(0);
+        self.cpu == zero_fuel && self.storage == zero_fuel && self.bandwidth == zero_fuel
+    }
+}
 
 pub struct HappBundle {
     pub happ_id: ActionHashB64,
     pub bundle_url: String,
     pub is_paused: bool,
     pub special_installed_app_id: Option<String>,
+    pub publisher_pricing_pref: PublisherPricingPref,
 }
 
 pub async fn get_all_enabled_hosted_happs(
