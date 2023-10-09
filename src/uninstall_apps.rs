@@ -29,12 +29,18 @@ pub async fn uninstall_removed_happs(
     let happ_ids_to_uninstall = ano_happ
         .into_iter()
         .filter(|h| {
-            !happs
-                .iter()
-                .any(|get_apps::HappBundle { happ_id, publisher_pricing_pref, .. }| &happ_id.to_string() == h || !is_kyc_level_2 && !publisher_pricing_pref.is_free())
+            !happs.iter().any(
+                |get_apps::HappBundle {
+                     happ_id,
+                     publisher_pricing_pref,
+                     ..
+                 }| {
+                    &happ_id.to_string() == h
+                        || !is_kyc_level_2 && !publisher_pricing_pref.is_free()
+                },
+            )
         })
         .collect();
-
 
     let happ_to_uninstall = filter_for_hosted_happ_to_uninstall(happ_ids_to_uninstall, active_apps);
 

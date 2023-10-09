@@ -7,9 +7,9 @@ use holochain_conductor_api::{CellInfo, ZomeCall};
 use holochain_types::prelude::ActionHashB64;
 use holochain_types::prelude::{ExternIO, FunctionName, ZomeName};
 use holochain_types::prelude::{Nonce256Bits, Timestamp, ZomeCallUnsigned};
+use holofuel_types::fuel::Fuel;
 use std::time::Duration;
 use tracing::trace;
-use holofuel_types::fuel::Fuel;
 
 pub struct PublisherPricingPref {
     pub cpu: Fuel,
