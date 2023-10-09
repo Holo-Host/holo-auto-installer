@@ -8,7 +8,9 @@ use std::process::{Command, Output};
 
 #[derive(Debug, Deserialize)]
 struct HostingCriteria {
+    #[allow(dead_code)]
     id: String,
+    #[allow(dead_code)]
     jurisdiction: String,
     kyc: KycLevel,
 }
@@ -24,7 +26,7 @@ pub enum KycLevel {
 
 pub async fn get_kyc_level() -> Result<KycLevel> {
     let output: Output = Command::new("/run/current-system/sw/bin/hpos-holochain-client")
-        .args(&["--url=http://localhost/holochain-api/", "hosting-criteria"])
+        .args(["--url=http://localhost/holochain-api/", "hosting-criteria"])
         .output()?;
 
     let output_str = String::from_utf8_lossy(&output.stdout).to_string();
