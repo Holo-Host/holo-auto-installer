@@ -10,6 +10,19 @@ use std::{collections::HashMap, env};
 use tracing::trace;
 
 #[derive(Deserialize, Debug, Clone)]
+pub struct PublisherPricingPref {
+    pub cpu: Fuel,
+    pub storage: Fuel,
+    pub bandwidth: Fuel,
+}
+impl PublisherPricingPref {
+    pub fn is_free(&self) -> bool {
+        let zero_fuel = Fuel::new(0);
+        self.cpu == zero_fuel && self.storage == zero_fuel && self.bandwidth == zero_fuel
+    }
+}
+
+#[derive(Deserialize, Debug, Clone)]
 pub struct DnaResource {
     pub hash: String, // hash of the dna, not a stored dht address
     pub src_url: String,
@@ -26,6 +39,7 @@ pub struct PresentedHappBundle {
     pub bundle_url: String,
     pub name: String,
     pub special_installed_app_id: Option<String>,
+    pub publisher_pricing_pref: PublisherPricingPref,
 }
 
 #[derive(Serialize, Debug, Clone)]

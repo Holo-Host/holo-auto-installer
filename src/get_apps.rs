@@ -7,21 +7,10 @@ use holochain_conductor_api::{CellInfo, ZomeCall};
 use holochain_types::prelude::ActionHashB64;
 use holochain_types::prelude::{ExternIO, FunctionName, ZomeName};
 use holochain_types::prelude::{Nonce256Bits, Timestamp, ZomeCallUnsigned};
-use holofuel_types::fuel::Fuel;
 use std::time::Duration;
 use tracing::trace;
 
-pub struct PublisherPricingPref {
-    pub cpu: Fuel,
-    pub storage: Fuel,
-    pub bandwidth: Fuel,
-}
-impl PublisherPricingPref {
-    pub fn is_free(&self) -> bool {
-        let zero_fuel = Fuel::new(0);
-        self.cpu == zero_fuel && self.storage == zero_fuel && self.bandwidth == zero_fuel
-    }
-}
+use self::entries::PublisherPricingPref;
 
 pub struct HappBundle {
     pub happ_id: ActionHashB64,
@@ -101,6 +90,7 @@ pub async fn get_all_enabled_hosted_happs(
                                 bundle_url: happ.bundle_url,
                                 is_paused: happ.is_paused,
                                 special_installed_app_id: happ.special_installed_app_id,
+                                publisher_pricing_pref: happ.publisher_pricing_pref,
                             }
                         })
                         .collect();
