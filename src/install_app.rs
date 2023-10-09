@@ -87,6 +87,10 @@ pub async fn install_holo_hosted_happs(
                 admin_websocket.deactivate_app(&happ_id.to_string()).await?;
             }
         }
+        // if kyc_level is not 2 and the happ is not free, we don't instal
+        else if !is_kyc_level_2 && !publisher_pricing_pref.is_free() {
+            trace!("Skipping non-free happ due to kyc level {}", happ_id);
+        }
         // else installed the hosted happ read-only instance
         else {
             trace!("Load mem-proofs for {}", happ_id);

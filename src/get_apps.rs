@@ -17,7 +17,7 @@ pub struct PublisherPricingPref {
     pub bandwidth: Fuel,
 }
 impl PublisherPricingPref {
-    fn is_free(&self) -> bool {
+    pub fn is_free(&self) -> bool {
         let zero_fuel = Fuel::new(0);
         self.cpu == zero_fuel && self.storage == zero_fuel && self.bandwidth == zero_fuel
     }

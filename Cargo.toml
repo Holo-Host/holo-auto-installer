@@ -9,6 +9,7 @@ again = "0.1"
 anyhow = "1.0"
 isahc = "1.7.2"
 serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
 serde_yaml = "0.8"
 structopt = "0.3"
 tempfile = "3.1"
