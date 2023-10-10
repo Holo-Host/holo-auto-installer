@@ -18,6 +18,7 @@ use url::Url;
 pub async fn install_holo_hosted_happs(
     happs: &[get_apps::HappBundle],
     config: &config::Config,
+    is_kyc_level_2: bool,
 ) -> Result<()> {
     info!("Starting to install....");
 
@@ -61,6 +62,7 @@ pub async fn install_holo_hosted_happs(
         bundle_url,
         is_paused,
         special_installed_app_id,
+        publisher_pricing_pref,
     } in happs
     {
         // if special happ is installed and do nothing if it is installed
@@ -84,6 +86,10 @@ pub async fn install_holo_hosted_happs(
                 trace!("Pausing {}", happ_id);
                 admin_websocket.deactivate_app(&happ_id.to_string()).await?;
             }
+        }
+        // if kyc_level is not 2 and the happ is not free, we don't instal
+        else if !is_kyc_level_2 && !publisher_pricing_pref.is_free() {
+            trace!("Skipping non-free happ due to kyc level {}", happ_id);
         }
         // else installed the hosted happ read-only instance
         else {

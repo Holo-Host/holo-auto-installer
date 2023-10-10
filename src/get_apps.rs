@@ -10,11 +10,14 @@ use holochain_types::prelude::{Nonce256Bits, Timestamp, ZomeCallUnsigned};
 use std::time::Duration;
 use tracing::trace;
 
+use self::entries::PublisherPricingPref;
+
 pub struct HappBundle {
     pub happ_id: ActionHashB64,
     pub bundle_url: String,
     pub is_paused: bool,
     pub special_installed_app_id: Option<String>,
+    pub publisher_pricing_pref: PublisherPricingPref,
 }
 
 pub async fn get_all_enabled_hosted_happs(
@@ -87,6 +90,7 @@ pub async fn get_all_enabled_hosted_happs(
                                 bundle_url: happ.bundle_url,
                                 is_paused: happ.is_paused,
                                 special_installed_app_id: happ.special_installed_app_id,
+                                publisher_pricing_pref: happ.publisher_pricing_pref,
                             }
                         })
                         .collect();
