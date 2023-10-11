@@ -4,6 +4,7 @@ pub use crate::get_apps;
 pub use crate::AdminWebsocket;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
+use tracing::debug;
 use std::process::{Command, Output};
 
 #[derive(Debug, Deserialize)]
@@ -31,7 +32,11 @@ pub async fn get_kyc_level() -> Result<KycLevel> {
 
     let output_str = String::from_utf8_lossy(&output.stdout).to_string();
 
-    let hosting_criteria: HostingCriteria = serde_json::from_str(&output_str)?;
-
-    Ok(hosting_criteria.kyc)
+    match serde_json::from_str::<HostingCriteria>(&output_str) {
+        Ok(hosting_criteria) => Ok(hosting_criteria.kyc),
+        Err(e) => {
+            debug!("Failed to deserialize hosting criteria {:?}", e);
+            Ok(KycLevel::Error)
+        },
+    }
 }
