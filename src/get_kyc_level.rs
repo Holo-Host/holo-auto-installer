@@ -4,8 +4,8 @@ pub use crate::get_apps;
 pub use crate::AdminWebsocket;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use tracing::debug;
 use std::process::{Command, Output};
+use tracing::debug;
 
 #[derive(Debug, Deserialize)]
 struct HostingCriteria {
@@ -37,6 +37,6 @@ pub async fn get_kyc_level() -> Result<KycLevel> {
         Err(e) => {
             debug!("Failed to deserialize hosting criteria {:?}", e);
             Ok(KycLevel::Error)
-        },
+        }
     }
 }

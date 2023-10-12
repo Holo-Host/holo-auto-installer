@@ -2,8 +2,7 @@ pub use crate::config;
 pub use crate::get_apps;
 pub use crate::websocket::AdminWebsocket;
 use anyhow::{Context, Result};
-use tracing::info;
-use tracing::warn;
+use tracing::{info, trace, warn};
 
 /// uninstalled old hosted happs
 /// Currently this completely removes the happ
@@ -19,30 +18,29 @@ pub async fn uninstall_removed_happs(
         .await
         .context("failed to connect to holochain's admin interface")?;
 
-    let active_apps = admin_websocket
+    let active_app_ids = admin_websocket
         .list_running_app()
         .await
         .context("failed to get installed hApps")?;
 
-    let ano_happ = filter_for_hosted_happ(active_apps.to_vec());
+    let ano_happ_ids = filter_for_anonymous_happ_ids(active_app_ids.to_vec());
 
-    let happ_ids_to_uninstall = ano_happ
+    trace!("All anonymous happs {:?}", ano_happ_ids);
+
+    let happ_ids_to_uninstall = ano_happ_ids
         .into_iter()
-        .filter(|h| {
+        .filter(|installed_happ_id| {
             !happs.iter().any(
                 |get_apps::HappBundle {
-                     happ_id,
-                     publisher_pricing_pref,
+                     happ_id: expected_happ_id,
                      ..
-                 }| {
-                    &happ_id.to_string() == h
-                        || !is_kyc_level_2 && !publisher_pricing_pref.is_free()
-                },
-            )
+                 }| { &expected_happ_id.to_string() == installed_happ_id },
+            ) || (!is_kyc_level_2 && happ_is_not_free(installed_happ_id, happs))
         })
         .collect();
 
-    let happ_to_uninstall = filter_for_hosted_happ_to_uninstall(happ_ids_to_uninstall, active_apps);
+    let happ_to_uninstall =
+        filter_for_hosted_happ_to_uninstall(happ_ids_to_uninstall, active_app_ids);
 
     for app in happ_to_uninstall {
         info!("Disabling {}", app);
@@ -85,7 +83,7 @@ fn is_instance_of_happ(happ_id: &str, installed_app_id: &str) -> bool {
     !installed_app_id.ends_with("servicelogger") && installed_app_id.starts_with(happ_id)
 }
 
-fn filter_for_hosted_happ(active_apps: Vec<String>) -> Vec<String> {
+fn filter_for_anonymous_happ_ids(active_apps: Vec<String>) -> Vec<String> {
     active_apps
         .into_iter()
         .filter(|app| is_anonymous(app))
@@ -94,4 +92,20 @@ fn filter_for_hosted_happ(active_apps: Vec<String>) -> Vec<String> {
 
 fn is_anonymous(app: &str) -> bool {
     app.starts_with("uhCkk") && app.len() == 53
+}
+
+fn happ_is_not_free(happ_id: &str, happs: &[get_apps::HappBundle]) -> bool {
+    let happ = happs.iter().find(
+        |get_apps::HappBundle {
+             happ_id: expected_happ_id,
+             ..
+         }| { &expected_happ_id.to_string() == happ_id },
+    );
+    if let Some(found_happ) = happ {
+        return !found_happ.publisher_pricing_pref.is_free();
+    } else {
+        // if we can't find the pricing, we act as if happ is free so as to not uninstall happs too aggresively
+        trace!("Can't find happ with happ_id {}", happ_id);
+        return false;
+    }
 }
