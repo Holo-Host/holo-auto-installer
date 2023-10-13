@@ -101,8 +101,6 @@ fn is_instance_or_sl_of_happ(expected_happ_id: &str, running_app_id: &str) -> bo
 //         .collect()
 // }
 
-
-
 // fn is_anonymous(app: &str) -> bool {
 //     app.starts_with("uhCkk") && app.len() == 53
 // }
@@ -123,17 +121,15 @@ fn is_instance_or_sl_of_happ(expected_happ_id: &str, running_app_id: &str) -> bo
 //     }
 // }
 
-pub fn should_be_installed(running_happ_id: &String,
+pub fn should_be_installed(
+    running_happ_id: &String,
     expected_happs: &[HappBundle],
     is_kyc_level_2: bool,
 ) -> bool {
     trace!("should_be_installed {}", running_happ_id);
 
     if !is_hosted_happ_or_sl(running_happ_id) {
-        trace!(
-            "keeping infrastructure happ {}",
-            running_happ_id
-        );
+        trace!("keeping infrastructure happ {}", running_happ_id);
         return true;
     }
 
@@ -164,7 +160,6 @@ pub fn should_be_installed(running_happ_id: &String,
         false
     }
 }
-
 
 /// Returns true if `installed_app_id` represents an anonymous or identified instance of `happ_id`
 fn is_instance_of_happ(happ_id: &str, installed_app_id: &str) -> bool {
