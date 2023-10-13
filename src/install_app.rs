@@ -52,6 +52,8 @@ pub async fn install_holo_hosted_happs(
             .context("failed to get installed hApps")?,
     );
 
+    trace!("active_happs {:?}", active_happs);
+
     let client = reqwest::Client::new();
 
     // iterate through the vec and
@@ -66,7 +68,7 @@ pub async fn install_holo_hosted_happs(
     } in happs
     {
         // if special happ is installed and do nothing if it is installed
-        trace!("Trying to install {}::servicelogger", happ_id);
+        trace!("Trying to install {}", happ_id);
         if special_installed_app_id.is_some()
             && active_happs.contains(&format!("{}::servicelogger", happ_id))
         {
