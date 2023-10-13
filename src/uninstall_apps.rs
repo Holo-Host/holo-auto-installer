@@ -26,7 +26,7 @@ pub async fn uninstall_removed_happs(
     let happ_ids_to_uninstall: Vec<String> = running_happ_ids
         .into_iter()
         .filter(|running_happ_id: &String| {
-            should_uninstall_happ(running_happ_id, expected_happs, is_kyc_level_2)
+            !should_be_installed(running_happ_id, expected_happs, is_kyc_level_2)
         })
         .collect();
 
@@ -65,50 +65,21 @@ pub async fn uninstall_removed_happs(
     //     filter_for_hosted_happ_to_uninstall(happ_ids_to_uninstall, active_app_ids);
 }
 
-fn should_uninstall_happ(
-    running_happ_id: &String,
-    expected_happs: &[HappBundle],
-    is_kyc_level_2: bool,
-) -> bool {
-    trace!("should_uninstall_happ {}", running_happ_id);
-
-    if !is_hosted_happ_or_sl(running_happ_id) {
-        trace!(
-            "shouldn't uninstall infrastructure happ {}",
-            running_happ_id
-        );
-        return false;
-    }
-
-    let expected_happ = expected_happs.iter().find(|expected_happ| {
-        is_instance_or_sl_of_happ(&expected_happ.happ_id.to_string(), running_happ_id)
-    });
-
-    trace!(
-        "found expected_happ {:?}",
-        &expected_happ.map(|eh| &eh.happ_id)
-    );
-
-    if let Some(expected_happ) = expected_happ {
-        // The running happ is an instance of an expected happ
-        if is_kyc_level_2 {
-            // nothing more to check, we should keep this happ
-            false
-        } else {
-            trace!(
-                "is free? {:?}",
-                expected_happ.publisher_pricing_pref.is_free()
-            );
-            // if kyc is not level 2 and happ isn't free, we should uninstall
-            !expected_happ.publisher_pricing_pref.is_free()
-        }
-    } else {
-        // The running happ is not an instance of any expected happ, so we should uninstall
-        true
-    }
+// There are core infrastructure happs that should never be uninstall. All uninstallable happs start with "uhCkk"
+fn is_hosted_happ_or_sl(app: &str) -> bool {
+    app.starts_with("uhCkk")
 }
 
-/// Takes a list of hApp IDs and returns a list of `installed_app_id`s corresponding with the anonymous and identified instances of those hApps.
+fn is_instance_or_sl_of_happ(expected_happ_id: &str, running_app_id: &str) -> bool {
+    // An `installed_app_id` is one of
+    // - A core hApp (e.g. `servicelogger:0_2_1::251e7cc8-9c48-4841-9eb0-435f0bf97373`)
+    // - An anonymous instance with installed_app_id == happ_id
+    // - An identified instance matching /happ_id::agent_id/
+    // - A happ-specific servicelogger instance matching /happ_id::servicelogger/
+    running_app_id.starts_with(expected_happ_id)
+}
+
+// Takes a list of hApp IDs and returns a list of `installed_app_id`s corresponding with the anonymous and identified instances of those hApps.
 // fn filter_for_hosted_happ_to_uninstall(
 //     happ_ids: Vec<String>,
 //     active_installed_app_ids: Vec<String>,
@@ -123,25 +94,6 @@ fn should_uninstall_happ(
 //         .collect()
 // }
 
-/// Returns true if `installed_app_id` represents an anonymous or identified instance of `happ_id`
-// fn is_instance_of_happ(happ_id: &str, installed_app_id: &str) -> bool {
-//     // An `installed_app_id` is one of
-//     // - A core hApp (e.g. `servicelogger:0_2_1::251e7cc8-9c48-4841-9eb0-435f0bf97373`)
-//     // - An anonymous instance with installed_app_id == happ_id
-//     // - An identified instance matching /happ_id::agent_id/
-//     // - A happ-specific servicelogger instance matching /happ_id::servicelogger/
-//     !installed_app_id.ends_with("servicelogger") && installed_app_id.starts_with(happ_id)
-// }
-
-fn is_instance_or_sl_of_happ(expected_happ_id: &str, running_app_id: &str) -> bool {
-    // An `installed_app_id` is one of
-    // - A core hApp (e.g. `servicelogger:0_2_1::251e7cc8-9c48-4841-9eb0-435f0bf97373`)
-    // - An anonymous instance with installed_app_id == happ_id
-    // - An identified instance matching /happ_id::agent_id/
-    // - A happ-specific servicelogger instance matching /happ_id::servicelogger/
-    running_app_id.starts_with(expected_happ_id)
-}
-
 // fn filter_for_anonymous_happ_ids(active_apps: Vec<String>) -> Vec<String> {
 //     active_apps
 //         .into_iter()
@@ -149,10 +101,7 @@ fn is_instance_or_sl_of_happ(expected_happ_id: &str, running_app_id: &str) -> bo
 //         .collect()
 // }
 
-// There are core infrastructure happs that should never be uninstall. All uninstallable happs start with "uhCkk"
-fn is_hosted_happ_or_sl(app: &str) -> bool {
-    app.starts_with("uhCkk")
-}
+
 
 // fn is_anonymous(app: &str) -> bool {
 //     app.starts_with("uhCkk") && app.len() == 53
@@ -173,3 +122,56 @@ fn is_hosted_happ_or_sl(app: &str) -> bool {
 //         return false;
 //     }
 // }
+
+pub fn should_be_installed(running_happ_id: &String,
+    expected_happs: &[HappBundle],
+    is_kyc_level_2: bool,
+) -> bool {
+    trace!("should_be_installed {}", running_happ_id);
+
+    if !is_hosted_happ_or_sl(running_happ_id) {
+        trace!(
+            "keeping infrastructure happ {}",
+            running_happ_id
+        );
+        return true;
+    }
+
+    let expected_happ = expected_happs.iter().find(|expected_happ| {
+        is_instance_of_happ(&expected_happ.happ_id.to_string(), running_happ_id)
+    });
+
+    trace!(
+        "found expected_happ {:?}",
+        &expected_happ.map(|eh| &eh.happ_id)
+    );
+
+    if let Some(expected_happ) = expected_happ {
+        // The running happ is an instance of an expected happ
+        if is_kyc_level_2 {
+            // nothing more to check, we should keep this happ
+            true
+        } else {
+            trace!(
+                "is free? {:?}",
+                expected_happ.publisher_pricing_pref.is_free()
+            );
+            // if kyc is not level 2 and happ isn't free, we should not install
+            expected_happ.publisher_pricing_pref.is_free()
+        }
+    } else {
+        // The running happ is not an instance of any expected happ, so shouldn't be installed
+        false
+    }
+}
+
+
+/// Returns true if `installed_app_id` represents an anonymous or identified instance of `happ_id`
+fn is_instance_of_happ(happ_id: &str, installed_app_id: &str) -> bool {
+    // An `installed_app_id` is one of
+    // - A core hApp (e.g. `servicelogger:0_2_1::251e7cc8-9c48-4841-9eb0-435f0bf97373`)
+    // - An anonymous instance with installed_app_id == happ_id
+    // - An identified instance matching /happ_id::agent_id/
+    // - A happ-specific servicelogger instance matching /happ_id::servicelogger/
+    installed_app_id.starts_with(happ_id) && !installed_app_id.ends_with("servicelogger")
+}

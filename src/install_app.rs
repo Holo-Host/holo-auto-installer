@@ -80,7 +80,7 @@ pub async fn install_holo_hosted_happs(
         // this is due to the change that holofuel cannot be installed as an stand-alone happ on a conductor
         // So the way to check if the happ is installed is to check if the servicelogger for the happ is installed
         // Check if happ is already installed and deactivate it if happ is paused in hha
-        else if active_happs.contains(&format!("{}::servicelogger", happ_id)) {
+        else if active_happs.contains(&format!("{}", happ_id)) {
             trace!("App {} already installed", happ_id);
             if *is_paused {
                 trace!("Pausing {}", happ_id);
