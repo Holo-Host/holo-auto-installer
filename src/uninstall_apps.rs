@@ -2,6 +2,7 @@ pub use crate::config;
 pub use crate::get_apps::HappBundle;
 pub use crate::websocket::AdminWebsocket;
 use anyhow::{Context, Result};
+use itertools::Itertools;
 use tracing::{info, trace, warn};
 
 /// uninstalled old hosted happs
@@ -23,12 +24,17 @@ pub async fn uninstall_removed_happs(
         .await
         .context("failed to get installed hApps")?;
 
+    trace!("running_happ_ids {:?}", running_happ_ids);
+
     let happ_ids_to_uninstall: Vec<String> = running_happ_ids
         .into_iter()
         .filter(|running_happ_id: &String| {
             !should_be_installed(running_happ_id, expected_happs, is_kyc_level_2)
         })
+        .unique()
         .collect();
+
+    trace!("happ_ids_to_uninstall {:?}", happ_ids_to_uninstall);
 
     for happ_id in happ_ids_to_uninstall {
         info!("Disabling {}", happ_id);

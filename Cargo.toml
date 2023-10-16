@@ -8,6 +8,7 @@ edition = "2021"
 again = "0.1"
 anyhow = "1.0"
 isahc = "1.7.2"
+itertools = "0.10.5"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 serde_yaml = "0.8"

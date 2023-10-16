@@ -78,10 +78,10 @@ pub async fn install_holo_hosted_happs(
             );
             // We do not pause here because we do not want our core-app to be uninstalled ever
         }
-        // Check if the servicelogger for the happ is installed
-        // this is due to the change that holofuel cannot be installed as an stand-alone happ on a conductor
-        // So the way to check if the happ is installed is to check if the servicelogger for the happ is installed
         // Check if happ is already installed and deactivate it if happ is paused in hha
+        // This will miss hosted holofuel as that happ is never installed under it's happ_id
+        // So we will always try and fail to install holofuel again
+        // Right now, we don't care
         else if active_happs.contains(&format!("{}", happ_id)) {
             trace!("App {} already installed", happ_id);
             if *is_paused {
@@ -103,6 +103,7 @@ pub async fn install_holo_hosted_happs(
                 happ_id,
                 mem_proof
             );
+            // We'd like to move the logic from `install_hosted_happ` out of `hpos-holochain-api` and into this service where it belongs
             let body = entries::InstallHappBody {
                 happ_id: happ_id.to_string(),
                 preferences: preferences.clone(),
