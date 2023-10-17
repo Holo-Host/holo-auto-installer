@@ -2117,7 +2117,6 @@ version = "0.3.2"
 dependencies = [
  "again",
  "anyhow",
- "futures",
  "getrandom 0.2.9",
  "holochain_conductor_api",
  "holochain_keystore",

@@ -7,7 +7,6 @@ edition = "2021"
 [dependencies]
 again = "0.1"
 anyhow = "1.0"
-futures = "0.3"
 isahc = "1.7.2"
 itertools = "0.10.5"
 serde = { version = "1.0", features = ["derive"] }
