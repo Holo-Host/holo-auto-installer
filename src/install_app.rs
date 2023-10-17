@@ -1,6 +1,7 @@
 pub use crate::config;
 pub use crate::entries;
-pub use crate::get_apps;
+use crate::host_zome_calls::CoreAppClient;
+pub use crate::host_zome_calls::{is_happ_free, HappBundle};
 pub use crate::AdminWebsocket;
 use anyhow::{anyhow, Context, Result};
 use holochain_types::prelude::{AppManifest, MembraneProof, SerializedBytes, UnsafeBytes};
@@ -16,8 +17,9 @@ use url::Url;
 
 /// installs a happs that are mented to be hosted
 pub async fn install_holo_hosted_happs(
-    happs: &[get_apps::HappBundle],
+    core_app_client: &mut CoreAppClient,
     config: &config::Config,
+    happs: &[HappBundle],
     is_kyc_level_2: bool,
 ) -> Result<()> {
     info!("Starting to install....");
@@ -59,12 +61,11 @@ pub async fn install_holo_hosted_happs(
     // iterate through the vec and
     // Call http://localhost/holochain-api/install_hosted_happ
     // for each WrappedActionHash to install the hosted_happ
-    for get_apps::HappBundle {
+    for HappBundle {
         happ_id,
         bundle_url,
         is_paused,
         special_installed_app_id,
-        publisher_pricing_pref,
     } in happs
     {
         // if special happ is installed and do nothing if it is installed
@@ -90,7 +91,7 @@ pub async fn install_holo_hosted_happs(
             }
         }
         // if kyc_level is not 2 and the happ is not free, we don't instal
-        else if !is_kyc_level_2 && !publisher_pricing_pref.is_free() {
+        else if !is_kyc_level_2 && !is_happ_free(&happ_id.to_string(), core_app_client).await? {
             trace!("Skipping non-free happ due to kyc level {}", happ_id);
         }
         // else installed the hosted happ read-only instance

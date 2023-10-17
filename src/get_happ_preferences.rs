@@ -17,14 +17,14 @@ pub struct HappBundle {
     pub bundle_url: String,
     pub is_paused: bool,
     pub special_installed_app_id: Option<String>,
-    pub publisher_pricing_pref: PublisherPricingPref,
 }
 
-pub async fn get_all_enabled_hosted_happs(
+pub async fn get_happ_preferences(
+    happ_id: ActionHash,
     core_happ: &config::Happ,
     config: &config::Config,
 ) -> Result<Vec<HappBundle>> {
-    trace!("get_all_enabled_hosted_happs");
+    trace!("get_happ_preferences");
     let mut app_websocket = AppWebsocket::connect(42233)
         .await
         .context("failed to connect to holochain's app interface")?;
@@ -90,7 +90,6 @@ pub async fn get_all_enabled_hosted_happs(
                                 bundle_url: happ.bundle_url,
                                 is_paused: happ.is_paused,
                                 special_installed_app_id: happ.special_installed_app_id,
-                                publisher_pricing_pref: happ.publisher_pricing_pref,
                             }
                         })
                         .collect();
