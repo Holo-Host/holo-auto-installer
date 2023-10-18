@@ -160,8 +160,6 @@ pub async fn get_all_enabled_hosted_happs(
 }
 
 pub async fn is_happ_free(happ_id: &String, core_app_client: &mut CoreAppClient) -> Result<bool> {
-    trace!("is_happ_free");
-
     let happ_preferences: HappPreferences = core_app_client
         .zome_call(
             ZomeName::from("hha"),
@@ -174,7 +172,11 @@ pub async fn is_happ_free(happ_id: &String, core_app_client: &mut CoreAppClient)
 
     trace!("happ_preferences {:?}", happ_preferences);
 
-    Ok(happ_preferences.price_compute == zero_fuel
+    let is_free = happ_preferences.price_compute == zero_fuel
         && happ_preferences.price_bandwidth == zero_fuel
-        && happ_preferences.price_storage == zero_fuel)
+        && happ_preferences.price_storage == zero_fuel;
+
+    trace!("is_happ_free {}: {}", happ_id, is_free);
+
+    Ok(is_free)
 }
