@@ -38,14 +38,21 @@ pub async fn uninstall_removed_happs(
             );
             continue;
         }
-        info!("Disabling {}", happ_id);
-        admin_websocket.uninstall_app(happ_id).await?;
-        let sl_instance = format!("{}::servicelogger", happ_id);
-        if let Err(e) = admin_websocket.uninstall_app(&sl_instance).await {
-            warn!(
-                "Unable to disable sl instance: {} with error: {}",
-                sl_instance, e
-            )
+
+        if is_anonymous_instance(happ_id) {
+            info!("Disabling {}", happ_id);
+            admin_websocket.disable_app(happ_id).await?;
+
+            // let sl_instance = format!("{}::servicelogger", happ_id);
+            // if let Err(e) = admin_websocket.uninstall_app(&sl_instance).await {
+            //     warn!(
+            //         "Unable to disable sl instance: {} with error: {}",
+            //         sl_instance, e
+            //     )
+            // }
+        } else {
+            info!("Uninstalling {}", happ_id);
+            admin_websocket.uninstall_app(happ_id).await?;    
         }
     }
     info!("Done uninstall happs that were removed from the hosted list.");
@@ -80,9 +87,9 @@ fn is_hosted_happ_or_sl(app: &str) -> bool {
 //         .collect()
 // }
 
-// fn is_anonymous(app: &str) -> bool {
-//     app.starts_with("uhCkk") && app.len() == 53
-// }
+fn is_anonymous_instance(happ_id: &str) -> bool {
+    happ_id.starts_with("uhCkk") && happ_id.len() == 53
+}
 
 pub async fn should_be_installed(
     core_app_client: &mut CoreAppClient,

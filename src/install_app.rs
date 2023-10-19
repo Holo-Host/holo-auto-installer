@@ -88,6 +88,14 @@ pub async fn install_holo_hosted_happs(
             if *is_paused {
                 trace!("Pausing {}", happ_id);
                 admin_websocket.deactivate_app(&happ_id.to_string()).await?;
+            } else {
+                // If a happ is already installed, check if it should be enabled
+                if is_kyc_level_2 || is_happ_free(&happ_id.to_string(), core_app_client).await? {
+                    trace!("Enabling {}", happ_id);
+                    admin_websocket.enable_app(&happ_id.to_string()).await?;    
+                } else {
+                    trace!("Not enabling installed app {}", happ_id);
+                }
             }
         }
         // if kyc_level is not 2 and the happ is not free, we don't instal
