@@ -125,6 +125,9 @@ pub async fn install_holo_hosted_happs(
                 .await?;
             info!("Installed happ-id {}", happ_id);
             trace!("Response {:?}", response);
+
+            // If app was already installed but disabled, the above install will fail, and we just enable it here
+            admin_websocket.enable_app(&happ_id.to_string()).await?;  
         }
     }
     Ok(())
