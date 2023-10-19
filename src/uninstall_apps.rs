@@ -52,7 +52,7 @@ pub async fn uninstall_removed_happs(
             // }
         } else {
             info!("Uninstalling {}", happ_id);
-            admin_websocket.uninstall_app(happ_id).await?;    
+            admin_websocket.uninstall_app(happ_id).await?;
         }
     }
     info!("Done uninstall happs that were removed from the hosted list.");
