@@ -42,14 +42,6 @@ pub async fn uninstall_removed_happs(
         if is_anonymous_instance(happ_id) {
             info!("Disabling {}", happ_id);
             admin_websocket.disable_app(happ_id).await?;
-
-            // let sl_instance = format!("{}::servicelogger", happ_id);
-            // if let Err(e) = admin_websocket.uninstall_app(&sl_instance).await {
-            //     warn!(
-            //         "Unable to disable sl instance: {} with error: {}",
-            //         sl_instance, e
-            //     )
-            // }
         } else {
             info!("Uninstalling {}", happ_id);
             admin_websocket.uninstall_app(happ_id).await?;
@@ -64,28 +56,6 @@ pub async fn uninstall_removed_happs(
 fn is_hosted_happ_or_sl(app: &str) -> bool {
     app.starts_with("uhCkk")
 }
-
-// Takes a list of hApp IDs and returns a list of `installed_app_id`s corresponding with the anonymous and identified instances of those hApps.
-// fn filter_for_hosted_happ_to_uninstall(
-//     happ_ids: Vec<String>,
-//     active_installed_app_ids: Vec<String>,
-// ) -> Vec<String> {
-//     active_installed_app_ids
-//         .into_iter()
-//         .filter(|installed_app_id| {
-//             happ_ids
-//                 .iter()
-//                 .any(|happ_id| is_instance_of_happ(happ_id, installed_app_id))
-//         })
-//         .collect()
-// }
-
-// fn filter_for_anonymous_happ_ids(active_apps: Vec<String>) -> Vec<String> {
-//     active_apps
-//         .into_iter()
-//         .filter(|app| is_anonymous(app))
-//         .collect()
-// }
 
 fn is_anonymous_instance(happ_id: &str) -> bool {
     happ_id.starts_with("uhCkk") && happ_id.len() == 53
@@ -126,8 +96,6 @@ pub async fn should_be_installed(
                     false
                 }
             };
-
-            trace!("is free? {:?}", is_free,);
             // if kyc is not level 2 and happ isn't free, we should not install
             is_free
         }
