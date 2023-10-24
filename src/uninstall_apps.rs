@@ -83,19 +83,20 @@ pub async fn should_be_installed(
         &expected_happ.map(|eh| &eh.happ_id)
     );
 
-    if let Some(_expected_happ) = expected_happ {
+    if let Some(expected_happ) = expected_happ {
         // The running happ is an instance of an expected happ
         if is_kyc_level_2 {
             // nothing more to check, we should keep this happ
             true
         } else {
-            let is_free = match is_happ_free(expected_happ.happ_id, core_app_client).await {
-                Ok(is_free) => is_free,
-                Err(e) => {
-                    warn!("is_happ_free failed with {}", e);
-                    false
-                }
-            };
+            let is_free =
+                match is_happ_free(&expected_happ.happ_id.to_string(), core_app_client).await {
+                    Ok(is_free) => is_free,
+                    Err(e) => {
+                        warn!("is_happ_free failed with {}", e);
+                        false
+                    }
+                };
             // if kyc is not level 2 and happ isn't free, we should not install
             is_free
         }
