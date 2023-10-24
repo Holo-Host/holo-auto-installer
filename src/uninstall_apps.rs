@@ -89,7 +89,7 @@ pub async fn should_be_installed(
             // nothing more to check, we should keep this happ
             true
         } else {
-            let is_free = match is_happ_free(running_happ_id, core_app_client).await {
+            let is_free = match is_happ_free(expected_happ.happ_id, core_app_client).await {
                 Ok(is_free) => is_free,
                 Err(e) => {
                     warn!("is_happ_free failed with {}", e);
