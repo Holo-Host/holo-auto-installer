@@ -54,7 +54,7 @@ pub async fn uninstall_removed_happs(
 
 // There are core infrastructure happs that should never be uninstall. All uninstallable happs start with "uhCkk" and don't contain ::servicelogger
 fn is_hosted_happ(app: &str) -> bool {
-    app.starts_with("uhCkk") && app.contains("::servicelogger")
+    app.starts_with("uhCkk") && !app.contains("::servicelogger")
 }
 
 fn is_anonymous_instance(happ_id: &str) -> bool {
