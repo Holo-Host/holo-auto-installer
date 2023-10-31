@@ -52,9 +52,9 @@ pub async fn uninstall_removed_happs(
     Ok(())
 }
 
-// There are core infrastructure happs that should never be uninstall. All uninstallable happs start with "uhCkk"
-fn is_hosted_happ_or_sl(app: &str) -> bool {
-    app.starts_with("uhCkk")
+// There are core infrastructure happs that should never be uninstall. All uninstallable happs start with "uhCkk" and don't contain ::servicelogger
+fn is_hosted_happ(app: &str) -> bool {
+    app.starts_with("uhCkk") && app.contains("::servicelogger")
 }
 
 fn is_anonymous_instance(happ_id: &str) -> bool {
@@ -69,7 +69,7 @@ pub async fn should_be_installed(
 ) -> bool {
     trace!("should_be_installed {}", running_happ_id);
 
-    if !is_hosted_happ_or_sl(running_happ_id) {
+    if !is_hosted_happ(running_happ_id) {
         trace!("keeping infrastructure happ {}", running_happ_id);
         return true;
     }
