@@ -6,6 +6,7 @@ use holofuel_types::fuel::Fuel;
 use serde::Deserialize;
 use serde::Serialize;
 use std::fs::File;
+use std::time::Duration;
 use std::{collections::HashMap, env};
 use tracing::trace;
 
@@ -38,7 +39,7 @@ pub struct PresentedHappBundle {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct HappPreferences {
     pub max_fuel_before_invoice: Fuel,
-    pub max_time_before_invoice: Vec<u64>,
+    pub max_time_before_invoice: Duration,
     pub price_compute: Fuel,
     pub price_storage: Fuel,
     pub price_bandwidth: Fuel,

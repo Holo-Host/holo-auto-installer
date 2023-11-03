@@ -10,6 +10,7 @@ use isahc::config::RedirectPolicy;
 use isahc::prelude::*;
 use isahc::HttpClient;
 use mr_bundle::Bundle;
+use std::time::Duration;
 use std::{collections::HashMap, fs, path::PathBuf, str::FromStr, sync::Arc};
 use tempfile::TempDir;
 use tracing::{info, instrument, trace, warn};
@@ -27,7 +28,7 @@ pub async fn install_holo_hosted_happs(
     // Hardcoded servicelogger preferences for all the hosted happs installed
     let preferences = entries::HappPreferences {
         max_fuel_before_invoice: Fuel::from_str("1000")?, // MAX_TX_AMT in holofuel is currently hard-coded to 50,000
-        max_time_before_invoice: vec![86400, 0],
+        max_time_before_invoice: Duration::default(),
         price_compute: Fuel::from_str("0.025")?,
         price_storage: Fuel::from_str("0.025")?,
         price_bandwidth: Fuel::from_str("0.025")?,
