@@ -150,6 +150,8 @@ pub async fn get_all_enabled_hosted_happs(
 }
 
 pub async fn is_happ_free(happ_id: &String, core_app_client: &mut CoreAppClient) -> Result<bool> {
+    trace!("calling is_happ_free for {:?}", happ_id);
+
     let happ_preferences: entries::HappPreferences = core_app_client
         .zome_call(
             ZomeName::from("hha"),
