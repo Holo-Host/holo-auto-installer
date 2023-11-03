@@ -9,7 +9,6 @@ use holochain_types::prelude::{
 };
 use holofuel_types::fuel::Fuel;
 use serde::de::DeserializeOwned;
-use serde::Deserialize;
 use serde::Serialize;
 use std::time::Duration;
 use tracing::trace;
@@ -19,15 +18,6 @@ pub struct HappBundle {
     pub bundle_url: String,
     pub is_paused: bool,
     pub special_installed_app_id: Option<String>,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-pub struct HappPreferences {
-    pub max_fuel_before_invoice: f64,
-    pub price_compute: Fuel,
-    pub price_storage: Fuel,
-    pub price_bandwidth: Fuel,
-    pub max_time_before_invoice: Duration,
 }
 
 pub struct CoreAppClient {
@@ -160,7 +150,7 @@ pub async fn get_all_enabled_hosted_happs(
 }
 
 pub async fn is_happ_free(happ_id: &String, core_app_client: &mut CoreAppClient) -> Result<bool> {
-    let happ_preferences: HappPreferences = core_app_client
+    let happ_preferences: entries::HappPreferences = core_app_client
         .zome_call(
             ZomeName::from("hha"),
             FunctionName::from("get_happ_preferences"),

@@ -35,15 +35,15 @@ pub struct PresentedHappBundle {
     pub special_installed_app_id: Option<String>,
 }
 
-#[derive(Serialize, Debug, Clone)]
-pub struct Preferences {
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct HappPreferences {
     pub max_fuel_before_invoice: Fuel,
     pub max_time_before_invoice: Vec<u64>,
     pub price_compute: Fuel,
     pub price_storage: Fuel,
     pub price_bandwidth: Fuel,
 }
-impl Preferences {
+impl HappPreferences {
     /// Save preferences to a file under {SL_PREFS_PATH}
     /// which allows hpos-holochain-api to read current values
     pub fn save(self) -> Result<Self> {
@@ -63,6 +63,6 @@ impl Preferences {
 #[derive(Serialize, Debug, Clone)]
 pub struct InstallHappBody {
     pub happ_id: String,
-    pub preferences: Preferences,
+    pub preferences: HappPreferences,
     pub membrane_proofs: HashMap<String, MembraneProof>,
 }
