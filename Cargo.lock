@@ -2126,6 +2126,7 @@ dependencies = [
  "hpos-config-core",
  "hpos-config-seed-bundle-explorer",
  "isahc",
+ "itertools 0.10.5",
  "mr_bundle",
  "observability",
  "reqwest",

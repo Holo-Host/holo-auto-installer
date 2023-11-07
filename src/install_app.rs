@@ -1,6 +1,7 @@
 pub use crate::config;
 pub use crate::entries;
-pub use crate::get_apps;
+use crate::host_zome_calls::CoreAppClient;
+pub use crate::host_zome_calls::{is_happ_free, HappBundle};
 pub use crate::AdminWebsocket;
 use anyhow::{anyhow, Context, Result};
 use holochain_types::prelude::{AppManifest, MembraneProof, SerializedBytes, UnsafeBytes};
@@ -9,6 +10,7 @@ use isahc::config::RedirectPolicy;
 use isahc::prelude::*;
 use isahc::HttpClient;
 use mr_bundle::Bundle;
+use std::time::Duration;
 use std::{collections::HashMap, fs, path::PathBuf, str::FromStr, sync::Arc};
 use tempfile::TempDir;
 use tracing::{info, instrument, trace, warn};
@@ -16,16 +18,17 @@ use url::Url;
 
 /// installs a happs that are mented to be hosted
 pub async fn install_holo_hosted_happs(
-    happs: &[get_apps::HappBundle],
+    core_app_client: &mut CoreAppClient,
     config: &config::Config,
+    happs: &[HappBundle],
     is_kyc_level_2: bool,
 ) -> Result<()> {
     info!("Starting to install....");
 
     // Hardcoded servicelogger preferences for all the hosted happs installed
-    let preferences = entries::Preferences {
+    let preferences = entries::HappPreferences {
         max_fuel_before_invoice: Fuel::from_str("1000")?, // MAX_TX_AMT in holofuel is currently hard-coded to 50,000
-        max_time_before_invoice: vec![86400, 0],
+        max_time_before_invoice: Duration::default(),
         price_compute: Fuel::from_str("0.025")?,
         price_storage: Fuel::from_str("0.025")?,
         price_bandwidth: Fuel::from_str("0.025")?,
@@ -52,21 +55,22 @@ pub async fn install_holo_hosted_happs(
             .context("failed to get installed hApps")?,
     );
 
+    trace!("active_happs {:?}", active_happs);
+
     let client = reqwest::Client::new();
 
     // iterate through the vec and
     // Call http://localhost/holochain-api/install_hosted_happ
     // for each WrappedActionHash to install the hosted_happ
-    for get_apps::HappBundle {
+    for HappBundle {
         happ_id,
         bundle_url,
         is_paused,
         special_installed_app_id,
-        publisher_pricing_pref,
     } in happs
     {
         // if special happ is installed and do nothing if it is installed
-        trace!("Trying to install {}::servicelogger", happ_id);
+        trace!("Trying to install {}", happ_id);
         if special_installed_app_id.is_some()
             && active_happs.contains(&format!("{}::servicelogger", happ_id))
         {
@@ -76,19 +80,27 @@ pub async fn install_holo_hosted_happs(
             );
             // We do not pause here because we do not want our core-app to be uninstalled ever
         }
-        // Check if the servicelogger for the happ is installed
-        // this is due to the change that holofuel cannot be installed as an stand-alone happ on a conductor
-        // So the way to check if the happ is installed is to check if the servicelogger for the happ is installed
         // Check if happ is already installed and deactivate it if happ is paused in hha
-        else if active_happs.contains(&format!("{}::servicelogger", happ_id)) {
+        // This will miss hosted holofuel as that happ is never installed under it's happ_id
+        // So we will always try and fail to install holofuel again
+        // Right now, we don't care
+        else if active_happs.contains(&format!("{}", happ_id)) {
             trace!("App {} already installed", happ_id);
             if *is_paused {
                 trace!("Pausing {}", happ_id);
                 admin_websocket.deactivate_app(&happ_id.to_string()).await?;
+            } else {
+                // If a happ is already installed, check if it should be enabled
+                if is_kyc_level_2 || is_happ_free(&happ_id.to_string(), core_app_client).await? {
+                    trace!("Enabling {}", happ_id);
+                    admin_websocket.enable_app(&happ_id.to_string()).await?;
+                } else {
+                    trace!("Not enabling installed app {}", happ_id);
+                }
             }
         }
         // if kyc_level is not 2 and the happ is not free, we don't instal
-        else if !is_kyc_level_2 && !publisher_pricing_pref.is_free() {
+        else if !is_kyc_level_2 && !is_happ_free(&happ_id.to_string(), core_app_client).await? {
             trace!("Skipping non-free happ due to kyc level {}", happ_id);
         }
         // else installed the hosted happ read-only instance
@@ -101,6 +113,7 @@ pub async fn install_holo_hosted_happs(
                 happ_id,
                 mem_proof
             );
+            // We'd like to move the logic from `install_hosted_happ` out of `hpos-holochain-api` and into this service where it belongs
             let body = entries::InstallHappBody {
                 happ_id: happ_id.to_string(),
                 preferences: preferences.clone(),
@@ -112,7 +125,12 @@ pub async fn install_holo_hosted_happs(
                 .send()
                 .await?;
             info!("Installed happ-id {}", happ_id);
-            trace!("Response {:?}", response);
+            trace!("Install happ Response {:?}", response);
+
+            // If app was already installed but disabled, the above install will fail, and we just enable it here
+            let result = admin_websocket.enable_app(&happ_id.to_string()).await;
+
+            trace!("Enable app result {:?}", result);
         }
     }
     Ok(())

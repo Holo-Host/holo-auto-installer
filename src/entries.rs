@@ -6,6 +6,7 @@ use holofuel_types::fuel::Fuel;
 use serde::Deserialize;
 use serde::Serialize;
 use std::fs::File;
+use std::time::Duration;
 use std::{collections::HashMap, env};
 use tracing::trace;
 
@@ -14,12 +15,6 @@ pub struct PublisherPricingPref {
     pub cpu: Fuel,
     pub storage: Fuel,
     pub bandwidth: Fuel,
-}
-impl PublisherPricingPref {
-    pub fn is_free(&self) -> bool {
-        let zero_fuel = Fuel::new(0);
-        self.cpu == zero_fuel && self.storage == zero_fuel && self.bandwidth == zero_fuel
-    }
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -39,18 +34,17 @@ pub struct PresentedHappBundle {
     pub bundle_url: String,
     pub name: String,
     pub special_installed_app_id: Option<String>,
-    pub publisher_pricing_pref: PublisherPricingPref,
 }
 
-#[derive(Serialize, Debug, Clone)]
-pub struct Preferences {
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct HappPreferences {
     pub max_fuel_before_invoice: Fuel,
-    pub max_time_before_invoice: Vec<u64>,
+    pub max_time_before_invoice: Duration,
     pub price_compute: Fuel,
     pub price_storage: Fuel,
     pub price_bandwidth: Fuel,
 }
-impl Preferences {
+impl HappPreferences {
     /// Save preferences to a file under {SL_PREFS_PATH}
     /// which allows hpos-holochain-api to read current values
     pub fn save(self) -> Result<Self> {
@@ -70,6 +64,6 @@ impl Preferences {
 #[derive(Serialize, Debug, Clone)]
 pub struct InstallHappBody {
     pub happ_id: String,
-    pub preferences: Preferences,
+    pub preferences: HappPreferences,
     pub membrane_proofs: HashMap<String, MembraneProof>,
 }

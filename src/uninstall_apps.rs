@@ -1,16 +1,18 @@
 pub use crate::config;
-pub use crate::get_apps;
+use crate::host_zome_calls::CoreAppClient;
+pub use crate::host_zome_calls::{is_happ_free, HappBundle};
 pub use crate::websocket::AdminWebsocket;
 use anyhow::{Context, Result};
-use tracing::info;
-use tracing::warn;
+use itertools::Itertools;
+use tracing::{info, trace, warn};
 
 /// uninstalled old hosted happs
 /// Currently this completely removes the happ
 /// This will be updated to checked enabled uninstalled and disable the happ accordingly
 pub async fn uninstall_removed_happs(
-    happs: &[get_apps::HappBundle],
+    core_app_client: &mut CoreAppClient,
     config: &config::Config,
+    expected_happs: &[HappBundle],
     is_kyc_level_2: bool,
 ) -> Result<()> {
     info!("Checking to uninstall happs that were removed from the hosted list....");
@@ -19,40 +21,30 @@ pub async fn uninstall_removed_happs(
         .await
         .context("failed to connect to holochain's admin interface")?;
 
-    let active_apps = admin_websocket
+    let running_happ_ids = admin_websocket
         .list_running_app()
         .await
         .context("failed to get installed hApps")?;
 
-    let ano_happ = filter_for_hosted_happ(active_apps.to_vec());
+    let unique_running_happ_ids: Vec<&String> = running_happ_ids.iter().unique().collect();
 
-    let happ_ids_to_uninstall = ano_happ
-        .into_iter()
-        .filter(|h| {
-            !happs.iter().any(
-                |get_apps::HappBundle {
-                     happ_id,
-                     publisher_pricing_pref,
-                     ..
-                 }| {
-                    &happ_id.to_string() == h
-                        || !is_kyc_level_2 && !publisher_pricing_pref.is_free()
-                },
-            )
-        })
-        .collect();
+    trace!("unique_running_happ_ids {:?}", unique_running_happ_ids);
 
-    let happ_to_uninstall = filter_for_hosted_happ_to_uninstall(happ_ids_to_uninstall, active_apps);
+    for happ_id in unique_running_happ_ids {
+        if should_be_installed(core_app_client, happ_id, expected_happs, is_kyc_level_2).await {
+            info!(
+                "Skipping uninstall of {} as it should be installed",
+                happ_id
+            );
+            continue;
+        }
 
-    for app in happ_to_uninstall {
-        info!("Disabling {}", app);
-        admin_websocket.uninstall_app(&app).await?;
-        let sl_instance = format!("{}::servicelogger", app);
-        if let Err(e) = admin_websocket.uninstall_app(&sl_instance).await {
-            warn!(
-                "Unable to disable sl instance: {} with error: {}",
-                sl_instance, e
-            )
+        if is_anonymous_instance(happ_id) {
+            info!("Disabling {}", happ_id);
+            admin_websocket.disable_app(happ_id).await?;
+        } else {
+            info!("Uninstalling {}", happ_id);
+            admin_websocket.uninstall_app(happ_id).await?;
         }
     }
     info!("Done uninstall happs that were removed from the hosted list.");
@@ -60,19 +52,58 @@ pub async fn uninstall_removed_happs(
     Ok(())
 }
 
-/// Takes a list of hApp IDs and returns a list of `installed_app_id`s corresponding with the anonymous and identified instances of those hApps.
-fn filter_for_hosted_happ_to_uninstall(
-    happ_ids: Vec<String>,
-    active_installed_app_ids: Vec<String>,
-) -> Vec<String> {
-    active_installed_app_ids
-        .into_iter()
-        .filter(|installed_app_id| {
-            happ_ids
-                .iter()
-                .any(|happ_id| is_instance_of_happ(happ_id, installed_app_id))
-        })
-        .collect()
+// There are core infrastructure happs that should never be uninstall. All uninstallable happs start with "uhCkk" and don't contain ::servicelogger
+fn is_hosted_happ(app: &str) -> bool {
+    app.starts_with("uhCkk") && !app.contains("::servicelogger")
+}
+
+fn is_anonymous_instance(happ_id: &str) -> bool {
+    happ_id.starts_with("uhCkk") && happ_id.len() == 53
+}
+
+pub async fn should_be_installed(
+    core_app_client: &mut CoreAppClient,
+    running_happ_id: &String,
+    expected_happs: &[HappBundle],
+    is_kyc_level_2: bool,
+) -> bool {
+    trace!("should_be_installed {}", running_happ_id);
+
+    if !is_hosted_happ(running_happ_id) {
+        trace!("keeping infrastructure happ {}", running_happ_id);
+        return true;
+    }
+
+    let expected_happ = expected_happs.iter().find(|expected_happ| {
+        is_instance_of_happ(&expected_happ.happ_id.to_string(), running_happ_id)
+    });
+
+    trace!(
+        "found expected_happ {:?}",
+        &expected_happ.map(|eh| &eh.happ_id)
+    );
+
+    if let Some(expected_happ) = expected_happ {
+        // The running happ is an instance of an expected happ
+        if is_kyc_level_2 {
+            // nothing more to check, we should keep this happ
+            true
+        } else {
+            let is_free =
+                match is_happ_free(&expected_happ.happ_id.to_string(), core_app_client).await {
+                    Ok(is_free) => is_free,
+                    Err(e) => {
+                        warn!("is_happ_free failed with {}", e);
+                        false
+                    }
+                };
+            // if kyc is not level 2 and happ isn't free, we should not install
+            is_free
+        }
+    } else {
+        // The running happ is not an instance of any expected happ, so shouldn't be installed
+        false
+    }
 }
 
 /// Returns true if `installed_app_id` represents an anonymous or identified instance of `happ_id`
@@ -82,16 +113,5 @@ fn is_instance_of_happ(happ_id: &str, installed_app_id: &str) -> bool {
     // - An anonymous instance with installed_app_id == happ_id
     // - An identified instance matching /happ_id::agent_id/
     // - A happ-specific servicelogger instance matching /happ_id::servicelogger/
-    !installed_app_id.ends_with("servicelogger") && installed_app_id.starts_with(happ_id)
-}
-
-fn filter_for_hosted_happ(active_apps: Vec<String>) -> Vec<String> {
-    active_apps
-        .into_iter()
-        .filter(|app| is_anonymous(app))
-        .collect()
-}
-
-fn is_anonymous(app: &str) -> bool {
-    app.starts_with("uhCkk") && app.len() == 53
+    installed_app_id.starts_with(happ_id) && !installed_app_id.ends_with("servicelogger")
 }
