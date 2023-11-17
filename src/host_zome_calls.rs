@@ -17,6 +17,7 @@ pub struct HappBundle {
     pub happ_id: ActionHashB64,
     pub bundle_url: String,
     pub is_paused: bool,
+    pub is_host_disabled: bool,
     pub special_installed_app_id: Option<String>,
 }
 
@@ -117,10 +118,10 @@ pub fn fresh_nonce() -> Result<(Nonce256Bits, Timestamp)> {
     Ok((nonce, expires))
 }
 
-pub async fn get_all_enabled_hosted_happs(
+pub async fn get_all_published_hosted_happs(
     core_app_client: &mut CoreAppClient,
 ) -> Result<Vec<HappBundle>> {
-    trace!("get_all_enabled_hosted_happs");
+    trace!("get_all_published_hosted_happs");
 
     let happ_bundles: Vec<entries::PresentedHappBundle> = core_app_client
         .zome_call(ZomeName::from("hha"), FunctionName::from("get_happs"), ())
@@ -140,6 +141,7 @@ pub async fn get_all_enabled_hosted_happs(
                 happ_id: happ.id,
                 bundle_url: happ.bundle_url,
                 is_paused: happ.is_paused,
+                is_host_disabled: happ.host_settings.is_host_disabled,
                 special_installed_app_id: happ.special_installed_app_id,
             }
         })
