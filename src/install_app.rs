@@ -59,7 +59,7 @@ pub async fn install_holo_hosted_happs(
 
     let client = reqwest::Client::new();
 
-    // iterate through the vec and
+    // Iterate through the vec and
     // Call http://localhost/holochain-api/install_hosted_happ
     // for each WrappedActionHash to install the hosted_happ
     for HappBundle {
@@ -81,24 +81,18 @@ pub async fn install_holo_hosted_happs(
                 special_installed_app_id
             );
         }
-        // Check if happ is already installed and deactivate it if happ is paused in hha
-        // This will miss hosted holofuel as that happ is never installed under it's happ_id
-        // So we will always try and fail to install holofuel again
+        // Check if happ is already installed and disable it if the publisher has paused happ in hha
+        // NB: This condition/check will miss hosted holofuel as that happ is never installed under its happ_id
+        // This means it will always try and fail to install holofuel again
         // Right now, we don't care
         else if running_happs.contains(&format!("{}", happ_id)) {
             trace!("App {} already installed", happ_id);
             if *is_paused {
                 trace!("Pausing {}", happ_id);
-                admin_websocket.deactivate_app(&happ_id.to_string()).await?;
-            } else if is_host_disabled.to_owned() {
-                trace!(
-                    "Deactiving happ {} because host has disabled it in hha",
-                    happ_id
-                );
-                admin_websocket.deactivate_app(&happ_id.to_string()).await?;
-                // AND UNINSTALL APP
+                admin_websocket.disable_app(&happ_id.to_string()).await?;
             } else {
-                // If a happ is already installed, check if it should be enabled
+                // Check if installed happ is eligible to be enabled for host and enable, if so
+                // NB: This check only compares price settings with kyc level for now
                 if is_kyc_level_2 || is_happ_free(&happ_id.to_string(), core_app_client).await? {
                     trace!("Enabling {}", happ_id);
                     admin_websocket.enable_app(&happ_id.to_string()).await?;
@@ -109,6 +103,13 @@ pub async fn install_holo_hosted_happs(
                     );
                 }
             }
+        }
+        // if the expected happ is disabled by the host, we don't install
+        else if is_host_disabled.to_owned() {
+            trace!(
+                "Skipping happ installation due to host's disabled setting for happ {}",
+                happ_id
+            );
         }
         // if kyc_level is not 2 and the happ is not free, we don't install
         else if !is_kyc_level_2 && !is_happ_free(&happ_id.to_string(), core_app_client).await? {

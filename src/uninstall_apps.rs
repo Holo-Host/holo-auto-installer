@@ -85,6 +85,7 @@ pub async fn should_be_installed(
         return true;
     }
 
+    // The running happ is an instance of an expected happ
     let expected_happ = published_happs.iter().find(|published_happ| {
         is_instance_of_happ(&published_happ.happ_id.to_string(), running_happ_id)
     });
@@ -95,8 +96,12 @@ pub async fn should_be_installed(
     );
 
     if let Some(expected_happ) = expected_happ {
-        // The running happ is an instance of an expected happ
+        // if the expected happ is disabled by the host, happ shouldn't be installed
         if expected_happ.is_host_disabled {
+            trace!(
+                "Disabling happ {} because host was disabled it in hha",
+                expected_happ.happ_id
+            );
             return false;
         }
 
@@ -112,7 +117,7 @@ pub async fn should_be_installed(
                         false
                     }
                 };
-            // if kyc is not level 2 and happ isn't free, we should not install
+            // if kyc is not level 2 and happ isn't free, happ shouldn't be installed
             is_free
         }
     } else {

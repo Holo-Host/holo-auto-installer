@@ -18,8 +18,8 @@ use get_kyc_level::{get_kyc_level, KycLevel};
 use crate::host_zome_calls::CoreAppClient;
 
 /// gets all the enabled happs from HHA
-/// installs &enables new happs that were registered by a provider and deactivates (holochain disables) those paused by provider in hha
-/// and uninstalls happs that are ineligible for host (eg: holo-disabled, unallowed pricing for kyc level)
+/// installs and enables new happs that were registered by a provider and holochain disables those paused by provider in hha
+/// then uninstalls happs that are ineligible for host (eg: holo-disabled, unallowed pricing for kyc level)
 pub async fn run(core_happ: &config::Happ, config: &config::Config) -> Result<()> {
     info!("Activating holo hosted apps");
     let kyc_level = get_kyc_level().await?;
