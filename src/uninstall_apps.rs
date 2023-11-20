@@ -97,7 +97,7 @@ pub async fn should_be_installed(
     if let Some(expected_happ) = expected_happ {
         // The running happ is an instance of an expected happ
         if expected_happ.is_host_disabled {
-            false
+            return false;
         }
 
         if is_kyc_level_2 {

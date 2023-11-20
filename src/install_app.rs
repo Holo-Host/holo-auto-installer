@@ -90,7 +90,7 @@ pub async fn install_holo_hosted_happs(
             if *is_paused {
                 trace!("Pausing {}", happ_id);
                 admin_websocket.deactivate_app(&happ_id.to_string()).await?;
-            } else if is_host_disabled {
+            } else if is_host_disabled.to_owned() {
                 trace!(
                     "Deactiving happ {} because host has disabled it in hha",
                     happ_id
