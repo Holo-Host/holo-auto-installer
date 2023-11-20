@@ -28,6 +28,7 @@ pub struct DnaResource {
 pub struct HostSettings {
     pub is_enabled: bool,
     pub is_host_disabled: bool,
+    pub is_auto_disabled: bool,
 }
 
 #[derive(Deserialize, Debug, Clone)]
