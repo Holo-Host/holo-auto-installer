@@ -48,62 +48,74 @@ pub async fn install_holo_hosted_happs(
         warn!(port = ?config.happ_port, ?error, "failed to start app interface, maybe it's already up?");
     }
 
-    let active_happs = Arc::new(
+    let running_happs = Arc::new(
         admin_websocket
             .list_running_app()
             .await
             .context("failed to get installed hApps")?,
     );
 
-    trace!("active_happs {:?}", active_happs);
+    trace!("running_happs {:?}", running_happs);
 
     let client = reqwest::Client::new();
 
-    // iterate through the vec and
+    // Iterate through the vec and
     // Call http://localhost/holochain-api/install_hosted_happ
     // for each WrappedActionHash to install the hosted_happ
     for HappBundle {
         happ_id,
         bundle_url,
         is_paused,
+        is_host_disabled,
         special_installed_app_id,
     } in happs
     {
-        // if special happ is installed and do nothing if it is installed
+        // Check if special happ is installed and do nothing if it is installed
         trace!("Trying to install {}", happ_id);
         if special_installed_app_id.is_some()
-            && active_happs.contains(&format!("{}::servicelogger", happ_id))
+            && running_happs.contains(&format!("{}::servicelogger", happ_id))
         {
+            // We do not need to install bc we never pause this app as we do not want our core-app to be uninstalled ever
             trace!(
                 "Special App {:?} already installed",
                 special_installed_app_id
             );
-            // We do not pause here because we do not want our core-app to be uninstalled ever
         }
-        // Check if happ is already installed and deactivate it if happ is paused in hha
-        // This will miss hosted holofuel as that happ is never installed under it's happ_id
-        // So we will always try and fail to install holofuel again
+        // Check if happ is already installed and disable it if the publisher has paused happ in hha
+        // NB: This condition/check will miss hosted holofuel as that happ is never installed under its happ_id
+        // This means it will always try and fail to install holofuel again
         // Right now, we don't care
-        else if active_happs.contains(&format!("{}", happ_id)) {
+        else if running_happs.contains(&format!("{}", happ_id)) {
             trace!("App {} already installed", happ_id);
             if *is_paused {
                 trace!("Pausing {}", happ_id);
-                admin_websocket.deactivate_app(&happ_id.to_string()).await?;
+                admin_websocket.disable_app(&happ_id.to_string()).await?;
             } else {
-                // If a happ is already installed, check if it should be enabled
+                // Check if installed happ is eligible to be enabled for host and enable, if so
+                // NB: This check only compares price settings with kyc level for now
                 if is_kyc_level_2 || is_happ_free(&happ_id.to_string(), core_app_client).await? {
                     trace!("Enabling {}", happ_id);
                     admin_websocket.enable_app(&happ_id.to_string()).await?;
                 } else {
-                    trace!("Not enabling installed app {}", happ_id);
+                    trace!(
+                        "Not enabling installed {} app due to failed price check for kyc level",
+                        happ_id
+                    );
                 }
             }
         }
-        // if kyc_level is not 2 and the happ is not free, we don't instal
-        else if !is_kyc_level_2 && !is_happ_free(&happ_id.to_string(), core_app_client).await? {
-            trace!("Skipping non-free happ due to kyc level {}", happ_id);
+        // if the expected happ is disabled by the host, we don't install
+        else if is_host_disabled.to_owned() {
+            trace!(
+                "Skipping happ installation due to host's disabled setting for happ {}",
+                happ_id
+            );
         }
-        // else installed the hosted happ read-only instance
+        // if kyc_level is not 2 and the happ is not free, we don't install
+        else if !is_kyc_level_2 && !is_happ_free(&happ_id.to_string(), core_app_client).await? {
+            trace!("Skipping paid happ due to kyc level {}", happ_id);
+        }
+        // else install the hosted happ read-only instance
         else {
             trace!("Load mem-proofs for {}", happ_id);
             let mem_proof: HashMap<String, MembraneProof> =
@@ -113,6 +125,7 @@ pub async fn install_holo_hosted_happs(
                 happ_id,
                 mem_proof
             );
+
             // We'd like to move the logic from `install_hosted_happ` out of `hpos-holochain-api` and into this service where it belongs
             let body = entries::InstallHappBody {
                 happ_id: happ_id.to_string(),

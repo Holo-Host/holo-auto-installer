@@ -24,6 +24,13 @@ pub struct DnaResource {
     pub nick: String,
 }
 
+#[derive(Debug, Clone, Deserialize)]
+pub struct HostSettings {
+    pub is_enabled: bool,
+    pub is_host_disabled: bool,
+    pub is_auto_disabled: bool,
+}
+
 #[derive(Deserialize, Debug, Clone)]
 pub struct PresentedHappBundle {
     pub id: ActionHashB64,
@@ -34,6 +41,7 @@ pub struct PresentedHappBundle {
     pub bundle_url: String,
     pub name: String,
     pub special_installed_app_id: Option<String>,
+    pub host_settings: HostSettings,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

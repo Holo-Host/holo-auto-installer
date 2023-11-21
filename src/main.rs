@@ -22,8 +22,8 @@ async fn spawn() -> Result<()> {
     match &core_happ_list {
         Some(core) => holo_auto_installer::run(core, &config).await,
         None => {
-            error!("No Core apps found in configuration");
-            Err(anyhow!("Please check that the happ config file is present. No Core apps found in configuration"))
+            error!("No core apps found in configuration");
+            Err(anyhow!("Please check that the happ config file is present. No core apps found in configuration"))
         }
     }
 }
