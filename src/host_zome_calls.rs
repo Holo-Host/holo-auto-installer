@@ -150,27 +150,3 @@ pub async fn get_all_published_hosted_happs(
     trace!("got happ bundles");
     Ok(happ_bundle_ids)
 }
-
-pub async fn is_happ_free(happ_id: &String, core_app_client: &mut CoreAppClient) -> Result<bool> {
-    trace!("calling is_happ_free for {:?}", happ_id);
-
-    let happ_preferences: entries::HappPreferences = core_app_client
-        .zome_call(
-            ZomeName::from("hha"),
-            FunctionName::from("get_happ_preferences"),
-            happ_id,
-        )
-        .await?;
-
-    let zero_fuel = Fuel::new(0);
-
-    trace!("happ_preferences {:?}", happ_preferences);
-
-    let is_free = happ_preferences.price_compute == zero_fuel
-        && happ_preferences.price_bandwidth == zero_fuel
-        && happ_preferences.price_storage == zero_fuel;
-
-    trace!("is_happ_free {}: {}", happ_id, is_free);
-
-    Ok(is_free)
-}

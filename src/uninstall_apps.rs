@@ -1,6 +1,6 @@
 pub use crate::config;
 use crate::host_zome_calls::CoreAppClient;
-pub use crate::host_zome_calls::{is_happ_free, HappBundle};
+pub use crate::host_zome_calls::HappBundle;
 pub use crate::websocket::AdminWebsocket;
 use anyhow::{Context, Result};
 use itertools::Itertools;
@@ -106,19 +106,11 @@ pub async fn should_be_installed(
         }
 
         if is_kyc_level_2 {
-            // nothing more to check, we should keep this happ
+            // if kyc is level 2, happ hosting is valid (despite price prefs)
             true
         } else {
-            let is_free =
-                match is_happ_free(&expected_happ.happ_id.to_string(), core_app_client).await {
-                    Ok(is_free) => is_free,
-                    Err(e) => {
-                        warn!("`is_happ_free` check failed with {}", e);
-                        false
-                    }
-                };
-            // if kyc is not level 2 and happ isn't free, happ shouldn't be installed
-            is_free
+            // if kyc is not level 2, happ hosting is not valid and happ shouldn't be installed
+            false
         }
     } else {
         // The running happ is not an instance of any expected happ, so shouldn't be installed

@@ -1,7 +1,7 @@
 pub use crate::config;
 pub use crate::entries;
 use crate::host_zome_calls::CoreAppClient;
-pub use crate::host_zome_calls::{is_happ_free, HappBundle};
+pub use crate::host_zome_calls::HappBundle;
 pub use crate::AdminWebsocket;
 use anyhow::{anyhow, Context, Result};
 use holochain_types::prelude::{AppManifest, MembraneProof, SerializedBytes, UnsafeBytes};
@@ -92,8 +92,7 @@ pub async fn install_holo_hosted_happs(
                 admin_websocket.disable_app(&happ_id.to_string()).await?;
             } else {
                 // Check if installed happ is eligible to be enabled for host and enable, if so
-                // NB: This check only compares price settings with kyc level for now
-                if is_kyc_level_2 || is_happ_free(&happ_id.to_string(), core_app_client).await? {
+                if is_kyc_level_2 {
                     trace!("Enabling {}", happ_id);
                     admin_websocket.enable_app(&happ_id.to_string()).await?;
                 } else {
@@ -111,8 +110,8 @@ pub async fn install_holo_hosted_happs(
                 happ_id
             );
         }
-        // if kyc_level is not 2 and the happ is not free, we don't install
-        else if !is_kyc_level_2 && !is_happ_free(&happ_id.to_string(), core_app_client).await? {
+        // if kyc_level is not 2 then happ hosting is not allowed and we don't install
+        else if !is_kyc_level_2 {
             trace!("Skipping paid happ due to kyc level {}", happ_id);
         }
         // else install the hosted happ read-only instance
