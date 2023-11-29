@@ -1,6 +1,5 @@
 pub use crate::config;
 pub use crate::entries;
-use crate::host_zome_calls::CoreAppClient;
 pub use crate::host_zome_calls::HappBundle;
 pub use crate::AdminWebsocket;
 use anyhow::{anyhow, Context, Result};
@@ -18,7 +17,6 @@ use url::Url;
 
 /// installs a happs that are mented to be hosted
 pub async fn install_holo_hosted_happs(
-    core_app_client: &mut CoreAppClient,
     config: &config::Config,
     happs: &[HappBundle],
     is_kyc_level_2: bool,

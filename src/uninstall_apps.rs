@@ -1,17 +1,15 @@
 pub use crate::config;
-use crate::host_zome_calls::CoreAppClient;
 pub use crate::host_zome_calls::HappBundle;
 pub use crate::websocket::AdminWebsocket;
 use anyhow::{Context, Result};
 use itertools::Itertools;
-use tracing::{info, trace, warn};
+use tracing::{info, trace};
 
 /// Ineligible Happs = old holo-hosted happs, holo-disabled happs, or happs with invalid pricing for kyc level
 /// Handles ineligible happs for 2 cases - identified and anonymous hosted agents:
 ///  - Identified: Uninstalls & removes identified instances of ineligible happs
 ///  - Anonymous: Disables anonymous instance of ineligible happs
 pub async fn uninstall_ineligible_happs(
-    core_app_client: &mut CoreAppClient,
     config: &config::Config,
     published_happs: &[HappBundle],
     is_kyc_level_2: bool,
@@ -32,7 +30,7 @@ pub async fn uninstall_ineligible_happs(
     trace!("Unique_running_happ_ids {:?}", unique_running_happ_ids);
 
     for happ_id in unique_running_happ_ids {
-        if should_be_installed(core_app_client, happ_id, published_happs, is_kyc_level_2).await {
+        if should_be_installed(happ_id, published_happs, is_kyc_level_2).await {
             info!(
                 "Skipping uninstall of {} as it should remain installed",
                 happ_id
@@ -73,7 +71,6 @@ fn is_instance_of_happ(happ_id: &str, installed_app_id: &str) -> bool {
 }
 
 pub async fn should_be_installed(
-    core_app_client: &mut CoreAppClient,
     running_happ_id: &String,
     published_happs: &[HappBundle],
     is_kyc_level_2: bool,
@@ -105,13 +102,8 @@ pub async fn should_be_installed(
             return false;
         }
 
-        if is_kyc_level_2 {
-            // if kyc is level 2, happ hosting is valid (despite price prefs)
-            true
-        } else {
-            // if kyc is not level 2, happ hosting is not valid and happ shouldn't be installed
-            false
-        }
+        // happ hosting is only valid (despite price prefs) if the host is >= kyc level 2
+        is_kyc_level_2
     } else {
         // The running happ is not an instance of any expected happ, so shouldn't be installed
         false

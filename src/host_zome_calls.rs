@@ -7,7 +7,6 @@ use holochain_keystore::MetaLairClient;
 use holochain_types::prelude::{
     ActionHashB64, ExternIO, FunctionName, Nonce256Bits, Timestamp, ZomeCallUnsigned, ZomeName,
 };
-use holofuel_types::fuel::Fuel;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::time::Duration;
