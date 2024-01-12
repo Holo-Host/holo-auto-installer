@@ -29,7 +29,17 @@ pub async fn get_kyc_level() -> Result<KycLevel> {
         .args(["--url=http://localhost/holochain-api/", "hosting-criteria"])
         .output()?;
 
+    println!(
+        " 'http://localhost/holochain-api/hosting-criteria' OUTPUT : ",
+        output
+    );
+
     let output_str = String::from_utf8_lossy(&output.stdout).to_string();
+
+    println!(
+        " 'http://localhost/holochain-api/hosting-criteria' output_str : ",
+        output_str
+    );
 
     match serde_json::from_str::<HostingCriteria>(&output_str) {
         Ok(hosting_criteria) => Ok(hosting_criteria.kyc),
