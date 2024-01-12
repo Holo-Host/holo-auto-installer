@@ -30,14 +30,14 @@ pub async fn get_kyc_level() -> Result<KycLevel> {
         .output()?;
 
     println!(
-        " 'http://localhost/holochain-api/hosting-criteria' OUTPUT : ",
+        " 'http://localhost/holochain-api/hosting-criteria' OUTPUT : {:?}",
         output
     );
 
     let output_str = String::from_utf8_lossy(&output.stdout).to_string();
 
     println!(
-        " 'http://localhost/holochain-api/hosting-criteria' output_str : ",
+        " 'http://localhost/holochain-api/hosting-criteria' output_str : {:?} ",
         output_str
     );
 
