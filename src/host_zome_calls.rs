@@ -9,6 +9,7 @@ use holochain_types::prelude::{
     ActionHashB64, ExternIO, FunctionName, Nonce256Bits, Timestamp, ZomeCallUnsigned, ZomeName,
 };
 use serde::de::DeserializeOwned;
+use serde::Deserialize;
 use serde::Serialize;
 use std::time::Duration;
 use tracing::trace;
@@ -25,6 +26,13 @@ pub struct CoreAppClient {
     pub app_ws: AppWebsocket,
     pub cell: ProvisionedCell,
     pub keystore: MetaLairClient,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct HappAndHost {
+    pub happ_id: ActionHashB64,
+    pub holoport_id: ActionHashB64,
+    pub is_automated: Option<bool>,
 }
 
 impl CoreAppClient {
@@ -162,4 +170,19 @@ pub async fn get_pending_transactions(core_app_client: &mut CoreAppClient) -> Re
 
     trace!("got pending transactions");
     Ok(pending_transactions)
+}
+
+
+
+pub async fn disable_happ(core_app_client: &mut CoreAppClient, payload: HappAndHost) -> Result<()> {
+    core_app_client
+        .zome_call(
+            ZomeName::from("hha"),
+            FunctionName::from("disable_happ"),
+            payload,
+        )
+        .await?;
+
+    trace!("disabled happ");
+    Ok(())
 }

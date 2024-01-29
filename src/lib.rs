@@ -32,7 +32,7 @@ pub async fn run(core_happ: &config::Happ, config: &config::Config) -> Result<()
     let mut core_app_client = CoreAppClient::connect(core_happ, config).await?;
     let list_of_happs = get_all_published_hosted_happs(&mut core_app_client).await?;
     let pending_transactions = get_pending_transactions(&mut core_app_client).await?;
-    suspend_unpaid_happs(&list_of_happs, pending_transactions).await?;
+    suspend_unpaid_happs(&mut core_app_client, pending_transactions).await?;
     install_holo_hosted_happs(config, &list_of_happs, is_kyc_level_2).await?;
     uninstall_ineligible_happs(config, &list_of_happs, is_kyc_level_2).await?;
     Ok(())
