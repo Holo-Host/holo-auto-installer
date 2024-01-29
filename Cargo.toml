@@ -32,3 +32,4 @@ holochain_websocket = { version = "0.2.2"}
 mr_bundle = { version = "0.2.2" }
 hpos-config-core = { git = "https://github.com/Holo-Host/hpos-config", rev = "bfaced6044ae570bf20d4528fa9aaafcc43ddeec" }
 hpos-config-seed-bundle-explorer ={ git = "https://github.com/Holo-Host/hpos-config", rev = "bfaced6044ae570bf20d4528fa9aaafcc43ddeec" }
+chrono = "0.4.33"
