@@ -1,5 +1,6 @@
 pub use crate::config;
 pub use crate::entries;
+pub use crate::transaction_types::*;
 pub use crate::websocket::{AdminWebsocket, AppWebsocket};
 use anyhow::{anyhow, Context, Result};
 use holochain_conductor_api::{AppInfo, AppResponse, CellInfo, ProvisionedCell, ZomeCall};
@@ -148,4 +149,17 @@ pub async fn get_all_published_hosted_happs(
 
     trace!("got happ bundles");
     Ok(happ_bundle_ids)
+}
+
+pub async fn get_pending_transactions(core_app_client: &mut CoreAppClient) -> Result<PendingTransaction> {
+    let pending_transactions: PendingTransaction = core_app_client
+        .zome_call(
+            ZomeName::from("transactor"),
+            FunctionName::from("get_pending_transactions"),
+            (),
+        )
+        .await?;
+
+    trace!("got pending transactions");
+    Ok(pending_transactions)
 }
