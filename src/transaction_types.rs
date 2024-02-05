@@ -2,7 +2,6 @@ use holochain_types::dna::ActionHashB64;
 use holochain_types::dna::AgentPubKeyB64;
 use holochain_types::dna::EntryHashB64;
 use holochain_types::prelude::CapSecret;
-use holochain_types::prelude::SerializedBytes;
 use holochain_types::prelude::Timestamp;
 
 #[derive(serde::Serialize, serde::Deserialize, Debug)]

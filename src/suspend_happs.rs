@@ -7,7 +7,6 @@ pub use crate::websocket::AdminWebsocket;
 use anyhow::Result;
 use chrono::Utc;
 use holochain_types::dna::HoloHashB64;
-use serde_yaml;
 use std::env;
 use std::process::Command;
 
@@ -28,28 +27,26 @@ pub async fn suspend_unpaid_happs(
     let holoport_id_holo_hash = HoloHashB64::from_b64_str(&holoport_id)?;
 
     for invoice in &pending_transactions.invoice_pending {
-        if let Some(proof_of_service) = &invoice.proof_of_service {
-            if let POS::Hosting(_) = proof_of_service {
-                if let Some(expiration_date) = invoice.expiration_date {
-                    if expiration_date.as_millis() < Utc::now().timestamp_millis() {
-                        if let Some(note) = invoice.note.clone() {
-                            let invoice_note: Result<InvoiceNote, _> = serde_yaml::from_str(&note);
-                            match invoice_note {
-                                Ok(note) => {
-                                    let hha_id = note.hha_id;
-                                    disable_happ(
-                                        core_app_client,
-                                        HappAndHost {
-                                            happ_id: hha_id.clone(),
-                                            holoport_id: holoport_id_holo_hash.clone(),
-                                            is_automated: Some(true),
-                                        },
-                                    )
-                                    .await?;
-                                }
-                                Err(e) => {
-                                    tracing::error!("Error parsing invoice note: {:?}", e);
-                                }
+        if let Some(POS::Hosting(_)) = &invoice.proof_of_service {
+            if let Some(expiration_date) = invoice.expiration_date {
+                if expiration_date.as_millis() < Utc::now().timestamp_millis() {
+                    if let Some(note) = invoice.note.clone() {
+                        let invoice_note: Result<InvoiceNote, _> = serde_yaml::from_str(&note);
+                        match invoice_note {
+                            Ok(note) => {
+                                let hha_id = note.hha_id;
+                                disable_happ(
+                                    core_app_client,
+                                    HappAndHost {
+                                        happ_id: hha_id.clone(),
+                                        holoport_id: holoport_id_holo_hash.clone(),
+                                        is_automated: Some(true),
+                                    },
+                                )
+                                .await?;
+                            }
+                            Err(e) => {
+                                tracing::error!("Error parsing invoice note: {:?}", e);
                             }
                         }
                     }
