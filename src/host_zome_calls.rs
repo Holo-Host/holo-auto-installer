@@ -159,7 +159,9 @@ pub async fn get_all_published_hosted_happs(
     Ok(happ_bundle_ids)
 }
 
-pub async fn get_pending_transactions(core_app_client: &mut CoreAppClient) -> Result<PendingTransaction> {
+pub async fn get_pending_transactions(
+    core_app_client: &mut CoreAppClient,
+) -> Result<PendingTransaction> {
     let pending_transactions: PendingTransaction = core_app_client
         .zome_call(
             ZomeName::from("transactor"),
@@ -171,8 +173,6 @@ pub async fn get_pending_transactions(core_app_client: &mut CoreAppClient) -> Re
     trace!("got pending transactions");
     Ok(pending_transactions)
 }
-
-
 
 pub async fn disable_happ(core_app_client: &mut CoreAppClient, payload: HappAndHost) -> Result<()> {
     core_app_client
