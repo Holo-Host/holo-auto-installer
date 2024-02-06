@@ -13,7 +13,9 @@ use std::process::Command;
 pub async fn suspend_unpaid_happs(
     core_app_client: &mut CoreAppClient,
     pending_transactions: PendingTransaction,
-) -> Result<()> {
+) -> Result<Vec<String>> {
+    let mut suspended_happs: Vec<String> = Vec::new();
+
     let password =
         env::var("DEVICE_SEED_DEFAULT_PASSWORD").expect("DEVICE_SEED_DEFAULT_PASSWORD is not set");
     let holoport_id_output = Command::new("hpos-config-into-base36-id")
@@ -35,6 +37,7 @@ pub async fn suspend_unpaid_happs(
                         match invoice_note {
                             Ok(note) => {
                                 let hha_id = note.hha_id;
+                                suspended_happs.push(hha_id.clone().to_string());
                                 disable_happ(
                                     core_app_client,
                                     HappAndHost {
@@ -55,5 +58,5 @@ pub async fn suspend_unpaid_happs(
         }
     }
 
-    Ok(())
+    Ok(suspended_happs)
 }

@@ -33,10 +33,10 @@ pub async fn run(core_happ: &config::Happ, config: &config::Config) -> Result<()
 
     // suspend happs that have overdue payments
     let pending_transactions = get_pending_transactions(&mut core_app_client).await?;
-    suspend_unpaid_happs(&mut core_app_client, pending_transactions).await?;
+    let suspended_happs = suspend_unpaid_happs(&mut core_app_client, pending_transactions).await?;
 
     let list_of_happs = get_all_published_hosted_happs(&mut core_app_client).await?;
     install_holo_hosted_happs(config, &list_of_happs, is_kyc_level_2).await?;
-    uninstall_ineligible_happs(config, &list_of_happs, is_kyc_level_2).await?;
+    uninstall_ineligible_happs(config, &list_of_happs, is_kyc_level_2, suspended_happs).await?;
     Ok(())
 }
