@@ -33,7 +33,8 @@ impl HbsClient {
         match self.get_access_token().await {
             Ok(v) => v.kyc,
             Err(e) => {
-                tracing::error!("Unable to get kyc: {:?}", e);
+                tracing::warn!("Unable to get kyc: {:?}", e);
+                tracing::warn!("returning default kyc level 1");
                 KycLevel::Level1
             }
         }
