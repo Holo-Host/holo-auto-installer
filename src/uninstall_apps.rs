@@ -13,7 +13,7 @@ pub async fn uninstall_ineligible_happs(
     config: &config::Config,
     published_happs: &[HappBundle],
     is_kyc_level_2: bool,
-    suspended_happs: Vec<String>
+    suspended_happs: Vec<String>,
 ) -> Result<()> {
     info!("Checking to uninstall happs that were removed from the hosted list....");
 
@@ -31,7 +31,14 @@ pub async fn uninstall_ineligible_happs(
     trace!("Unique_running_happ_ids {:?}", unique_running_happ_ids);
 
     for happ_id in unique_running_happ_ids {
-        if should_be_installed(happ_id, published_happs, is_kyc_level_2, suspended_happs.clone()).await {
+        if should_be_installed(
+            happ_id,
+            published_happs,
+            is_kyc_level_2,
+            suspended_happs.clone(),
+        )
+        .await
+        {
             info!(
                 "Skipping uninstall of {} as it should remain installed",
                 happ_id
@@ -75,7 +82,7 @@ pub async fn should_be_installed(
     running_happ_id: &String,
     published_happs: &[HappBundle],
     is_kyc_level_2: bool,
-    suspended_happs: Vec<String>
+    suspended_happs: Vec<String>,
 ) -> bool {
     if suspended_happs.contains(running_happ_id) {
         trace!("Disabling suspended happ {}", running_happ_id);
