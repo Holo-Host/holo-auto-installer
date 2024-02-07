@@ -19,8 +19,6 @@ pub enum KycLevel {
     Level1,
     #[serde(rename = "holo_kyc_2")]
     Level2,
-    #[serde(rename = "error")]
-    Error,
 }
 pub struct HbsClient {
     pub client: reqwest::Client,
@@ -30,7 +28,17 @@ impl HbsClient {
         let client = reqwest::Client::builder().build()?;
         Ok(Self { client })
     }
-    pub async fn get_kyc_level(&self) -> Result<KycLevel> {
+    // return kyc level and assumes default as level 1
+    pub async fn get_kyc_level(&self) -> KycLevel {
+        match self.get_access_token().await {
+            Ok(v) => v.kyc,
+            Err(e) => {
+                tracing::error!("Unable to get kyc: {:?}", e);
+                KycLevel::Level1
+            }
+        }
+    }
+    async fn get_access_token(&self) -> Result<HostingCriteria> {
         let config: hpos_config_core::Config = get_hpos_config()?;
 
         let email = match config {
@@ -87,9 +95,9 @@ impl HbsClient {
         let body = response.text().await?;
         tracing::debug!("Result: {}", body);
         let result: serde_json::Value = serde_json::from_str(&body)?;
-        let h: HostingCriteria = serde_json::from_value(result).unwrap();
+        let h: HostingCriteria = serde_json::from_value(result)?;
         tracing::debug!("HostingCriteria: {:?}", h);
-        Ok(h.kyc)
+        Ok(h)
     }
 }
 

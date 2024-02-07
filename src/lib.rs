@@ -23,7 +23,7 @@ use crate::host_zome_calls::CoreAppClient;
 pub async fn run(core_happ: &config::Happ, config: &config::Config) -> Result<()> {
     info!("Activating holo hosted apps");
     let hbs_connect = HbsClient::connect()?;
-    let kyc_level = hbs_connect.get_kyc_level().await?;
+    let kyc_level = hbs_connect.get_kyc_level().await;
     debug!("Got kyc level {:?}", &kyc_level);
     let is_kyc_level_2 = kyc_level == KycLevel::Level2;
 
