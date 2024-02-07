@@ -44,10 +44,10 @@ impl HbsClient {
             .await?;
         tracing::debug!("email: {:?}, pub_key: {:?}", email, pub_key);
         #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, SerializedBytes)]
+        #[allow(non_snake_case)]
         struct Body {
             email: String,
             timestamp: String,
-            #[allow(non_snake_case)]
             pubKey: String,
         }
 
