@@ -8,6 +8,7 @@ edition = "2021"
 again = "0.1"
 anyhow = "1.0"
 base64= "0.21.7"
+chrono = "0.4.33"
 isahc = "1.7.2"
 itertools = "0.10.5"
 serde = { version = "1.0", features = ["derive"] }
