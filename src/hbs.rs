@@ -1,7 +1,7 @@
 use anyhow::Context;
 use anyhow::Result;
 use base64::prelude::*;
-use holochain_types::prelude::{holochain_serial, SerializedBytes, Signature};
+use holochain_types::prelude::{holochain_serial, SerializedBytes, Signature, Timestamp};
 use hpos_hc_connect::{hpos_agent::get_hpos_config, CoreAppAgent};
 use serde::{Deserialize, Serialize};
 
@@ -56,13 +56,13 @@ impl HbsClient {
         #[allow(non_snake_case)]
         struct Body {
             email: String,
-            timestamp: String,
+            timestamp: i64,
             pubKey: String,
         }
 
         let payload = Body {
             email,
-            timestamp: chrono::offset::Utc::now().to_string(),
+            timestamp: Timestamp::now().as_millis(),
             pubKey: pub_key.to_string(),
         };
         let signature: Signature = core_app_agent
