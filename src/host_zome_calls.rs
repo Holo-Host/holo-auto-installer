@@ -1,5 +1,6 @@
 pub use crate::config;
 pub use crate::entries;
+pub use crate::transaction_types::*;
 pub use crate::websocket::{AdminWebsocket, AppWebsocket};
 use anyhow::{anyhow, Context, Result};
 use holochain_conductor_api::{AppInfo, AppResponse, CellInfo, ProvisionedCell, ZomeCall};
@@ -8,6 +9,7 @@ use holochain_types::prelude::{
     ActionHashB64, ExternIO, FunctionName, Nonce256Bits, Timestamp, ZomeCallUnsigned, ZomeName,
 };
 use serde::de::DeserializeOwned;
+use serde::Deserialize;
 use serde::Serialize;
 use std::time::Duration;
 use tracing::trace;
@@ -24,6 +26,13 @@ pub struct CoreAppClient {
     pub app_ws: AppWebsocket,
     pub cell: ProvisionedCell,
     pub keystore: MetaLairClient,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct HappAndHost {
+    pub happ_id: ActionHashB64,
+    pub holoport_id: ActionHashB64,
+    pub is_automated: Option<bool>,
 }
 
 impl CoreAppClient {
@@ -148,4 +157,32 @@ pub async fn get_all_published_hosted_happs(
 
     trace!("got happ bundles");
     Ok(happ_bundle_ids)
+}
+
+pub async fn get_pending_transactions(
+    core_app_client: &mut CoreAppClient,
+) -> Result<PendingTransaction> {
+    let pending_transactions: PendingTransaction = core_app_client
+        .zome_call(
+            ZomeName::from("transactor"),
+            FunctionName::from("get_pending_transactions"),
+            (),
+        )
+        .await?;
+
+    trace!("got pending transactions");
+    Ok(pending_transactions)
+}
+
+pub async fn disable_happ(core_app_client: &mut CoreAppClient, payload: HappAndHost) -> Result<()> {
+    core_app_client
+        .zome_call(
+            ZomeName::from("hha"),
+            FunctionName::from("disable_happ"),
+            payload,
+        )
+        .await?;
+
+    trace!("disabled happ");
+    Ok(())
 }
