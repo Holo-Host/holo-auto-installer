@@ -17,6 +17,8 @@ mod get_kyc_level;
 use get_kyc_level::{get_kyc_level, KycLevel};
 mod suspend_happs;
 use suspend_happs::suspend_unpaid_happs;
+mod hbs;
+use hbs::{HbsClient, KycLevel};
 
 use crate::host_zome_calls::{get_pending_transactions, CoreAppClient};
 
@@ -25,7 +27,8 @@ use crate::host_zome_calls::{get_pending_transactions, CoreAppClient};
 /// then uninstalls happs that are ineligible for host (eg: holo-disabled, unallowed pricing for kyc level)
 pub async fn run(core_happ: &config::Happ, config: &config::Config) -> Result<()> {
     info!("Activating holo hosted apps");
-    let kyc_level = get_kyc_level().await?;
+    let hbs_connect = HbsClient::connect()?;
+    let kyc_level = hbs_connect.get_kyc_level().await;
     debug!("Got kyc level {:?}", &kyc_level);
     let is_kyc_level_2 = kyc_level == KycLevel::Level2;
 
