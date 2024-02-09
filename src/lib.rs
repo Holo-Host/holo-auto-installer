@@ -13,8 +13,6 @@ use install_app::install_holo_hosted_happs;
 mod uninstall_apps;
 use tracing::{debug, info};
 use uninstall_apps::uninstall_ineligible_happs;
-mod get_kyc_level;
-use get_kyc_level::{get_kyc_level, KycLevel};
 mod suspend_happs;
 use suspend_happs::suspend_unpaid_happs;
 mod hbs;
