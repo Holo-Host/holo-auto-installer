@@ -2177,8 +2177,8 @@ version = "0.3.3"
 dependencies = [
  "again",
  "anyhow",
- "chrono",
  "base64 0.21.7",
+ "chrono",
  "getrandom 0.2.9",
  "holochain_conductor_api",
  "holochain_keystore",
