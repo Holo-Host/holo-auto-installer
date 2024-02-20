@@ -22,6 +22,7 @@ pub struct HappBundle {
     pub special_installed_app_id: Option<String>,
 }
 
+#[derive(Clone)]
 pub struct CoreAppClient {
     pub app_ws: AppWebsocket,
     pub core_happ_cell: ProvisionedCell,
@@ -73,7 +74,7 @@ impl CoreAppClient {
                         CellInfo::Provisioned(c) => c.clone(),
                         _ => return Err(anyhow!("holofuel cell not found")),
                     };
-                    trace!("got holofuel cell {:?}", holofuel_cell);
+                trace!("got holofuel cell {:?}", holofuel_cell);
                 Ok(CoreAppClient {
                     app_ws,
                     core_happ_cell,
@@ -140,8 +141,14 @@ pub async fn get_all_published_hosted_happs(
 ) -> Result<Vec<HappBundle>> {
     trace!("get_all_published_hosted_happs");
 
+    let core_happ_cell = core_app_client.clone().core_happ_cell;
     let happ_bundles: Vec<entries::PresentedHappBundle> = core_app_client
-        .zome_call(core_app_client.core_happ_cell, ZomeName::from("hha"), FunctionName::from("get_happs"), ())
+        .zome_call(
+            core_happ_cell,
+            ZomeName::from("hha"),
+            FunctionName::from("get_happs"),
+            (),
+        )
         .await?;
 
     let happ_bundle_ids = happ_bundles
@@ -171,9 +178,10 @@ pub async fn get_all_published_hosted_happs(
 pub async fn get_pending_transactions(
     core_app_client: &mut CoreAppClient,
 ) -> Result<PendingTransaction> {
+    let holofuel_cell = core_app_client.clone().holofuel_cell;
     let pending_transactions: PendingTransaction = core_app_client
         .zome_call(
-            core_app_client.holofuel_cell,
+            holofuel_cell,
             ZomeName::from("transactor"),
             FunctionName::from("get_pending_transactions"),
             (),
@@ -185,9 +193,10 @@ pub async fn get_pending_transactions(
 }
 
 pub async fn disable_happ(core_app_client: &mut CoreAppClient, payload: HappAndHost) -> Result<()> {
+    let core_happ_cell = core_app_client.clone().core_happ_cell;
     core_app_client
         .zome_call(
-            core_app_client.core_happ_cell,
+            core_happ_cell,
             ZomeName::from("hha"),
             FunctionName::from("disable_happ"),
             payload,
