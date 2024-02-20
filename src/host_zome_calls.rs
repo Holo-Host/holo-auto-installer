@@ -71,7 +71,7 @@ impl CoreAppClient {
                 let holofuel_cell: holochain_conductor_api::ProvisionedCell =
                     match &cell_info.get("holofuel").unwrap()[0] {
                         CellInfo::Provisioned(c) => c.clone(),
-                        _ => return Err(anyhow!("core-app cell not found")),
+                        _ => return Err(anyhow!("holofuel cell not found")),
                     };
                     trace!("got holofuel cell {:?}", holofuel_cell);
                 Ok(CoreAppClient {
