@@ -24,7 +24,8 @@ pub struct HappBundle {
 
 pub struct CoreAppClient {
     pub app_ws: AppWebsocket,
-    pub cell: ProvisionedCell,
+    pub core_happ_cell: ProvisionedCell,
+    pub holofuel_cell: ProvisionedCell,
     pub keystore: MetaLairClient,
 }
 
@@ -61,15 +62,22 @@ impl CoreAppClient {
             }) => {
                 trace!("got app info");
 
-                let cell: holochain_conductor_api::ProvisionedCell =
+                let core_happ_cell: holochain_conductor_api::ProvisionedCell =
                     match &cell_info.get("core-app").unwrap()[0] {
                         CellInfo::Provisioned(c) => c.clone(),
                         _ => return Err(anyhow!("core-app cell not found")),
                     };
-                trace!("got cell {:?}", cell);
+                trace!("got core happ cell {:?}", core_happ_cell);
+                let holofuel_cell: holochain_conductor_api::ProvisionedCell =
+                    match &cell_info.get("holofuel").unwrap()[0] {
+                        CellInfo::Provisioned(c) => c.clone(),
+                        _ => return Err(anyhow!("core-app cell not found")),
+                    };
+                    trace!("got holofuel cell {:?}", holofuel_cell);
                 Ok(CoreAppClient {
                     app_ws,
-                    cell,
+                    core_happ_cell,
+                    holofuel_cell,
                     keystore,
                 })
             }
@@ -79,6 +87,7 @@ impl CoreAppClient {
 
     pub async fn zome_call<T, R>(
         &mut self,
+        cell: ProvisionedCell,
         zome_name: ZomeName,
         fn_name: FunctionName,
         payload: T,
@@ -89,12 +98,12 @@ impl CoreAppClient {
     {
         let (nonce, expires_at) = fresh_nonce()?;
         let zome_call_unsigned = ZomeCallUnsigned {
-            cell_id: self.cell.cell_id.clone(),
+            cell_id: cell.cell_id.clone(),
             zome_name,
             fn_name,
             payload: ExternIO::encode(payload)?,
             cap_secret: None,
-            provenance: self.cell.cell_id.agent_pubkey().clone(),
+            provenance: cell.cell_id.agent_pubkey().clone(),
             nonce,
             expires_at,
         };
@@ -132,7 +141,7 @@ pub async fn get_all_published_hosted_happs(
     trace!("get_all_published_hosted_happs");
 
     let happ_bundles: Vec<entries::PresentedHappBundle> = core_app_client
-        .zome_call(ZomeName::from("hha"), FunctionName::from("get_happs"), ())
+        .zome_call(core_app_client.core_happ_cell, ZomeName::from("hha"), FunctionName::from("get_happs"), ())
         .await?;
 
     let happ_bundle_ids = happ_bundles
@@ -164,6 +173,7 @@ pub async fn get_pending_transactions(
 ) -> Result<PendingTransaction> {
     let pending_transactions: PendingTransaction = core_app_client
         .zome_call(
+            core_app_client.holofuel_cell,
             ZomeName::from("transactor"),
             FunctionName::from("get_pending_transactions"),
             (),
@@ -177,6 +187,7 @@ pub async fn get_pending_transactions(
 pub async fn disable_happ(core_app_client: &mut CoreAppClient, payload: HappAndHost) -> Result<()> {
     core_app_client
         .zome_call(
+            core_app_client.core_happ_cell,
             ZomeName::from("hha"),
             FunctionName::from("disable_happ"),
             payload,
