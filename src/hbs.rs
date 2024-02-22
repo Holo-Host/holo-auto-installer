@@ -1,5 +1,3 @@
-use std::ptr::null;
-
 use anyhow::Context;
 use anyhow::Result;
 use base64::prelude::*;

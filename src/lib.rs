@@ -4,7 +4,6 @@ pub mod config;
 pub mod entries;
 pub mod websocket;
 use anyhow::Result;
-use tracing_subscriber::field::debug;
 pub use websocket::{AdminWebsocket, AppWebsocket};
 pub mod host_zome_calls;
 pub mod transaction_types;
