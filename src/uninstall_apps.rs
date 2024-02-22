@@ -94,19 +94,20 @@ pub async fn should_be_installed(
 
     if let Some(happ) = published_happs
         .iter()
-        .find(|&happ| &happ.happ_id.to_string() == running_happ_id)
+        .find(|&happ| happ.happ_id.to_string() == *running_happ_id)
     {
         let mut is_jurisdiction_in_list = false;
         if let Some(_happ_jurisdiction) = happ
             .jurisdictions
             .iter()
-            .find(|&happ_jurisdiction| happ_jurisdiction.to_string() == jurisdiction)
+            .find(|&happ_jurisdiction| *happ_jurisdiction == jurisdiction)
         {
             is_jurisdiction_in_list = true;
         }
         if happ.exclude_jurisdictions && is_jurisdiction_in_list {
             return false;
-        } else if !happ.exclude_jurisdictions && !is_jurisdiction_in_list {
+        }
+        if !happ.exclude_jurisdictions && !is_jurisdiction_in_list {
             return false;
         }
     }
