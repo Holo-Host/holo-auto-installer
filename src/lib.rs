@@ -4,6 +4,7 @@ pub mod config;
 pub mod entries;
 pub mod websocket;
 use anyhow::Result;
+use tracing_subscriber::field::debug;
 pub use websocket::{AdminWebsocket, AppWebsocket};
 pub mod host_zome_calls;
 pub mod transaction_types;
@@ -28,6 +29,9 @@ pub async fn run(core_happ: &config::Happ, config: &config::Config) -> Result<()
     let hbs_connect = HbsClient::connect()?;
     let kyc_level = hbs_connect.get_kyc_level().await;
     debug!("Got kyc level {:?}", &kyc_level);
+    let jurisdiction = hbs_connect.get_jurisdiction().await;
+    debug!("Got jurisdiction from hbs {:?}", jurisdiction);
+
     let is_kyc_level_2 = kyc_level == KycLevel::Level2;
 
     let mut core_app_client = CoreAppClient::connect(core_happ, config).await?;
@@ -38,6 +42,6 @@ pub async fn run(core_happ: &config::Happ, config: &config::Config) -> Result<()
 
     let list_of_happs = get_all_published_hosted_happs(&mut core_app_client).await?;
     install_holo_hosted_happs(config, &list_of_happs, is_kyc_level_2).await?;
-    uninstall_ineligible_happs(config, &list_of_happs, is_kyc_level_2, suspended_happs).await?;
+    uninstall_ineligible_happs(config, &list_of_happs, is_kyc_level_2, suspended_happs, jurisdiction).await?;
     Ok(())
 }

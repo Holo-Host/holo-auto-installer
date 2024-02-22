@@ -2,7 +2,9 @@ use anyhow::{Context, Result};
 use holochain_types::prelude::ActionHashB64;
 use holochain_types::prelude::AgentPubKeyB64;
 use holochain_types::prelude::MembraneProof;
+use holochain_types::prelude::Timestamp;
 use holofuel_types::fuel::Fuel;
+use hpos_hc_connect::hha_types::LoginConfig;
 use serde::Deserialize;
 use serde::Serialize;
 use std::fs::File;
@@ -39,9 +41,20 @@ pub struct PresentedHappBundle {
     pub is_paused: bool,
     pub uid: Option<String>,
     pub bundle_url: String,
+    pub ui_src_url: Option<String>,
+    pub dnas: Vec<DnaResource>,
+    pub hosted_urls: Vec<String>,
     pub name: String,
+    pub logo_url: Option<String>,
+    pub description: String,
+    pub categories: Vec<String>,
+    pub jurisdictions: Vec<String>,
+    pub exclude_jurisdictions: bool,
+    pub publisher_pricing_pref: PublisherPricingPref,
+    pub login_config: LoginConfig,
     pub special_installed_app_id: Option<String>,
     pub host_settings: HostSettings,
+    pub last_edited: Timestamp,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

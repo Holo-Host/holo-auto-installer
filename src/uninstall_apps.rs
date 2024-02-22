@@ -2,8 +2,10 @@ pub use crate::config;
 pub use crate::host_zome_calls::HappBundle;
 pub use crate::websocket::AdminWebsocket;
 use anyhow::{Context, Result};
+use holochain_types::dna::HoloHashB64;
 use itertools::Itertools;
-use tracing::{info, trace};
+use tracing::{info, trace, warn};
+use tracing_subscriber::field::debug;
 
 /// Ineligible Happs = old holo-hosted happs, holo-disabled happs, or happs with invalid pricing for kyc level
 /// Handles ineligible happs for 2 cases - identified and anonymous hosted agents:
@@ -14,6 +16,7 @@ pub async fn uninstall_ineligible_happs(
     published_happs: &[HappBundle],
     is_kyc_level_2: bool,
     suspended_happs: Vec<String>,
+    jurisdiction: String,
 ) -> Result<()> {
     info!("Checking to uninstall happs that were removed from the hosted list....");
 
@@ -36,6 +39,7 @@ pub async fn uninstall_ineligible_happs(
             published_happs,
             is_kyc_level_2,
             suspended_happs.clone(),
+            jurisdiction.clone(),
         )
         .await
         {
@@ -83,10 +87,30 @@ pub async fn should_be_installed(
     published_happs: &[HappBundle],
     is_kyc_level_2: bool,
     suspended_happs: Vec<String>,
+    jurisdiction: String,
 ) -> bool {
     if suspended_happs.contains(running_happ_id) {
         trace!("Disabling suspended happ {}", running_happ_id);
         return false;
+    }
+
+    if let Some(happ) = published_happs
+        .iter()
+        .find(|&happ| &happ.happ_id.to_string() == running_happ_id)
+    {
+        let mut is_jurisdiction_in_list = false;
+        if let Some(_happ_jurisdiction) = happ
+            .jurisdictions
+            .iter()
+            .find(|&happ_jurisdiction| happ_jurisdiction.to_string() == jurisdiction)
+        {
+            is_jurisdiction_in_list = true;
+        }
+        if happ.exclude_jurisdictions && is_jurisdiction_in_list {
+            return false;
+        } else if !happ.exclude_jurisdictions && !is_jurisdiction_in_list {
+            return false;
+        }
     }
 
     trace!("`should_be_installed check` for {}", running_happ_id);

@@ -1,3 +1,5 @@
+use std::ptr::null;
+
 use anyhow::Context;
 use anyhow::Result;
 use base64::prelude::*;
@@ -36,6 +38,16 @@ impl HbsClient {
                 tracing::warn!("Unable to get kyc: {:?}", e);
                 tracing::warn!("returning default kyc level 1");
                 KycLevel::Level1
+            }
+        }
+    }
+    pub async fn get_jurisdiction(&self) -> String {
+        match self.get_access_token().await {
+            Ok(v) => v.jurisdiction,
+            Err(e) => {
+                tracing::warn!("Unable to get jurisdiction: {:?}", e);
+                tracing::warn!("Using an empty string as jurisdiction");
+                return "".to_string()
             }
         }
     }

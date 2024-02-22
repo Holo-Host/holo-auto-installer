@@ -20,6 +20,8 @@ pub struct HappBundle {
     pub is_paused: bool,
     pub is_host_disabled: bool,
     pub special_installed_app_id: Option<String>,
+    pub jurisdictions: Vec<String>,
+    pub exclude_jurisdictions: bool,
 }
 
 pub struct CoreAppClient {
@@ -151,6 +153,8 @@ pub async fn get_all_published_hosted_happs(
                 is_paused: happ.is_paused,
                 is_host_disabled: happ.host_settings.is_host_disabled,
                 special_installed_app_id: happ.special_installed_app_id,
+                jurisdictions: happ.jurisdictions,
+                exclude_jurisdictions: happ.exclude_jurisdictions
             }
         })
         .collect();
