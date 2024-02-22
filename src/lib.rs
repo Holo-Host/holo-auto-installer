@@ -41,6 +41,13 @@ pub async fn run(core_happ: &config::Happ, config: &config::Config) -> Result<()
 
     let list_of_happs = get_all_published_hosted_happs(&mut core_app_client).await?;
     install_holo_hosted_happs(config, &list_of_happs, is_kyc_level_2).await?;
-    uninstall_ineligible_happs(config, &list_of_happs, is_kyc_level_2, suspended_happs, jurisdiction).await?;
+    uninstall_ineligible_happs(
+        config,
+        &list_of_happs,
+        is_kyc_level_2,
+        suspended_happs,
+        jurisdiction,
+    )
+    .await?;
     Ok(())
 }

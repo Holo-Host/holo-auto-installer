@@ -154,7 +154,7 @@ pub async fn get_all_published_hosted_happs(
                 is_host_disabled: happ.host_settings.is_host_disabled,
                 special_installed_app_id: happ.special_installed_app_id,
                 jurisdictions: happ.jurisdictions,
-                exclude_jurisdictions: happ.exclude_jurisdictions
+                exclude_jurisdictions: happ.exclude_jurisdictions,
             }
         })
         .collect();

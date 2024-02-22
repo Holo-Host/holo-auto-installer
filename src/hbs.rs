@@ -45,7 +45,7 @@ impl HbsClient {
             Err(e) => {
                 tracing::warn!("Unable to get jurisdiction: {:?}", e);
                 tracing::warn!("Using an empty string as jurisdiction");
-                return "".to_string()
+                return "".to_string();
             }
         }
     }

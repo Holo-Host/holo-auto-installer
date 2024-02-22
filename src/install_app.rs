@@ -67,7 +67,7 @@ pub async fn install_holo_hosted_happs(
         is_host_disabled,
         special_installed_app_id,
         exclude_jurisdictions: _,
-        jurisdictions: _
+        jurisdictions: _,
     } in happs
     {
         // Check if special happ is installed and do nothing if it is installed
