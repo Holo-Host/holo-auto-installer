@@ -35,7 +35,7 @@ pub struct CoreAppClient {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct HappAndHost {
     pub happ_id: ActionHashB64,
-    pub holoport_id: ActionHashB64,
+    pub holoport_id: String,
     pub is_automated: Option<bool>,
 }
 

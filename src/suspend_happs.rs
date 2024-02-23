@@ -3,7 +3,6 @@ use crate::host_zome_calls::{
 };
 use anyhow::Result;
 use chrono::Utc;
-use holochain_types::dna::HoloHashB64;
 use std::env;
 use std::process::Command;
 use tracing::debug;
@@ -26,7 +25,6 @@ pub async fn suspend_unpaid_happs(
         .output()
         .expect("Failed to execute command");
     let holoport_id = String::from_utf8_lossy(&holoport_id_output.stdout);
-    let holoport_id_holo_hash = HoloHashB64::from_b64_str(&holoport_id)?;
 
     for invoice in &pending_transactions.invoice_pending {
         if let Some(POS::Hosting(_)) = &invoice.proof_of_service {
@@ -42,7 +40,7 @@ pub async fn suspend_unpaid_happs(
                                     core_app_client,
                                     HappAndHost {
                                         happ_id: hha_id.clone(),
-                                        holoport_id: holoport_id_holo_hash.clone(),
+                                        holoport_id: holoport_id.to_string(),
                                         is_automated: Some(true),
                                     },
                                 )
