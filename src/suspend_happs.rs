@@ -6,6 +6,7 @@ use chrono::Utc;
 use holochain_types::dna::HoloHashB64;
 use std::env;
 use std::process::Command;
+use tracing::debug;
 
 pub async fn suspend_unpaid_happs(
     core_app_client: &mut CoreAppClient,
@@ -57,5 +58,6 @@ pub async fn suspend_unpaid_happs(
         }
     }
 
+    debug!("suspend happs completed: {:?}", suspended_happs);
     Ok(suspended_happs)
 }
