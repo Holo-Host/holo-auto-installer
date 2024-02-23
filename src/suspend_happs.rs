@@ -17,9 +17,9 @@ pub async fn suspend_unpaid_happs(
         env::var("DEVICE_SEED_DEFAULT_PASSWORD").expect("DEVICE_SEED_DEFAULT_PASSWORD is not set");
     let hpos_config_path = env::var("HPOS_CONFIG_PATH")
         .expect("HPOS_CONFIG_PATH not found. please add the path to the environment variable");
-    let holoport_id_output = Command::new(hpos_config_path)
+    let holoport_id_output = Command::new("hpos-config-into-base36-id")
         .arg("--config-path")
-        .arg("/run/hpos-init/hp-*.json")
+        .arg(hpos_config_path)
         .arg("--password")
         .arg(password)
         .output()
