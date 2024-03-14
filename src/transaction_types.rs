@@ -27,6 +27,7 @@ pub enum TransactionDirection {
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Debug)]
+#[serde(rename_all = "snake_case")]
 pub enum POS {
     Hosting(CapSecret),
     Redemption(String), // Contains wallet address
