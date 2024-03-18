@@ -26,9 +26,10 @@ use crate::host_zome_calls::{get_pending_transactions, CoreAppClient};
 pub async fn run(core_happ: &config::Happ, config: &config::Config) -> Result<()> {
     info!("Activating holo hosted apps");
     let hbs_connect = HbsClient::connect()?;
-    let kyc_level = hbs_connect.get_kyc_level().await;
+    let hosting_criteria = hbs_connect.get_hosting_criteria().await;
+    let kyc_level = hosting_criteria.kyc;
     debug!("Got kyc level {:?}", &kyc_level);
-    let jurisdiction = hbs_connect.get_jurisdiction().await;
+    let jurisdiction = hosting_criteria.jurisdiction;
     debug!("Got jurisdiction from hbs {:?}", jurisdiction);
 
     let is_kyc_level_2 = kyc_level == KycLevel::Level2;
