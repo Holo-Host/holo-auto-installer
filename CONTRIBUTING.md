@@ -23,4 +23,4 @@ Generally if you want to restrict something so it is not installed on the holopo
 There is a connection made to HBS at the start of the script. Please look at `hbs.rs` if you need to communicate with HBS. Please make any HBS requests in this file and then expose it to the app.
 
 ### Zome
-If you are making a zome call. Look at `host_zome_calls.rs`. Currently there are 2 sell ids setup, `core_happ` and `holofuel`. If you want to expand the functionality and add aditional cell ids then please look at `connect` function. All zome calls should be made here and exposed to the other functions 
+If you are making a zome call. Look at `host_zome_calls.rs`. Currently there are 2 cell ids setup, `core_happ` and `holofuel`. If you want to expand the functionality and add additional cell ids then please look at `connect` function. All zome calls should be made here and exposed to the other functions 
