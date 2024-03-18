@@ -32,8 +32,9 @@ impl HbsClient {
         match self.get_access_token().await {
             Ok(v) => v,
             Err(e) => {
-                tracing::warn!("Unable to get kyc: {:?}", e);
+                tracing::warn!("Unable to get kyc & jurisdiction: {:?}", e);
                 tracing::warn!("returning default kyc level 1");
+                tracing::warn!("returning default jurisdiction of empty string");
                 HostingCriteria {
                     id: "".to_string(),
                     jurisdiction: "".to_string(),
