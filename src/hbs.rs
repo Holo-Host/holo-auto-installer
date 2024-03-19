@@ -8,9 +8,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Deserialize)]
 pub struct HostingCriteria {
     #[allow(dead_code)]
-    pub id: String,
-    #[allow(dead_code)]
-    pub jurisdiction: String,
+    pub id: Option<String>,
+    pub jurisdiction: Option<String>,
     pub kyc: KycLevel,
 }
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
@@ -34,10 +33,10 @@ impl HbsClient {
             Err(e) => {
                 tracing::warn!("Unable to get kyc & jurisdiction: {:?}", e);
                 tracing::warn!("returning default kyc level 1");
-                tracing::warn!("returning default jurisdiction of empty string");
+                tracing::warn!("returning default jurisdiction of None");
                 HostingCriteria {
-                    id: "".to_string(),
-                    jurisdiction: "".to_string(),
+                    id: None,
+                    jurisdiction: None,
                     kyc: KycLevel::Level1,
                 }
             }

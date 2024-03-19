@@ -47,7 +47,7 @@ pub async fn run(core_happ: &config::Happ, config: &config::Config) -> Result<()
         &list_of_happs,
         is_kyc_level_2,
         suspended_happs,
-        jurisdiction,
+        jurisdiction.unwrap_or_default(),
     )
     .await?;
     Ok(())
