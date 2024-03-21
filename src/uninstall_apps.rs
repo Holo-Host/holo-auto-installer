@@ -115,8 +115,8 @@ pub async fn should_be_installed(
             }
         }
         None => {
-            debug!("jurisdiction not available for holoport");
-            debug!("happ {} won't be installed", running_happ_id);
+            warn!("jurisdiction not available for holoport");
+            warn!("happ {} won't be installed", running_happ_id);
             return false;
         }
     }
