@@ -1,14 +1,11 @@
-pub use crate::config;
-pub use crate::host_zome_calls::HappBundle;
 use crate::host_zome_calls::{
     disable_happ, CoreAppClient, HappAndHost, InvoiceNote, PendingTransaction, POS,
 };
-pub use crate::websocket::AdminWebsocket;
 use anyhow::Result;
 use chrono::Utc;
-use holochain_types::dna::HoloHashB64;
 use std::env;
 use std::process::Command;
+use tracing::debug;
 
 pub async fn suspend_unpaid_happs(
     core_app_client: &mut CoreAppClient,
@@ -18,15 +15,16 @@ pub async fn suspend_unpaid_happs(
 
     let password =
         env::var("DEVICE_SEED_DEFAULT_PASSWORD").expect("DEVICE_SEED_DEFAULT_PASSWORD is not set");
+    let hpos_config_path = env::var("HPOS_CONFIG_PATH")
+        .expect("HPOS_CONFIG_PATH not found. please add the path to the environment variable");
     let holoport_id_output = Command::new("hpos-config-into-base36-id")
         .arg("--config-path")
-        .arg("/run/hpos-init/hp-*.json")
+        .arg(hpos_config_path)
         .arg("--password")
         .arg(password)
         .output()
         .expect("Failed to execute command");
     let holoport_id = String::from_utf8_lossy(&holoport_id_output.stdout);
-    let holoport_id_holo_hash = HoloHashB64::from_b64_str(&holoport_id)?;
 
     for invoice in &pending_transactions.invoice_pending {
         if let Some(POS::Hosting(_)) = &invoice.proof_of_service {
@@ -42,7 +40,7 @@ pub async fn suspend_unpaid_happs(
                                     core_app_client,
                                     HappAndHost {
                                         happ_id: hha_id.clone(),
-                                        holoport_id: holoport_id_holo_hash.clone(),
+                                        holoport_id: holoport_id.to_string(),
                                         is_automated: Some(true),
                                     },
                                 )
@@ -58,5 +56,6 @@ pub async fn suspend_unpaid_happs(
         }
     }
 
+    debug!("suspend happs completed: {:?}", suspended_happs);
     Ok(suspended_happs)
 }

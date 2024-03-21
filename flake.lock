@@ -184,7 +184,7 @@
       },
       "original": {
         "owner": "holochain",
-        "ref": "holochain-0.2.5",
+        "ref": "holochain-0.2.6-rc.0",
         "repo": "holochain",
         "type": "github"
       }

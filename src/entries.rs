@@ -40,6 +40,9 @@ pub struct PresentedHappBundle {
     pub uid: Option<String>,
     pub bundle_url: String,
     pub name: String,
+    pub categories: Vec<String>,
+    pub jurisdictions: Vec<String>,
+    pub exclude_jurisdictions: bool,
     pub special_installed_app_id: Option<String>,
     pub host_settings: HostSettings,
 }

@@ -6,12 +6,11 @@ use hpos_hc_connect::{hpos_agent::get_hpos_config, CoreAppAgent};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize)]
-struct HostingCriteria {
+pub struct HostingCriteria {
     #[allow(dead_code)]
-    id: String,
-    #[allow(dead_code)]
-    jurisdiction: String,
-    kyc: KycLevel,
+    pub id: Option<String>,
+    pub jurisdiction: Option<String>,
+    pub kyc: KycLevel,
 }
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub enum KycLevel {
@@ -28,14 +27,18 @@ impl HbsClient {
         let client = reqwest::Client::builder().build()?;
         Ok(Self { client })
     }
-    // return kyc level and assumes default as level 1
-    pub async fn get_kyc_level(&self) -> KycLevel {
+    pub async fn get_hosting_criteria(&self) -> HostingCriteria {
         match self.get_access_token().await {
-            Ok(v) => v.kyc,
+            Ok(v) => v,
             Err(e) => {
-                tracing::warn!("Unable to get kyc: {:?}", e);
+                tracing::warn!("Unable to get kyc & jurisdiction: {:?}", e);
                 tracing::warn!("returning default kyc level 1");
-                KycLevel::Level1
+                tracing::warn!("returning default jurisdiction of None");
+                HostingCriteria {
+                    id: None,
+                    jurisdiction: None,
+                    kyc: KycLevel::Level1,
+                }
             }
         }
     }
