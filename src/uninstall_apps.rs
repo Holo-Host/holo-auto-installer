@@ -3,7 +3,7 @@ pub use crate::host_zome_calls::HappBundle;
 pub use crate::websocket::AdminWebsocket;
 use anyhow::{Context, Result};
 use itertools::Itertools;
-use tracing::{debug, info, trace};
+use tracing::{warn, info, trace};
 
 /// Ineligible Happs = old holo-hosted happs, holo-disabled happs, or happs with invalid pricing for kyc level
 /// Handles ineligible happs for 2 cases - identified and anonymous hosted agents:
