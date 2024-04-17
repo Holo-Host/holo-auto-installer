@@ -87,6 +87,13 @@ pub async fn should_be_installed(
     suspended_happs: Vec<String>,
     jurisdiction: Option<String>,
 ) -> bool {
+    trace!("`should_be_installed check` for {}", running_happ_id);
+    // This should be the first check since the core-app should never be uninstalled currently
+    if !is_hosted_happ(running_happ_id) {
+        trace!("Keeping infrastructure happ {}", running_happ_id);
+        return true;
+    }
+
     if suspended_happs.contains(running_happ_id) {
         trace!("Disabling suspended happ {}", running_happ_id);
         return false;
@@ -119,13 +126,6 @@ pub async fn should_be_installed(
             warn!("happ {} won't be installed", running_happ_id);
             return false;
         }
-    }
-
-    trace!("`should_be_installed check` for {}", running_happ_id);
-
-    if !is_hosted_happ(running_happ_id) {
-        trace!("Keeping infrastructure happ {}", running_happ_id);
-        return true;
     }
 
     // The running happ is an instance of an expected happ
