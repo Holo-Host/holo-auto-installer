@@ -47,7 +47,7 @@ impl HbsClient {
     async fn get_access_token(&self) -> Result<Option<HostingCriteria>> {
         let response = self.inner_get_access_token().await?;
         tracing::debug!("response received");
-        let body = response.text().await?;
+        let mut body = response.text().await?;
         // 504 Gateway Timeout
         // here we either need to retry once more or end the script
         if body.contains("error code: 504") {
