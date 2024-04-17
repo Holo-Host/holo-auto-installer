@@ -45,21 +45,18 @@ impl HbsClient {
     }
 
     async fn get_access_token(&self) -> Result<Option<HostingCriteria>> {
-        let mut retry_counter = 0;
-        let mut retry = true;
-        let mut body = String::new();
-        // retry atleast twice
-        while retry && (retry_counter < 2) {
+        let response = self.inner_get_access_token().await?;
+        tracing::debug!("response received");
+        let body = response.text().await?;
+        // 504 Gateway Timeout
+        // here we either need to retry once more or end the script
+        if body.contains("error code: 504") {
+            tracing::warn!("Gateway Timeout. Retrying once more...");
             let response = self.inner_get_access_token().await?;
-            tracing::debug!("response received");
             body = response.text().await?;
-            // 504 Gateway Timeout
-            // here we either need to retry or end the script
             if body.contains("error code: 504") {
-                tracing::warn!("Gateway Timeout. Retrying...");
-                retry_counter += 1;
-            } else {
-                retry = false;
+                tracing::warn!("Gateway Timeout. Exiting...");
+                return Ok(None);
             }
         }
         tracing::debug!("Result: {}", body);
