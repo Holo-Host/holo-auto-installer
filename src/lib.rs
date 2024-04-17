@@ -11,7 +11,7 @@ use host_zome_calls::get_all_published_hosted_happs;
 mod install_app;
 use install_app::install_holo_hosted_happs;
 mod uninstall_apps;
-use tracing::{debug, info};
+use tracing::{debug, error, info};
 use uninstall_apps::uninstall_ineligible_happs;
 mod suspend_happs;
 use suspend_happs::suspend_unpaid_happs;
@@ -26,7 +26,13 @@ use crate::host_zome_calls::{get_pending_transactions, CoreAppClient};
 pub async fn run(core_happ: &config::Happ, config: &config::Config) -> Result<()> {
     info!("Activating holo hosted apps");
     let hbs_connect = HbsClient::connect()?;
-    let hosting_criteria = hbs_connect.get_hosting_criteria().await;
+    let hosting_criteria = match hbs_connect.get_hosting_criteria().await {
+        Some(v) => v,
+        None => {
+            error!("Unable to get hosting criteria from HBS. Exiting...");
+            return Err(anyhow::anyhow!("Unable to get hosting criteria"));
+        }
+    };
     let kyc_level = hosting_criteria.kyc;
     debug!("Got kyc level {:?}", &kyc_level);
     let jurisdiction = hosting_criteria.jurisdiction;

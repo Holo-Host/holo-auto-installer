@@ -3,6 +3,7 @@ use anyhow::Result;
 use base64::prelude::*;
 use holochain_types::prelude::{holochain_serial, SerializedBytes, Signature, Timestamp};
 use hpos_hc_connect::{hpos_agent::get_hpos_config, CoreAppAgent};
+use reqwest::Response;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize)]
@@ -27,22 +28,48 @@ impl HbsClient {
         let client = reqwest::Client::builder().build()?;
         Ok(Self { client })
     }
-    pub async fn get_hosting_criteria(&self) -> HostingCriteria {
+    pub async fn get_hosting_criteria(&self) -> Option<HostingCriteria> {
         match self.get_access_token().await {
             Ok(v) => v,
             Err(e) => {
                 tracing::warn!("Unable to get kyc & jurisdiction: {:?}", e);
                 tracing::warn!("returning default kyc level 1");
                 tracing::warn!("returning default jurisdiction of None");
-                HostingCriteria {
+                Some(HostingCriteria {
                     id: None,
                     jurisdiction: None,
                     kyc: KycLevel::Level1,
-                }
+                })
             }
         }
     }
-    async fn get_access_token(&self) -> Result<HostingCriteria> {
+
+    async fn get_access_token(&self) -> Result<Option<HostingCriteria>> {
+        let mut retry_counter = 0;
+        let mut retry = true;
+        let mut body = String::new();
+        // retry atleast twice
+        while retry && (retry_counter < 2) {
+            let response = self.inner_get_access_token().await?;
+            tracing::debug!("response received");
+            body = response.text().await?;
+            // 504 Gateway Timeout
+            // here we either need to retry or end the script
+            if body.contains("error code: 504") {
+                tracing::warn!("Gateway Timeout. Retrying...");
+                retry_counter += 1;
+            } else {
+                retry = false;
+            }
+        }
+        tracing::debug!("Result: {}", body);
+        let result: serde_json::Value = serde_json::from_str(&body)?;
+        let h: HostingCriteria = serde_json::from_value(result)?;
+        tracing::debug!("HostingCriteria: {:?}", h);
+        Ok(Some(h))
+    }
+
+    async fn inner_get_access_token(&self) -> Result<Response> {
         let config: hpos_config_core::Config = get_hpos_config()?;
 
         let email = match config {
@@ -94,14 +121,7 @@ impl HbsClient {
             .headers(headers)
             .json(&json);
 
-        let response = request.send().await?;
-        tracing::debug!("response received");
-        let body = response.text().await?;
-        tracing::debug!("Result: {}", body);
-        let result: serde_json::Value = serde_json::from_str(&body)?;
-        let h: HostingCriteria = serde_json::from_value(result)?;
-        tracing::debug!("HostingCriteria: {:?}", h);
-        Ok(h)
+        Ok(request.send().await?)
     }
 }
 
