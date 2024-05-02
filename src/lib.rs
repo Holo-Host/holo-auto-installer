@@ -18,7 +18,7 @@ use suspend_happs::suspend_unpaid_happs;
 mod hbs;
 use hbs::{HbsClient, KycLevel};
 
-use crate::host_zome_calls::{get_pending_transactions, CoreAppClient};
+use crate::host_zome_calls::{get_hosting_preferences, get_pending_transactions, CoreAppClient};
 
 /// gets all the enabled happs from HHA
 /// installs and enables new happs that were registered by a provider and holochain disables those paused by provider in hha
@@ -45,6 +45,7 @@ pub async fn run(core_happ: &config::Happ, config: &config::Config) -> Result<()
     // suspend happs that have overdue payments
     let pending_transactions = get_pending_transactions(&mut core_app_client).await?;
     let suspended_happs = suspend_unpaid_happs(&mut core_app_client, pending_transactions).await?;
+    let hosting_preference = get_hosting_preferences(&mut core_app_client).await?;
 
     let list_of_happs = get_all_published_hosted_happs(&mut core_app_client).await?;
     install_holo_hosted_happs(config, &list_of_happs, is_kyc_level_2).await?;
@@ -54,6 +55,7 @@ pub async fn run(core_happ: &config::Happ, config: &config::Config) -> Result<()
         is_kyc_level_2,
         suspended_happs,
         jurisdiction,
+        hosting_preference
     )
     .await?;
     Ok(())

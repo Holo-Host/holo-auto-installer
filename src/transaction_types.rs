@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use holochain_types::dna::ActionHashB64;
 use holochain_types::dna::AgentPubKeyB64;
 use holochain_types::dna::EntryHashB64;
@@ -81,4 +83,22 @@ pub struct InvoiceNote {
     // disk_usage_logs_range: Vec<ActionHashB64>,
     #[serde(flatten)]
     pub invoiced_items: InvoicedItems,
+}
+
+#[hdk_entry_helper]
+#[derive(Clone, serde::Serialize, serde::Deserialize, Debug)]
+pub struct JurisdictionPreferences {
+    pub value: Vec<String>,
+    pub is_exclusion: bool,
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Debug)]
+pub struct HostingPreferences {
+    pub max_fuel_before_invoice: Fuel,
+    pub price_compute: Fuel,
+    pub price_storage: Fuel,
+    pub price_bandwidth: Fuel,
+    pub max_time_before_invoice: Duration,
+    pub invoice_due_in_days: u8,
+    pub jurisdiction_prefs: JurisdictionPreferences,
 }

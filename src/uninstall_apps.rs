@@ -1,5 +1,6 @@
 pub use crate::config;
 pub use crate::host_zome_calls::HappBundle;
+use crate::transaction_types::HostingPreferences;
 pub use crate::websocket::AdminWebsocket;
 use anyhow::{Context, Result};
 use itertools::Itertools;
@@ -15,6 +16,7 @@ pub async fn uninstall_ineligible_happs(
     is_kyc_level_2: bool,
     suspended_happs: Vec<String>,
     jurisdiction: Option<String>,
+    hosting_preferences: HostingPreferences,
 ) -> Result<()> {
     info!("Checking to uninstall happs that were removed from the hosted list....");
 
@@ -38,6 +40,7 @@ pub async fn uninstall_ineligible_happs(
             is_kyc_level_2,
             suspended_happs.clone(),
             jurisdiction.clone(),
+            hosting_preferences.clone(),
         )
         .await
         {
@@ -86,6 +89,7 @@ pub async fn should_be_installed(
     is_kyc_level_2: bool,
     suspended_happs: Vec<String>,
     jurisdiction: Option<String>,
+    hosting_preferences: HostingPreferences,
 ) -> bool {
     trace!("`should_be_installed check` for {}", running_happ_id);
     // This should be the first check since the core-app should never be uninstalled currently
@@ -99,6 +103,8 @@ pub async fn should_be_installed(
         return false;
     }
 
+    // verify the hApp is allowed to run on this jurisdiction.
+    // jurisdiction is taken from mongodb and compared against hApps jurisdictions
     match jurisdiction {
         Some(jurisdiction) => {
             if let Some(happ) = published_happs
@@ -113,6 +119,8 @@ pub async fn should_be_installed(
                 {
                     is_jurisdiction_in_list = true;
                 }
+                // todo get happ's publisher jurisdiction from mongodb
+                // compare it against hosting_preference.jurisdictions
                 if happ.exclude_jurisdictions && is_jurisdiction_in_list {
                     return false;
                 }

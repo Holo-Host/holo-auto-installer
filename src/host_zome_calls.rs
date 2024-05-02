@@ -210,3 +210,18 @@ pub async fn disable_happ(core_app_client: &mut CoreAppClient, payload: HappAndH
     trace!("disabled happ");
     Ok(())
 }
+
+pub async fn get_hosting_preferences(core_app_client: &mut CoreAppClient) -> Result<HostingPreferences> {
+    let core_happ_cell = core_app_client.clone().core_happ_cell;
+    let hosting_preferences: HostingPreferences = core_app_client
+        .zome_call(
+            core_happ_cell,
+            ZomeName::from("hha"),
+            FunctionName::from("get_default_happ_preferences"),
+            (),
+        )
+        .await?;
+
+    trace("got hosting preferences");
+    Ok(hosting_preferences)
+}
