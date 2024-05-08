@@ -3,7 +3,10 @@
 pub mod config;
 pub mod entries;
 pub mod websocket;
+use std::collections::HashMap;
+
 use anyhow::Result;
+use holochain_types::dna::ActionHashB64;
 pub use websocket::{AdminWebsocket, AppWebsocket};
 pub mod host_zome_calls;
 pub mod transaction_types;
@@ -18,7 +21,9 @@ use suspend_happs::suspend_unpaid_happs;
 mod hbs;
 use hbs::{HbsClient, KycLevel};
 
-use crate::host_zome_calls::{get_hosting_preferences, get_pending_transactions, CoreAppClient};
+use crate::host_zome_calls::{
+    get_happ_preferences, get_hosting_preferences, get_pending_transactions, CoreAppClient,
+};
 
 /// gets all the enabled happs from HHA
 /// installs and enables new happs that were registered by a provider and holochain disables those paused by provider in hha
@@ -48,6 +53,15 @@ pub async fn run(core_happ: &config::Happ, config: &config::Config) -> Result<()
     let hosting_preference = get_hosting_preferences(&mut core_app_client).await?;
 
     let list_of_happs = get_all_published_hosted_happs(&mut core_app_client).await?;
+    let mut publisher_jurisdictions: HashMap<String, Option<String>> = HashMap::new();
+    // get publisher jurisdiction for each happ
+    for happ in list_of_happs.iter() {
+        let happ_prefs = get_happ_preferences(&mut core_app_client, happ.happ_id.clone()).await?;
+        let publisher_jurisdiction = hbs_connect
+            .get_publisher_jurisdiction(happ_prefs.provider_pubkey.to_string())
+            .await?;
+        publisher_jurisdictions.insert(happ.happ_id.clone().to_string(), publisher_jurisdiction);
+    }
     install_holo_hosted_happs(config, &list_of_happs, is_kyc_level_2).await?;
     uninstall_ineligible_happs(
         config,
@@ -55,7 +69,8 @@ pub async fn run(core_happ: &config::Happ, config: &config::Config) -> Result<()
         is_kyc_level_2,
         suspended_happs,
         jurisdiction,
-        hosting_preference
+        hosting_preference,
+        publisher_jurisdictions,
     )
     .await?;
     Ok(())

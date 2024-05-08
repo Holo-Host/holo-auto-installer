@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 pub use crate::config;
 pub use crate::host_zome_calls::HappBundle;
 use crate::transaction_types::HostingPreferences;
@@ -17,6 +19,7 @@ pub async fn uninstall_ineligible_happs(
     suspended_happs: Vec<String>,
     jurisdiction: Option<String>,
     hosting_preferences: HostingPreferences,
+    publisher_jurisdictions: HashMap<String, Option<String>>,
 ) -> Result<()> {
     info!("Checking to uninstall happs that were removed from the hosted list....");
 
@@ -41,6 +44,7 @@ pub async fn uninstall_ineligible_happs(
             suspended_happs.clone(),
             jurisdiction.clone(),
             hosting_preferences.clone(),
+            publisher_jurisdictions.clone(),
         )
         .await
         {
@@ -90,6 +94,7 @@ pub async fn should_be_installed(
     suspended_happs: Vec<String>,
     jurisdiction: Option<String>,
     hosting_preferences: HostingPreferences,
+    publisher_jurisdictions: HashMap<String, Option<String>>,
 ) -> bool {
     trace!("`should_be_installed check` for {}", running_happ_id);
     // This should be the first check since the core-app should never be uninstalled currently
@@ -101,6 +106,39 @@ pub async fn should_be_installed(
     if suspended_happs.contains(running_happ_id) {
         trace!("Disabling suspended happ {}", running_happ_id);
         return false;
+    }
+    let publisher_jurisdiction = publisher_jurisdictions.get(running_happ_id);
+    match publisher_jurisdiction {
+        Some(jurisdiction) => match jurisdiction {
+            Some(jurisdiction) => {
+                let mut is_jurisdiction_in_list = false;
+                if let Some(_) = hosting_preferences
+                    .jurisdiction_prefs
+                    .value
+                    .iter()
+                    .find(|&host_jurisdiction| *host_jurisdiction == *jurisdiction)
+                {
+                    is_jurisdiction_in_list = true;
+                }
+                if hosting_preferences.jurisdiction_prefs.is_exclusion && is_jurisdiction_in_list {
+                    return false;
+                }
+                if !hosting_preferences.jurisdiction_prefs.is_exclusion && !is_jurisdiction_in_list
+                {
+                    return false;
+                }
+            }
+            _ => {
+                warn!("could not get publisher jurisdiction");
+                warn!("happ {} won't be installed", running_happ_id);
+                return false;
+            }
+        },
+        _ => {
+            warn!("could not get publisher jurisdiction");
+            warn!("happ {} won't be installed", running_happ_id);
+            return false;
+        }
     }
 
     // verify the hApp is allowed to run on this jurisdiction.

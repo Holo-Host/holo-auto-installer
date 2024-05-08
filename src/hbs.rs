@@ -1,19 +1,26 @@
+use std::sync::Mutex;
+
 use anyhow::Context;
 use anyhow::Result;
 use base64::prelude::*;
 use holochain_types::prelude::{holochain_serial, SerializedBytes, Signature, Timestamp};
+use holochain_websocket::connect;
 use hpos_hc_connect::{hpos_agent::get_hpos_config, CoreAppAgent};
 use reqwest::Response;
 use serde::{Deserialize, Serialize};
-
 #[derive(Debug, Deserialize)]
+pub struct HappJurisdiction {
+    jurisdiction: String,
+}
+#[derive(Debug, Deserialize, Clone)]
 pub struct HostingCriteria {
     #[allow(dead_code)]
     pub id: Option<String>,
     pub jurisdiction: Option<String>,
     pub kyc: KycLevel,
+    pub accessToken: Option<String>,
 }
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub enum KycLevel {
     #[serde(rename = "holo_kyc_1")]
     Level1,
@@ -22,26 +29,62 @@ pub enum KycLevel {
 }
 pub struct HbsClient {
     pub client: reqwest::Client,
+    pub hosting_criteria: Mutex<Option<HostingCriteria>>,
 }
 impl HbsClient {
     pub fn connect() -> Result<Self> {
         let client = reqwest::Client::builder().build()?;
-        Ok(Self { client })
+        Ok(Self {
+            client,
+            hosting_criteria: Mutex::new(None),
+        })
     }
+
     pub async fn get_hosting_criteria(&self) -> Option<HostingCriteria> {
-        match self.get_access_token().await {
-            Ok(v) => v,
-            Err(e) => {
-                tracing::warn!("Unable to get kyc & jurisdiction: {:?}", e);
-                tracing::warn!("returning default kyc level 1");
-                tracing::warn!("returning default jurisdiction of None");
-                Some(HostingCriteria {
-                    id: None,
-                    jurisdiction: None,
-                    kyc: KycLevel::Level1,
-                })
-            }
+        let criteria = &*self.hosting_criteria.lock().unwrap();
+        match criteria {
+            Some(c) => Some(c.clone()),
+            _ => match self.get_access_token().await {
+                Ok(v) => v,
+                Err(e) => {
+                    tracing::warn!("Unable to get kyc & jurisdiction: {:?}", e);
+                    tracing::warn!("returning default kyc level 1");
+                    tracing::warn!("returning default jurisdiction of None");
+                    Some(HostingCriteria {
+                        id: None,
+                        jurisdiction: None,
+                        kyc: KycLevel::Level1,
+                        accessToken: None,
+                    })
+                }
+            },
         }
+    }
+
+    pub async fn get_publisher_jurisdiction(&self, public_key: String) -> Result<Option<String>> {
+        // get access token
+        let criteria = self.hosting_criteria.lock().unwrap();
+        let access_token = criteria.clone().unwrap().accessToken.unwrap();
+
+        let connection = Self::connect()?;
+        let hbs_url = hbs_url()?;
+        let mut headers = reqwest::header::HeaderMap::new();
+        headers.insert("Authorization", access_token.parse()?);
+        let req = connection
+            .client
+            .request(
+                reqwest::Method::GET,
+                format!(
+                    "{}/registration/api/v1/publisher-jurisdiction?pub={}",
+                    hbs_url, public_key
+                ),
+            )
+            .headers(headers)
+            .send()
+            .await?;
+
+        let body = req.text().await?;
+        Ok(Some(body))
     }
 
     async fn get_access_token(&self) -> Result<Option<HostingCriteria>> {
@@ -63,6 +106,10 @@ impl HbsClient {
         let result: serde_json::Value = serde_json::from_str(&body)?;
         let h: HostingCriteria = serde_json::from_value(result)?;
         tracing::debug!("HostingCriteria: {:?}", h);
+
+        let mut criteria = self.hosting_criteria.lock().unwrap();
+        *criteria = Some(h.clone());
+
         Ok(Some(h))
     }
 

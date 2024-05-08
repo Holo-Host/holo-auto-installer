@@ -1,10 +1,12 @@
 use std::time::Duration;
 
 use holochain_types::dna::ActionHashB64;
+use holochain_types::dna::AgentPubKey;
 use holochain_types::dna::AgentPubKeyB64;
 use holochain_types::dna::EntryHashB64;
 use holochain_types::prelude::CapSecret;
 use holochain_types::prelude::Timestamp;
+use holofuel_types::fuel::Fuel;
 
 #[derive(serde::Serialize, serde::Deserialize, Debug)]
 pub enum AcceptedBy {
@@ -85,14 +87,13 @@ pub struct InvoiceNote {
     pub invoiced_items: InvoicedItems,
 }
 
-#[hdk_entry_helper]
 #[derive(Clone, serde::Serialize, serde::Deserialize, Debug)]
 pub struct JurisdictionPreferences {
     pub value: Vec<String>,
     pub is_exclusion: bool,
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Debug)]
+#[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
 pub struct HostingPreferences {
     pub max_fuel_before_invoice: Fuel,
     pub price_compute: Fuel,
@@ -101,4 +102,20 @@ pub struct HostingPreferences {
     pub max_time_before_invoice: Duration,
     pub invoice_due_in_days: u8,
     pub jurisdiction_prefs: JurisdictionPreferences,
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Debug)]
+pub struct ServiceloggerHappPreferences {
+    pub provider_pubkey: AgentPubKey,
+    pub max_fuel_before_invoice: Fuel,
+    pub price_compute: Fuel,
+    pub price_storage: Fuel,
+    pub price_bandwidth: Fuel,
+    pub max_time_before_invoice: Duration,
+    pub invoice_due_in_days: u8, // how many days after an invoice is created it it due
+}
+
+pub struct PublisherJurisdiction {
+    pub happ_id: ActionHashB64,
+    pub jurisdiction: Option<String>,
 }

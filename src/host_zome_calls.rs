@@ -39,6 +39,11 @@ pub struct HappAndHost {
     pub is_automated: Option<bool>,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct HappPreferencePayload {
+    pub happ_id: ActionHashB64,
+}
+
 impl CoreAppClient {
     pub async fn connect(
         core_happ: &config::Happ,
@@ -211,7 +216,9 @@ pub async fn disable_happ(core_app_client: &mut CoreAppClient, payload: HappAndH
     Ok(())
 }
 
-pub async fn get_hosting_preferences(core_app_client: &mut CoreAppClient) -> Result<HostingPreferences> {
+pub async fn get_hosting_preferences(
+    core_app_client: &mut CoreAppClient,
+) -> Result<HostingPreferences> {
     let core_happ_cell = core_app_client.clone().core_happ_cell;
     let hosting_preferences: HostingPreferences = core_app_client
         .zome_call(
@@ -222,6 +229,24 @@ pub async fn get_hosting_preferences(core_app_client: &mut CoreAppClient) -> Res
         )
         .await?;
 
-    trace("got hosting preferences");
+    trace!("got hosting preferences");
     Ok(hosting_preferences)
+}
+
+pub async fn get_happ_preferences(
+    core_app_client: &mut CoreAppClient,
+    happ_id: ActionHashB64,
+) -> Result<ServiceloggerHappPreferences> {
+    let core_happ_cell = core_app_client.clone().core_happ_cell;
+    let happ_preference: ServiceloggerHappPreferences = core_app_client
+        .zome_call(
+            core_happ_cell,
+            ZomeName::from("hha"),
+            FunctionName::from("get_happ_preferences"),
+            HappPreferencePayload { happ_id },
+        )
+        .await?;
+
+    trace!("got happ preferences");
+    Ok(happ_preference)
 }
