@@ -34,4 +34,5 @@ mr_bundle = { version = "0.4.0-dev.1" }
 hpos-config-core = { git = "https://github.com/Holo-Host/hpos-config", rev = "a36f862869cc162c843ac27ed617910d68f480cc" }
 hpos-config-seed-bundle-explorer ={ git = "https://github.com/Holo-Host/hpos-config", rev = "a36f862869cc162c843ac27ed617910d68f480cc" }
 chrono = "0.4.33"
-hpos_hc_connect = { git = "https://github.com/holo-host/hpos-service-crates.git", rev = "085fe679f84d2b1c2de0c42e9c8392b42b63ae9a" }
+hpos_hc_connect = { git = "https://github.com/holo-host/hpos-service-crates.git", rev = "b0546a8be5dd6abf5aae0bf5a8727ee6f997ee52" }
+holo_happ_manager = { git = "https://github.com/holo-host/hpos-service-crates.git", rev = "b0546a8be5dd6abf5aae0bf5a8727ee6f997ee52" }

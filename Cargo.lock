@@ -1738,6 +1738,7 @@ dependencies = [
  "base64 0.21.7",
  "chrono",
  "getrandom 0.2.9",
+ "holo_happ_manager",
  "holochain_conductor_api",
  "holochain_keystore",
  "holochain_types",
@@ -1762,6 +1763,29 @@ dependencies = [
  "tracing",
  "tracing-subscriber 0.3.17",
  "url",
+ "url2",
+]
+
+[[package]]
+name = "holo_happ_manager"
+version = "0.1.0"
+source = "git+https://github.com/holo-host/hpos-service-crates.git?rev=b0546a8be5dd6abf5aae0bf5a8727ee6f997ee52#b0546a8be5dd6abf5aae0bf5a8727ee6f997ee52"
+dependencies = [
+ "anyhow",
+ "getrandom 0.2.9",
+ "holochain_conductor_api",
+ "holochain_keystore",
+ "holochain_types",
+ "holofuel_types",
+ "hpos-config-core",
+ "hpos_hc_connect",
+ "rmp-serde 1.1.2",
+ "serde",
+ "serde_json",
+ "sodoken",
+ "tokio",
+ "tracing",
+ "tracing-subscriber 0.3.17",
  "url2",
 ]
 
@@ -2203,7 +2227,7 @@ dependencies = [
 [[package]]
 name = "hpos_hc_connect"
 version = "0.1.0"
-source = "git+https://github.com/holo-host/hpos-service-crates.git?rev=085fe679f84d2b1c2de0c42e9c8392b42b63ae9a#085fe679f84d2b1c2de0c42e9c8392b42b63ae9a"
+source = "git+https://github.com/holo-host/hpos-service-crates.git?rev=b0546a8be5dd6abf5aae0bf5a8727ee6f997ee52#b0546a8be5dd6abf5aae0bf5a8727ee6f997ee52"
 dependencies = [
  "again",
  "anyhow",

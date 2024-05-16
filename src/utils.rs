@@ -1,28 +1,25 @@
-pub use crate::config;
 pub use crate::entries;
-use crate::transaction_types::InvoiceNote;
-use crate::transaction_types::PendingTransaction;
-use crate::transaction_types::POS;
+use crate::transaction_types::{InvoiceNote, PendingTransaction, POS};
+use anyhow::{anyhow, Context, Result};
 use chrono::Utc;
+use holo_happ_manager::{hha::HHAAgent, Config};
 use holochain_types::dna::ActionHashB64;
-use holochain_types::prelude::FunctionName;
-use holochain_types::prelude::ZomeName;
+use holochain_types::prelude::{
+    AppManifest, ExternIO, FunctionName, MembraneProof, SerializedBytes, UnsafeBytes, ZomeName,
+};
+use holofuel_types::fuel::Fuel;
 use hpos_hc_connect::hha_types::HappAndHost;
 use hpos_hc_connect::AdminWebsocket;
-use anyhow::{anyhow, Context, Result};
-use holochain_types::prelude::{AppManifest, MembraneProof, SerializedBytes, UnsafeBytes};
-use holofuel_types::fuel::Fuel;
 use isahc::config::RedirectPolicy;
-use isahc::{HttpClient, prelude::*};
+use isahc::{prelude::*, HttpClient};
 use itertools::Itertools;
 use mr_bundle::Bundle;
-use tracing::{debug, error, warn};
-use std::env;
-use std::process::Command;
-use std::time::Duration;
-use std::{collections::HashMap, fs, path::PathBuf, str::FromStr, sync::Arc};
+use std::{
+    collections::HashMap, env, fs, path::PathBuf, process::Command, str::FromStr, sync::Arc,
+    time::Duration,
+};
 use tempfile::TempDir;
-use tracing::{info, instrument, trace};
+use tracing::{debug, error, info, instrument, trace, warn};
 use url::Url;
 
 pub struct HappBundle {
@@ -37,7 +34,7 @@ pub struct HappBundle {
 
 /// installs a happs that are mented to be hosted
 pub async fn install_holo_hosted_happs(
-    config: &config::Config,
+    config: &Config,
     happs: &[HappBundle],
     is_kyc_level_2: bool,
 ) -> Result<()> {
@@ -232,14 +229,13 @@ pub(crate) async fn download_file(url: &Url) -> Result<PathBuf> {
 }
 
 pub async fn get_all_published_hosted_happs(
-    core_app_client: &mut CoreAppClient,
+    core_app_client: &mut HHAAgent,
 ) -> Result<Vec<HappBundle>> {
     trace!("get_all_published_hosted_happs");
 
-    let core_happ_cell = core_app_client.clone().core_happ_cell;
     let happ_bundles: Vec<entries::PresentedHappBundle> = core_app_client
         .zome_call(
-            core_happ_cell,
+            core_app_client.cells.core_app.clone(),
             ZomeName::from("hha"),
             FunctionName::from("get_happs"),
             (),
@@ -273,12 +269,11 @@ pub async fn get_all_published_hosted_happs(
 }
 
 pub async fn get_pending_transactions(
-    core_app_client: &mut CoreAppClient,
+    core_app_client: &mut HHAAgent,
 ) -> Result<PendingTransaction> {
-    let holofuel_cell = core_app_client.clone().holofuel_cell;
     let pending_transactions: PendingTransaction = core_app_client
         .zome_call(
-            holofuel_cell,
+            core_app_client.cells.holofuel.clone(),
             ZomeName::from("transactor"),
             FunctionName::from("get_pending_transactions"),
             (),
@@ -294,7 +289,7 @@ pub async fn get_pending_transactions(
 ///  - Identified: Uninstalls & removes identified instances of ineligible happs
 ///  - Anonymous: Disables anonymous instance of ineligible happs
 pub async fn uninstall_ineligible_happs(
-    config: &config::Config,
+    config: &Config,
     published_happs: &[HappBundle],
     is_kyc_level_2: bool,
     suspended_happs: Vec<String>,
@@ -441,7 +436,7 @@ pub async fn should_be_installed(
 }
 
 pub async fn suspend_unpaid_happs(
-    core_app_client: &mut CoreAppClient,
+    core_app_client: &mut HHAAgent,
     pending_transactions: PendingTransaction,
 ) -> Result<Vec<String>> {
     let mut suspended_happs: Vec<String> = Vec::new();
@@ -469,16 +464,17 @@ pub async fn suspend_unpaid_happs(
                             Ok(note) => {
                                 let hha_id = note.hha_id;
                                 suspended_happs.push(hha_id.clone().to_string());
-                                core_app_client.zome_call(
-                                    core_app_client.core_happ_cell.clone(),
-                                    ZomeName::from("hha"),
-                                    FunctionName::from("disable_happ"),
-                                    HappAndHost {
-                                        happ_id: hha_id.clone(),
-                                        holoport_id: holoport_id.to_string(),
-                                    },
-                                )
-                                .await?;
+                                core_app_client
+                                    .zome_call(
+                                        core_app_client.cells.core_app.clone(),
+                                        ZomeName::from("hha"),
+                                        FunctionName::from("disable_happ"),
+                                        ExternIO::encode(HappAndHost {
+                                            happ_id: hha_id.clone(),
+                                            holoport_id: holoport_id.to_string(),
+                                        })?,
+                                    )
+                                    .await?;
                             }
                             Err(e) => {
                                 error!("Error parsing invoice note: {:?}", e);

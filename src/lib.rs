@@ -1,20 +1,23 @@
 // TODO: https://github.com/tokio-rs/tracing/issues/843
 #![allow(clippy::unit_arg)]
-pub mod config;
 pub mod entries;
 use anyhow::Result;
 pub use hpos_hc_connect::{AdminWebsocket, AppWebsocket};
 pub mod transaction_types;
 mod utils;
-use utils::{get_pending_transactions, install_holo_hosted_happs, get_all_published_hosted_happs, uninstall_ineligible_happs, suspend_unpaid_happs};
 use tracing::{debug, error, info};
+use utils::{
+    get_all_published_hosted_happs, get_pending_transactions, install_holo_hosted_happs,
+    suspend_unpaid_happs, uninstall_ineligible_happs,
+};
 mod hbs;
 use hbs::{HbsClient, KycLevel};
+use holo_happ_manager::{hha::HHAAgent, Config, Happ};
 
 /// gets all the enabled happs from HHA
 /// installs and enables new happs that were registered by a provider and holochain disables those paused by provider in hha
 /// then uninstalls happs that are ineligible for host (eg: holo-disabled, unallowed pricing for kyc level)
-pub async fn run(core_happ: &config::Happ, config: &config::Config) -> Result<()> {
+pub async fn run(core_happ: &Happ, config: &Config) -> Result<()> {
     info!("Activating holo hosted apps");
     let hbs_connect = HbsClient::connect()?;
     let hosting_criteria = match hbs_connect.get_hosting_criteria().await {
@@ -31,7 +34,7 @@ pub async fn run(core_happ: &config::Happ, config: &config::Config) -> Result<()
 
     let is_kyc_level_2 = kyc_level == KycLevel::Level2;
 
-    let mut core_app_client = CoreAppClient::connect(core_happ, config).await?;
+    let mut core_app_client = HHAAgent::spawn(core_happ, config).await?;
 
     // suspend happs that have overdue payments
     let pending_transactions = get_pending_transactions(&mut core_app_client).await?;
