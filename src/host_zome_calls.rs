@@ -5,10 +5,10 @@ pub use crate::websocket::{AdminWebsocket, AppWebsocket};
 use anyhow::{anyhow, Context, Result};
 use holochain_conductor_api::{AppInfo, AppResponse, CellInfo, ProvisionedCell, ZomeCall};
 use holochain_keystore::MetaLairClient;
+use holochain_types::dna::AgentPubKey;
 use holochain_types::prelude::{
     ActionHashB64, ExternIO, FunctionName, Nonce256Bits, Timestamp, ZomeCallUnsigned, ZomeName,
 };
-use hpos_hc_connect::core_app_agent;
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
 use serde::Serialize;
@@ -255,7 +255,7 @@ pub async fn get_happ_preferences(
 pub async fn get_publisher_jurisdiction(
     core_app_client: &mut CoreAppClient,
     pubkey: AgentPubKey
-) -> Option<String> {
+) -> Result<Option<String>> {
     let core_happ_cell = core_app_client.clone().core_happ_cell;
     let publisher_jurisdiction: Option<String> = core_app_client
         .zome_call(
