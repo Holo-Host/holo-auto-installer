@@ -4,21 +4,15 @@ use anyhow::Context;
 use anyhow::Result;
 use base64::prelude::*;
 use holochain_types::prelude::{holochain_serial, SerializedBytes, Signature, Timestamp};
-use holochain_websocket::connect;
 use hpos_hc_connect::{hpos_agent::get_hpos_config, CoreAppAgent};
 use reqwest::Response;
 use serde::{Deserialize, Serialize};
-#[derive(Debug, Deserialize)]
-pub struct HappJurisdiction {
-    jurisdiction: String,
-}
 #[derive(Debug, Deserialize, Clone)]
 pub struct HostingCriteria {
     #[allow(dead_code)]
     pub id: Option<String>,
     pub jurisdiction: Option<String>,
     pub kyc: KycLevel,
-    pub accessToken: Option<String>,
 }
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub enum KycLevel {
@@ -54,37 +48,10 @@ impl HbsClient {
                         id: None,
                         jurisdiction: None,
                         kyc: KycLevel::Level1,
-                        accessToken: None,
                     })
                 }
             },
         }
-    }
-
-    pub async fn get_publisher_jurisdiction(&self, public_key: String) -> Result<Option<String>> {
-        // get access token
-        let criteria = self.hosting_criteria.lock().unwrap();
-        let access_token = criteria.clone().unwrap().accessToken.unwrap();
-
-        let connection = Self::connect()?;
-        let hbs_url = hbs_url()?;
-        let mut headers = reqwest::header::HeaderMap::new();
-        headers.insert("Authorization", access_token.parse()?);
-        let req = connection
-            .client
-            .request(
-                reqwest::Method::GET,
-                format!(
-                    "{}/registration/api/v1/publisher-jurisdiction?pub={}",
-                    hbs_url, public_key
-                ),
-            )
-            .headers(headers)
-            .send()
-            .await?;
-
-        let body = req.text().await?;
-        Ok(Some(body))
     }
 
     async fn get_access_token(&self) -> Result<Option<HostingCriteria>> {
