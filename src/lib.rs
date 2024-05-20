@@ -21,7 +21,8 @@ mod hbs;
 use hbs::{HbsClient, KycLevel};
 
 use crate::host_zome_calls::{
-    get_publisher_jurisdiction, get_happ_preferences, get_hosting_preferences, get_pending_transactions, CoreAppClient,
+    get_happ_preferences, get_hosting_preferences, get_pending_transactions,
+    get_publisher_jurisdiction, CoreAppClient,
 };
 
 /// gets all the enabled happs from HHA
@@ -56,7 +57,8 @@ pub async fn run(core_happ: &config::Happ, config: &config::Config) -> Result<()
     // get publisher jurisdiction for each happ
     for happ in list_of_happs.iter() {
         let happ_prefs = get_happ_preferences(&mut core_app_client, happ.happ_id.clone()).await?;
-        let publisher_jurisdiction = get_publisher_jurisdiction(&mut core_app_client, happ_prefs.provider_pubkey).await?;
+        let publisher_jurisdiction =
+            get_publisher_jurisdiction(&mut core_app_client, happ_prefs.provider_pubkey).await?;
         publisher_jurisdictions.insert(happ.happ_id.clone().to_string(), publisher_jurisdiction);
     }
     install_holo_hosted_happs(config, &list_of_happs, is_kyc_level_2).await?;

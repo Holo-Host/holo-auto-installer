@@ -254,7 +254,7 @@ pub async fn get_happ_preferences(
 
 pub async fn get_publisher_jurisdiction(
     core_app_client: &mut CoreAppClient,
-    pubkey: AgentPubKey
+    pubkey: AgentPubKey,
 ) -> Result<Option<String>> {
     let core_happ_cell = core_app_client.clone().core_happ_cell;
     let publisher_jurisdiction: Option<String> = core_app_client
