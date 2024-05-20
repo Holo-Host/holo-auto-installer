@@ -112,11 +112,11 @@ pub async fn should_be_installed(
         Some(jurisdiction) => match jurisdiction {
             Some(jurisdiction) => {
                 let mut is_jurisdiction_in_list = false;
-                if let Some(_) = hosting_preferences
+                if hosting_preferences
                     .jurisdiction_prefs
                     .value
                     .iter()
-                    .find(|&host_jurisdiction| *host_jurisdiction == *jurisdiction)
+                    .any(|host_jurisdiction| *host_jurisdiction == *jurisdiction)
                 {
                     is_jurisdiction_in_list = true;
                 }
