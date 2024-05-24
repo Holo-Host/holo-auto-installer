@@ -157,8 +157,6 @@ pub async fn should_be_installed(
                 {
                     is_jurisdiction_in_list = true;
                 }
-                // todo get happ's publisher jurisdiction from mongodb
-                // compare it against hosting_preference.jurisdictions
                 if happ.exclude_jurisdictions && is_jurisdiction_in_list {
                     return false;
                 }
