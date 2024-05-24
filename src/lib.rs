@@ -6,6 +6,7 @@ pub mod websocket;
 use std::collections::HashMap;
 
 use anyhow::Result;
+use holochain_types::dna::{hash_type::Agent, HoloHash};
 pub use websocket::{AdminWebsocket, AppWebsocket};
 pub mod host_zome_calls;
 pub mod transaction_types;
@@ -53,13 +54,25 @@ pub async fn run(core_happ: &config::Happ, config: &config::Config) -> Result<()
     let hosting_preference = get_hosting_preferences(&mut core_app_client).await?;
 
     let list_of_happs = get_all_published_hosted_happs(&mut core_app_client).await?;
-    let mut publisher_jurisdictions: HashMap<String, Option<String>> = HashMap::new();
+    let mut publisher_jurisdictions: HashMap<HoloHash<Agent>, Option<String>> = HashMap::new();
+    let mut happ_jurisdictions: HashMap<String, Option<String>> = HashMap::new();
     // get publisher jurisdiction for each happ
     for happ in list_of_happs.iter() {
         let happ_prefs = get_happ_preferences(&mut core_app_client, happ.happ_id.clone()).await?;
-        let publisher_jurisdiction =
-            get_publisher_jurisdiction(&mut core_app_client, happ_prefs.provider_pubkey).await?;
-        publisher_jurisdictions.insert(happ.happ_id.clone().to_string(), publisher_jurisdiction);
+        let publisher_pubkey = happ_prefs.provider_pubkey;
+        match publisher_jurisdictions.get(&publisher_pubkey) {
+            Some(jurisdiction) => {
+                happ_jurisdictions
+                    .insert(happ.happ_id.clone().to_string(), (*jurisdiction).clone());
+            }
+            None => {
+                let jurisdiction =
+                    get_publisher_jurisdiction(&mut core_app_client, publisher_pubkey.clone())
+                        .await?;
+                publisher_jurisdictions.insert(publisher_pubkey, jurisdiction.clone());
+                happ_jurisdictions.insert(happ.happ_id.clone().to_string(), jurisdiction);
+            }
+        }
     }
     install_holo_hosted_happs(config, &list_of_happs, is_kyc_level_2).await?;
     uninstall_ineligible_happs(
@@ -69,7 +82,7 @@ pub async fn run(core_happ: &config::Happ, config: &config::Config) -> Result<()
         suspended_happs,
         jurisdiction,
         hosting_preference,
-        publisher_jurisdictions,
+        happ_jurisdictions,
     )
     .await?;
     Ok(())
