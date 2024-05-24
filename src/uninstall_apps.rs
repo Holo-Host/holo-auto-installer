@@ -103,6 +103,7 @@ pub async fn should_be_installed(
         return true;
     }
 
+    // checks if published happ is still running 
     let published_happ = published_happs
         .iter()
         .find(|&happ| happ.happ_id.to_string() == *running_happ_id);
