@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 pub use crate::config;
 pub use crate::host_zome_calls::HappBundle;
@@ -103,6 +103,10 @@ pub async fn should_be_installed(
         return true;
     }
 
+    let published_happ = published_happs
+        .iter()
+        .find(|&happ| happ.happ_id.to_string() == *running_happ_id);
+
     if suspended_happs.contains(running_happ_id) {
         trace!("Disabling suspended happ {}", running_happ_id);
         return false;
@@ -145,10 +149,7 @@ pub async fn should_be_installed(
     // jurisdiction is taken from mongodb and compared against hApps jurisdictions
     match jurisdiction {
         Some(jurisdiction) => {
-            if let Some(happ) = published_happs
-                .iter()
-                .find(|&happ| happ.happ_id.to_string() == *running_happ_id)
-            {
+            if let Some(happ) = published_happ {
                 let mut is_jurisdiction_in_list = false;
                 if let Some(_happ_jurisdiction) = happ
                     .jurisdictions
@@ -168,6 +169,28 @@ pub async fn should_be_installed(
         None => {
             warn!("jurisdiction not available for holoport");
             warn!("happ {} won't be installed", running_happ_id);
+            return false;
+        }
+    }
+
+    // verify the happ matches the hosting categories preferences
+    if let Some(happ) = published_happ {
+        let categories_prefs: HashSet<String> = hosting_preferences
+            .categories_prefs
+            .value
+            .iter()
+            .cloned()
+            .collect();
+
+        let contains_category = happ
+            .categories
+            .iter()
+            .any(|category| categories_prefs.contains(category));
+
+        if contains_category && hosting_preferences.categories_prefs.is_exclusion {
+            return false;
+        }
+        if !contains_category && !hosting_preferences.categories_prefs.is_exclusion {
             return false;
         }
     }

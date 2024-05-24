@@ -88,7 +88,7 @@ pub struct InvoiceNote {
 }
 
 #[derive(Clone, serde::Serialize, serde::Deserialize, Debug)]
-pub struct JurisdictionPreferences {
+pub struct JurisdictionAndCategoryPreferences {
     pub value: Vec<String>,
     pub is_exclusion: bool,
 }
@@ -101,7 +101,8 @@ pub struct HostingPreferences {
     pub price_bandwidth: Fuel,
     pub max_time_before_invoice: Duration,
     pub invoice_due_in_days: u8,
-    pub jurisdiction_prefs: JurisdictionPreferences,
+    pub jurisdiction_prefs: JurisdictionAndCategoryPreferences,
+    pub categories_prefs: JurisdictionAndCategoryPreferences,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Debug)]

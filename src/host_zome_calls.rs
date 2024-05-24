@@ -23,6 +23,7 @@ pub struct HappBundle {
     pub special_installed_app_id: Option<String>,
     pub jurisdictions: Vec<String>,
     pub exclude_jurisdictions: bool,
+    pub categories: Vec<String>,
 }
 
 #[derive(Clone)]
@@ -177,6 +178,7 @@ pub async fn get_all_published_hosted_happs(
                 special_installed_app_id: happ.special_installed_app_id,
                 jurisdictions: happ.jurisdictions,
                 exclude_jurisdictions: happ.exclude_jurisdictions,
+                categories: happ.categories,
             }
         })
         .collect();
