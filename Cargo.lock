@@ -1750,7 +1750,7 @@ dependencies = [
 [[package]]
 name = "holo_happ_manager"
 version = "0.1.0"
-source = "git+https://github.com/holo-host/hpos-service-crates.git?rev=b0546a8be5dd6abf5aae0bf5a8727ee6f997ee52#b0546a8be5dd6abf5aae0bf5a8727ee6f997ee52"
+source = "git+https://github.com/holo-host/hpos-service-crates.git?rev=5266ae2963c7f905fa1ef6c06c265f6cbd4cf1c9#5266ae2963c7f905fa1ef6c06c265f6cbd4cf1c9"
 dependencies = [
  "anyhow",
  "getrandom 0.2.9",
@@ -2183,7 +2183,7 @@ dependencies = [
 [[package]]
 name = "hpos_hc_connect"
 version = "0.1.0"
-source = "git+https://github.com/holo-host/hpos-service-crates.git?rev=b0546a8be5dd6abf5aae0bf5a8727ee6f997ee52#b0546a8be5dd6abf5aae0bf5a8727ee6f997ee52"
+source = "git+https://github.com/holo-host/hpos-service-crates.git?rev=5266ae2963c7f905fa1ef6c06c265f6cbd4cf1c9#5266ae2963c7f905fa1ef6c06c265f6cbd4cf1c9"
 dependencies = [
  "again",
  "anyhow",
@@ -2202,6 +2202,7 @@ dependencies = [
  "lazy_static",
  "mr_bundle",
  "reqwest",
+ "rmp-serde 1.1.2",
  "serde",
  "serde_json",
  "serde_yaml",

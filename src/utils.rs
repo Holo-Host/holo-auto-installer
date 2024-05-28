@@ -2,13 +2,15 @@ pub use crate::entries;
 use crate::transaction_types::{InvoiceNote, PendingTransaction, POS};
 use anyhow::{anyhow, Context, Result};
 use chrono::Utc;
-use holo_happ_manager::{hha::HHAAgent, Config};
 use holochain_types::dna::ActionHashB64;
 use holochain_types::prelude::{
     AppManifest, ExternIO, FunctionName, MembraneProof, SerializedBytes, UnsafeBytes, ZomeName,
 };
 use holofuel_types::fuel::Fuel;
+use hpos_hc_connect::app_connection::CoreAppRoleName;
+use hpos_hc_connect::hha_agent::HHAAgent;
 use hpos_hc_connect::hha_types::HappAndHost;
+use hpos_hc_connect::holo_config::Config;
 use hpos_hc_connect::AdminWebsocket;
 use isahc::config::RedirectPolicy;
 use isahc::{prelude::*, HttpClient};
@@ -234,8 +236,9 @@ pub async fn get_all_published_hosted_happs(
     trace!("get_all_published_hosted_happs");
 
     let happ_bundles: Vec<entries::PresentedHappBundle> = core_app_client
-        .zome_call(
-            core_app_client.cells.core_app.clone(),
+        .app
+        .zome_call_typed(
+            CoreAppRoleName::HHA.into(),
             ZomeName::from("hha"),
             FunctionName::from("get_happs"),
             (),
@@ -272,8 +275,9 @@ pub async fn get_pending_transactions(
     core_app_client: &mut HHAAgent,
 ) -> Result<PendingTransaction> {
     let pending_transactions: PendingTransaction = core_app_client
-        .zome_call(
-            core_app_client.cells.holofuel.clone(),
+        .app
+        .zome_call_typed(
+            CoreAppRoleName::Holofuel.into(),
             ZomeName::from("transactor"),
             FunctionName::from("get_pending_transactions"),
             (),
@@ -465,8 +469,9 @@ pub async fn suspend_unpaid_happs(
                                 let hha_id = note.hha_id;
                                 suspended_happs.push(hha_id.clone().to_string());
                                 core_app_client
-                                    .zome_call(
-                                        core_app_client.cells.core_app.clone(),
+                                    .app
+                                    .zome_call_typed(
+                                        CoreAppRoleName::HHA.into(),
                                         ZomeName::from("hha"),
                                         FunctionName::from("disable_happ"),
                                         ExternIO::encode(HappAndHost {
