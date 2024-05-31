@@ -33,7 +33,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: 1.73.0
+          toolchain: 1.78.0
           override: true
 
       - name: Run cargo test
@@ -62,7 +62,7 @@ jobs:
         with:
           profile: minimal
           components: rustfmt, clippy
-          toolchain: 1.73.0
+          toolchain: 1.78.0
           override: true
 
       - name: Run cargo fmt
