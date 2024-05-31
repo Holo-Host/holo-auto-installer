@@ -1,8 +1,10 @@
 pub use crate::entries;
-use crate::transaction_types::{InvoiceNote, PendingTransaction, POS};
+use crate::transaction_types::{
+    HostingPreferences, InvoiceNote, PendingTransaction, ServiceloggerHappPreferences, POS,
+};
 use anyhow::{anyhow, Context, Result};
 use chrono::Utc;
-use holochain_types::dna::ActionHashB64;
+use holochain_types::dna::{ActionHashB64, AgentPubKey};
 use holochain_types::prelude::{
     AppManifest, ExternIO, FunctionName, MembraneProof, SerializedBytes, UnsafeBytes, ZomeName,
 };
@@ -16,6 +18,8 @@ use isahc::config::RedirectPolicy;
 use isahc::{prelude::*, HttpClient};
 use itertools::Itertools;
 use mr_bundle::Bundle;
+use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 use std::{
     collections::HashMap, env, fs, path::PathBuf, process::Command, str::FromStr, sync::Arc,
     time::Duration,
@@ -32,6 +36,12 @@ pub struct HappBundle {
     pub special_installed_app_id: Option<String>,
     pub jurisdictions: Vec<String>,
     pub exclude_jurisdictions: bool,
+    pub categories: Vec<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct HappPreferencePayload {
+    pub happ_id: ActionHashB64,
 }
 
 /// installs a happs that are mented to be hosted
@@ -83,6 +93,7 @@ pub async fn install_holo_hosted_happs(
         special_installed_app_id,
         exclude_jurisdictions: _,
         jurisdictions: _,
+        categories: _,
     } in happs
     {
         // Check if special happ is installed and do nothing if it is installed
@@ -263,6 +274,7 @@ pub async fn get_all_published_hosted_happs(
                 special_installed_app_id: happ.special_installed_app_id,
                 jurisdictions: happ.jurisdictions,
                 exclude_jurisdictions: happ.exclude_jurisdictions,
+                categories: happ.categories,
             }
         })
         .collect();
@@ -298,6 +310,8 @@ pub async fn uninstall_ineligible_happs(
     is_kyc_level_2: bool,
     suspended_happs: Vec<String>,
     jurisdiction: Option<String>,
+    hosting_preferences: HostingPreferences,
+    publisher_jurisdictions: HashMap<String, Option<String>>,
 ) -> Result<()> {
     info!("Checking to uninstall happs that were removed from the hosted list....");
 
@@ -321,6 +335,8 @@ pub async fn uninstall_ineligible_happs(
             is_kyc_level_2,
             suspended_happs.clone(),
             jurisdiction.clone(),
+            hosting_preferences.clone(),
+            publisher_jurisdictions.clone(),
         )
         .await
         {
@@ -369,6 +385,8 @@ pub async fn should_be_installed(
     is_kyc_level_2: bool,
     suspended_happs: Vec<String>,
     jurisdiction: Option<String>,
+    hosting_preferences: HostingPreferences,
+    publisher_jurisdictions: HashMap<String, Option<String>>,
 ) -> bool {
     trace!("`should_be_installed check` for {}", running_happ_id);
     // This should be the first check since the core-app should never be uninstalled currently
@@ -377,17 +395,55 @@ pub async fn should_be_installed(
         return true;
     }
 
+    // checks if published happ is still running
+    let published_happ = published_happs
+        .iter()
+        .find(|&happ| happ.happ_id.to_string() == *running_happ_id);
+
     if suspended_happs.contains(running_happ_id) {
         trace!("Disabling suspended happ {}", running_happ_id);
         return false;
     }
 
+    let publisher_jurisdiction = publisher_jurisdictions.get(running_happ_id);
+    match publisher_jurisdiction {
+        Some(jurisdiction) => match jurisdiction {
+            Some(jurisdiction) => {
+                let mut is_jurisdiction_in_list = false;
+                if hosting_preferences
+                    .jurisdiction_prefs
+                    .value
+                    .iter()
+                    .any(|host_jurisdiction| *host_jurisdiction == *jurisdiction)
+                {
+                    is_jurisdiction_in_list = true;
+                }
+                if hosting_preferences.jurisdiction_prefs.is_exclusion && is_jurisdiction_in_list {
+                    return false;
+                }
+                if !hosting_preferences.jurisdiction_prefs.is_exclusion && !is_jurisdiction_in_list
+                {
+                    return false;
+                }
+            }
+            _ => {
+                warn!("could not get publisher jurisdiction");
+                warn!("happ {} won't be installed", running_happ_id);
+                return false;
+            }
+        },
+        _ => {
+            warn!("could not get publisher jurisdiction");
+            warn!("happ {} won't be installed", running_happ_id);
+            return false;
+        }
+    }
+
+    // verify the hApp is allowed to run on this jurisdiction.
+    // jurisdiction is taken from mongodb and compared against hApps jurisdictions
     match jurisdiction {
         Some(jurisdiction) => {
-            if let Some(happ) = published_happs
-                .iter()
-                .find(|&happ| happ.happ_id.to_string() == *running_happ_id)
-            {
+            if let Some(happ) = published_happ {
                 let mut is_jurisdiction_in_list = false;
                 if let Some(_happ_jurisdiction) = happ
                     .jurisdictions
@@ -407,6 +463,28 @@ pub async fn should_be_installed(
         None => {
             warn!("jurisdiction not available for holoport");
             warn!("happ {} won't be installed", running_happ_id);
+            return false;
+        }
+    }
+
+    // verify the happ matches the hosting categories preferences
+    if let Some(happ) = published_happ {
+        let categories_prefs: HashSet<String> = hosting_preferences
+            .categories_prefs
+            .value
+            .iter()
+            .cloned()
+            .collect();
+
+        let contains_category = happ
+            .categories
+            .iter()
+            .any(|category| categories_prefs.contains(category));
+
+        if contains_category && hosting_preferences.categories_prefs.is_exclusion {
+            return false;
+        }
+        if !contains_category && !hosting_preferences.categories_prefs.is_exclusion {
             return false;
         }
     }
@@ -493,4 +571,55 @@ pub async fn suspend_unpaid_happs(
 
     debug!("suspend happs completed: {:?}", suspended_happs);
     Ok(suspended_happs)
+}
+
+pub async fn get_hosting_preferences(core_app_client: &mut HHAAgent) -> Result<HostingPreferences> {
+    let hosting_preferences: HostingPreferences = core_app_client
+        .app
+        .zome_call_typed(
+            CoreAppRoleName::HHA.into(),
+            ZomeName::from("hha"),
+            FunctionName::from("get_default_happ_preferences"),
+            (),
+        )
+        .await?;
+
+    trace!("got hosting preferences");
+    Ok(hosting_preferences)
+}
+
+pub async fn get_happ_preferences(
+    core_app_client: &mut HHAAgent,
+    happ_id: ActionHashB64,
+) -> Result<ServiceloggerHappPreferences> {
+    let happ_preference: ServiceloggerHappPreferences = core_app_client
+        .app
+        .zome_call_typed(
+            CoreAppRoleName::HHA.into(),
+            ZomeName::from("hha"),
+            FunctionName::from("get_happ_preferences"),
+            HappPreferencePayload { happ_id },
+        )
+        .await?;
+
+    trace!("got happ preferences");
+    Ok(happ_preference)
+}
+
+pub async fn get_publisher_jurisdiction(
+    core_app_client: &mut HHAAgent,
+    pubkey: AgentPubKey,
+) -> Result<Option<String>> {
+    let publisher_jurisdiction: Option<String> = core_app_client
+        .app
+        .zome_call_typed(
+            CoreAppRoleName::HHA.into(),
+            ZomeName::from("hha"),
+            FunctionName::from("get_publisher_jurisdiction"),
+            pubkey,
+        )
+        .await?;
+
+    trace!("got publisher jurisdiction");
+    Ok(publisher_jurisdiction)
 }
