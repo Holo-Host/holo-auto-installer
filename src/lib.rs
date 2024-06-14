@@ -17,7 +17,7 @@ use utils::{
 };
 mod hbs;
 use hbs::{HbsClient, KycLevel};
-use holo_happ_manager::Config;
+use hpos_hc_connect::holo_config::Config;
 
 /// gets all the enabled happs from HHA
 /// installs and enables new happs that were registered by a provider and holochain disables those paused by provider in hha
