@@ -83,7 +83,7 @@ pub async fn install_holo_hosted_happs(
     let client = reqwest::Client::new();
 
     // Iterate through the vec and
-    // Call http://localhost/holochain-api/install_hosted_happ
+    // Call http://localhost/api/v2/apps/hosted/install
     // for each WrappedActionHash to install the hosted_happ
     for HappBundle {
         happ_id,
@@ -154,14 +154,14 @@ pub async fn install_holo_hosted_happs(
                 mem_proof
             );
 
-            // We'd like to move the logic from `install_hosted_happ` out of `hpos-holochain-api` and into this service where it belongs
+            // We'd like to move the logic from `install_hosted_happ` out of `hpos-api` and into this service where it belongs
             let body = entries::InstallHappBody {
                 happ_id: happ_id.to_string(),
                 preferences: preferences.clone(),
                 membrane_proofs: mem_proof.clone(),
             };
             let response = client
-                .post("http://localhost/holochain-api/install_hosted_happ")
+                .post("http://localhost/api/v2/apps/hosted/install")
                 .json(&body)
                 .send()
                 .await?;
@@ -184,7 +184,7 @@ pub async fn load_mem_proof_file(bundle_url: &str) -> Result<HashMap<String, Mem
 
     let path = download_file(&url).await?;
 
-    let bundle = Bundle::read_from_file(&path).await.unwrap();
+    let bundle = Bundle::read_from_file(&path).await?;
 
     let AppManifest::V1(manifest) = bundle.manifest();
 

@@ -57,7 +57,7 @@ pub struct HappPreferences {
 }
 impl HappPreferences {
     /// Save preferences to a file under {SL_PREFS_PATH}
-    /// which allows hpos-holochain-api to read current values
+    /// which allows hpos-api to read current values
     pub fn save(self) -> Result<Self> {
         if let Ok(path) = env::var("SL_PREFS_PATH") {
             trace!("Writing default servicelogger prefs to {}", &path);
