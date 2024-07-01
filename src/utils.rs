@@ -1,6 +1,6 @@
 pub use crate::entries;
 use crate::transaction_types::{
-    HostingPreferences, InvoiceNote, PendingTransaction, ServiceloggerHappPreferences, POS,
+    HostingPreferences, PendingTransaction, ServiceloggerHappPreferences, POS,
 };
 use anyhow::{anyhow, Context, Result};
 use chrono::Utc;
