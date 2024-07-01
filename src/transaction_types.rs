@@ -8,13 +8,13 @@ use holochain_types::prelude::CapSecret;
 use holochain_types::prelude::Timestamp;
 use holofuel_types::fuel::Fuel;
 
-#[derive(serde::Serialize, serde::Deserialize, Debug)]
+#[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
 pub enum AcceptedBy {
     ByMe,
     ByCounterParty,
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Debug)]
+#[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
 pub enum TransactionStatus {
     Actionable, // tx that is create by 1st instance and waiting for counterparty to complete the tx
     Pending,    // tx that was created by 1st instance and second instance
@@ -24,26 +24,36 @@ pub enum TransactionStatus {
     Expired,
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Debug)]
+#[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
 pub enum TransactionDirection {
     Outgoing, // To(Address),
     Incoming, // From(Address),
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Debug)]
+#[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
 #[serde(rename_all = "snake_case")]
 pub enum POS {
     Hosting(CapSecret),
     Redemption(String), // Contains wallet address
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Debug)]
+#[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
 pub enum TransactionType {
     Request, //Invoice
     Offer,   //Promise
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Debug)]
+pub struct TransactionNote {
+    pub hha_id: ActionHashB64,
+    pub invoice_period_start: Timestamp,
+    pub invoice_period_end: Timestamp,
+    pub invoice_due_date: Timestamp,
+    #[serde(flatten)]
+    pub invoiced_items: InvoicedItems,
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
 pub struct Transaction {
     pub id: EntryHashB64,
     pub amount: String,
@@ -58,6 +68,17 @@ pub struct Transaction {
     pub proof_of_service: Option<POS>,
     pub url: Option<String>,
     pub expiration_date: Option<Timestamp>,
+}
+impl Transaction {
+    pub fn get_note(self) -> Option<TransactionNote> {
+        match self.note {
+            Some(note) => match serde_yaml::from_str(&note) {
+                Ok(result) => result,
+                Err(_) => None,
+            },
+            None => None,
+        }
+    }
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Debug)]
