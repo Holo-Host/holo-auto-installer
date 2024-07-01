@@ -409,7 +409,6 @@ pub async fn should_be_installed(
 
     let publisher_jurisdiction = publisher_jurisdictions.get(running_happ_id);
     match publisher_jurisdiction {
-
         Some(jurisdiction) => match jurisdiction {
             Some(jurisdiction) => {
                 let mut is_jurisdiction_in_list = false;
@@ -423,8 +422,7 @@ pub async fn should_be_installed(
                 if jurisdiction_preferences.is_exclusion && is_jurisdiction_in_list {
                     return false;
                 }
-                if !jurisdiction_preferences.is_exclusion && !is_jurisdiction_in_list
-                {
+                if !jurisdiction_preferences.is_exclusion && !is_jurisdiction_in_list {
                     return false;
                 }
             }
@@ -472,11 +470,8 @@ pub async fn should_be_installed(
     let categories_preferences = hosting_preferences.categories_prefs.unwrap();
     // verify the happ matches the hosting categories preferences
     if let Some(happ) = published_happ {
-        let categories_list: HashSet<String> = categories_preferences
-            .value
-            .iter()
-            .cloned()
-            .collect();
+        let categories_list: HashSet<String> =
+            categories_preferences.value.iter().cloned().collect();
 
         let contains_category = happ
             .categories
