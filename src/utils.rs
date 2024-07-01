@@ -472,12 +472,12 @@ pub async fn should_be_installed(
         if let Some(happ) = published_happ {
             let categories_list: HashSet<String> =
                 categories_preferences.value.iter().cloned().collect();
-    
+
             let contains_category = happ
                 .categories
                 .iter()
                 .any(|category| categories_list.contains(category));
-    
+
             if contains_category && categories_preferences.is_exclusion {
                 return false;
             }
@@ -486,7 +486,7 @@ pub async fn should_be_installed(
             }
         }
     }
-    
+
     // The running happ is an instance of an expected happ
     let expected_happ = published_happs.iter().find(|published_happ| {
         is_instance_of_happ(&published_happ.happ_id.to_string(), running_happ_id)
