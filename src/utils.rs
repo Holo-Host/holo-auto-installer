@@ -6,7 +6,8 @@ use anyhow::{anyhow, Context, Result};
 use chrono::Utc;
 use holochain_types::dna::{ActionHashB64, AgentPubKey};
 use holochain_types::prelude::{
-    AppManifest, ExternIO, FunctionName, MembraneProof, SerializedBytes, UnsafeBytes, ZomeName,
+    AppManifest, ExternIO, FunctionName, MembraneProof, SerializedBytes, Timestamp, UnsafeBytes,
+    ZomeName,
 };
 use holofuel_types::fuel::Fuel;
 use hpos_hc_connect::app_connection::CoreAppRoleName;
@@ -538,32 +539,28 @@ pub async fn suspend_unpaid_happs(
 
     for invoice in &pending_transactions.invoice_pending {
         if let Some(POS::Hosting(_)) = &invoice.proof_of_service {
-            if let Some(expiration_date) = invoice.expiration_date {
-                if expiration_date.as_millis() < Utc::now().timestamp_millis() {
-                    if let Some(note) = invoice.note.clone() {
-                        let invoice_note: Result<InvoiceNote, _> = serde_yaml::from_str(&note);
-                        match invoice_note {
-                            Ok(note) => {
-                                let hha_id = note.hha_id;
-                                suspended_happs.push(hha_id.clone().to_string());
-                                core_app_client
-                                    .app
-                                    .zome_call_typed(
-                                        CoreAppRoleName::HHA.into(),
-                                        ZomeName::from("hha"),
-                                        FunctionName::from("disable_happ"),
-                                        ExternIO::encode(HappAndHost {
-                                            happ_id: hha_id.clone(),
-                                            holoport_id: holoport_id.to_string(),
-                                        })?,
-                                    )
-                                    .await?;
-                            }
-                            Err(e) => {
-                                error!("Error parsing invoice note: {:?}", e);
-                            }
-                        }
+            let note = invoice.clone().get_note();
+            match note {
+                Some(note) => {
+                    if note.invoice_due_date <= Timestamp(Utc::now().timestamp()) {
+                        let hha_id = note.hha_id;
+                        suspended_happs.push(hha_id.clone().to_string());
+                        core_app_client
+                            .app
+                            .zome_call_typed(
+                                CoreAppRoleName::HHA.into(),
+                                ZomeName::from("hha"),
+                                FunctionName::from("disable_happ"),
+                                ExternIO::encode(HappAndHost {
+                                    happ_id: hha_id.clone(),
+                                    holoport_id: holoport_id.to_string(),
+                                })?,
+                            )
+                            .await?;
                     }
+                }
+                None => {
+                    error!("cannot get note from transaction")
                 }
             }
         }
