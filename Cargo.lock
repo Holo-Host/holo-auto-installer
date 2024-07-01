@@ -2171,7 +2171,7 @@ dependencies = [
 [[package]]
 name = "hpos_hc_connect"
 version = "0.1.0"
-source = "git+https://github.com/holo-host/hpos-service-crates.git?rev=18255aa0450e463db69381aac88e8f148eab7c9c#18255aa0450e463db69381aac88e8f148eab7c9c"
+source = "git+https://github.com/holo-host/hpos-service-crates.git?rev=d2f443c66311e78317e177da1d0553ee4c6c57e6#d2f443c66311e78317e177da1d0553ee4c6c57e6"
 dependencies = [
  "again",
  "anyhow",
