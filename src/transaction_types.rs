@@ -101,8 +101,8 @@ pub struct HostingPreferences {
     pub price_bandwidth: Fuel,
     pub max_time_before_invoice: Duration,
     pub invoice_due_in_days: u8,
-    pub jurisdiction_prefs: JurisdictionAndCategoryPreferences,
-    pub categories_prefs: JurisdictionAndCategoryPreferences,
+    pub jurisdiction_prefs: Option<JurisdictionAndCategoryPreferences>,
+    pub categories_prefs: Option<JurisdictionAndCategoryPreferences>,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Debug)]

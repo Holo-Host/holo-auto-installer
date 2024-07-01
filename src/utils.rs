@@ -405,37 +405,37 @@ pub async fn should_be_installed(
         return false;
     }
 
-    let publisher_jurisdiction = publisher_jurisdictions.get(running_happ_id);
-    match publisher_jurisdiction {
-        Some(jurisdiction) => match jurisdiction {
-            Some(jurisdiction) => {
-                let mut is_jurisdiction_in_list = false;
-                if hosting_preferences
-                    .jurisdiction_prefs
-                    .value
-                    .iter()
-                    .any(|host_jurisdiction| *host_jurisdiction == *jurisdiction)
-                {
-                    is_jurisdiction_in_list = true;
+    if let Some(jurisdiction_preferences) = hosting_preferences.jurisdiction_prefs {
+        let publisher_jurisdiction = publisher_jurisdictions.get(running_happ_id);
+        match publisher_jurisdiction {
+            Some(jurisdiction) => match jurisdiction {
+                Some(jurisdiction) => {
+                    let mut is_jurisdiction_in_list = false;
+                    if jurisdiction_preferences
+                        .value
+                        .iter()
+                        .any(|host_jurisdiction| *host_jurisdiction == *jurisdiction)
+                    {
+                        is_jurisdiction_in_list = true;
+                    }
+                    if jurisdiction_preferences.is_exclusion && is_jurisdiction_in_list {
+                        return false;
+                    }
+                    if !jurisdiction_preferences.is_exclusion && !is_jurisdiction_in_list {
+                        return false;
+                    }
                 }
-                if hosting_preferences.jurisdiction_prefs.is_exclusion && is_jurisdiction_in_list {
+                _ => {
+                    warn!("could not get publisher jurisdiction");
+                    warn!("happ {} won't be installed", running_happ_id);
                     return false;
                 }
-                if !hosting_preferences.jurisdiction_prefs.is_exclusion && !is_jurisdiction_in_list
-                {
-                    return false;
-                }
-            }
+            },
             _ => {
                 warn!("could not get publisher jurisdiction");
                 warn!("happ {} won't be installed", running_happ_id);
                 return false;
             }
-        },
-        _ => {
-            warn!("could not get publisher jurisdiction");
-            warn!("happ {} won't be installed", running_happ_id);
-            return false;
         }
     }
 
@@ -467,25 +467,23 @@ pub async fn should_be_installed(
         }
     }
 
-    // verify the happ matches the hosting categories preferences
-    if let Some(happ) = published_happ {
-        let categories_prefs: HashSet<String> = hosting_preferences
-            .categories_prefs
-            .value
-            .iter()
-            .cloned()
-            .collect();
+    if let Some(categories_preferences) = hosting_preferences.categories_prefs {
+        // verify the happ matches the hosting categories preferences
+        if let Some(happ) = published_happ {
+            let categories_list: HashSet<String> =
+                categories_preferences.value.iter().cloned().collect();
 
-        let contains_category = happ
-            .categories
-            .iter()
-            .any(|category| categories_prefs.contains(category));
+            let contains_category = happ
+                .categories
+                .iter()
+                .any(|category| categories_list.contains(category));
 
-        if contains_category && hosting_preferences.categories_prefs.is_exclusion {
-            return false;
-        }
-        if !contains_category && !hosting_preferences.categories_prefs.is_exclusion {
-            return false;
+            if contains_category && categories_preferences.is_exclusion {
+                return false;
+            }
+            if !contains_category && !categories_preferences.is_exclusion {
+                return false;
+            }
         }
     }
 
