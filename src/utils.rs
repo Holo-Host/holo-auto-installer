@@ -73,7 +73,7 @@ pub async fn install_holo_hosted_happs(
 
     let running_happs = Arc::new(
         admin_websocket
-            .list_running_app()
+            .list_enabled_apps()
             .await
             .context("failed to get installed hApps")?,
     );
@@ -155,6 +155,7 @@ pub async fn install_holo_hosted_happs(
             );
 
             // We'd like to move the logic from `install_hosted_happ` out of `hpos-api` and into this service where it belongs
+            // Note: This call will create the first sl clone.  Additional clone handling happens above.
             let body = entries::InstallHappBody {
                 happ_id: happ_id.to_string(),
                 preferences: preferences.clone(),
@@ -320,7 +321,7 @@ pub async fn uninstall_ineligible_happs(
         .context("Failed to connect to holochain's admin interface")?;
 
     let running_happ_ids = admin_websocket
-        .list_running_app()
+        .list_enabled_apps()
         .await
         .context("Failed to get installed and running hApps")?;
 
