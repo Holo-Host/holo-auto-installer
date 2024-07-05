@@ -590,14 +590,15 @@ pub async fn get_happ_preferences(
     core_app_client: &mut HHAAgent,
     happ_id: ActionHashB64,
 ) -> Result<ServiceloggerHappPreferences> {
-
     let happ_preference: ServiceloggerHappPreferences = core_app_client
         .app
         .zome_call_typed(
             CoreAppRoleName::HHA.into(),
             ZomeName::from("hha"),
             FunctionName::from("get_happ_preferences"),
-            HappPreferencePayload { happ_id: happ_id.into() },
+            HappPreferencePayload {
+                happ_id: happ_id.into(),
+            },
         )
         .await?;
 
