@@ -4,7 +4,7 @@ use crate::transaction_types::{
 };
 use anyhow::{anyhow, Context, Result};
 use chrono::Utc;
-use holochain_types::dna::{ActionHashB64, AgentPubKey};
+use holochain_types::dna::{ActionHash, ActionHashB64, AgentPubKey};
 use holochain_types::prelude::{
     AppManifest, ExternIO, FunctionName, MembraneProof, SerializedBytes, UnsafeBytes, ZomeName,
 };
@@ -41,7 +41,7 @@ pub struct HappBundle {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct HappPreferencePayload {
-    pub happ_id: ActionHashB64,
+    pub happ_id: ActionHash,
 }
 
 /// installs a happs that are mented to be hosted
@@ -590,13 +590,14 @@ pub async fn get_happ_preferences(
     core_app_client: &mut HHAAgent,
     happ_id: ActionHashB64,
 ) -> Result<ServiceloggerHappPreferences> {
+
     let happ_preference: ServiceloggerHappPreferences = core_app_client
         .app
         .zome_call_typed(
             CoreAppRoleName::HHA.into(),
             ZomeName::from("hha"),
             FunctionName::from("get_happ_preferences"),
-            HappPreferencePayload { happ_id },
+            HappPreferencePayload { happ_id: happ_id.into() },
         )
         .await?;
 
