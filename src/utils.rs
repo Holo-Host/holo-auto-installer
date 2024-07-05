@@ -39,11 +39,6 @@ pub struct HappBundle {
     pub categories: Vec<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct HappPreferencePayload {
-    pub happ_id: ActionHashB64,
-}
-
 /// installs a happs that are mented to be hosted
 pub async fn install_holo_hosted_happs(
     config: &Config,
@@ -596,7 +591,7 @@ pub async fn get_happ_preferences(
             CoreAppRoleName::HHA.into(),
             ZomeName::from("hha"),
             FunctionName::from("get_happ_preferences"),
-            HappPreferencePayload { happ_id },
+            happ_id,
         )
         .await?;
 
