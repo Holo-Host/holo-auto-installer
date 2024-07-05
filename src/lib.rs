@@ -51,6 +51,7 @@ pub async fn run(config: &Config) -> Result<()> {
     let mut happ_jurisdictions: HashMap<String, Option<String>> = HashMap::new();
     // get publisher jurisdiction for each happ
     for happ in list_of_happs.iter() {
+        trace!("Getting jurisdiction for happ {:?}", happ.happ_id.clone());
         let happ_prefs = get_happ_preferences(&mut core_app, happ.happ_id.clone()).await?;
         let publisher_pubkey = happ_prefs.provider_pubkey;
         match publisher_jurisdictions.get(&publisher_pubkey) {
