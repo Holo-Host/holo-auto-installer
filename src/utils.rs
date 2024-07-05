@@ -4,7 +4,7 @@ use crate::transaction_types::{
 };
 use anyhow::{anyhow, Context, Result};
 use chrono::Utc;
-use holochain_types::dna::{ActionHash, ActionHashB64, AgentPubKey};
+use holochain_types::dna::{ActionHashB64, AgentPubKey};
 use holochain_types::prelude::{
     AppManifest, ExternIO, FunctionName, MembraneProof, SerializedBytes, UnsafeBytes, ZomeName,
 };

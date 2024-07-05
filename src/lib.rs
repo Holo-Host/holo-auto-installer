@@ -9,7 +9,7 @@ use hpos_hc_connect::hha_agent::HHAAgent;
 pub use hpos_hc_connect::AdminWebsocket;
 pub mod transaction_types;
 mod utils;
-use tracing::{debug, error, info};
+use tracing::{debug, error, info, trace};
 use utils::{
     get_all_published_hosted_happs, get_happ_preferences, get_hosting_preferences,
     get_pending_transactions, get_publisher_jurisdiction, install_holo_hosted_happs,
