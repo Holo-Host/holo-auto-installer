@@ -18,7 +18,6 @@ use isahc::config::RedirectPolicy;
 use isahc::{prelude::*, HttpClient};
 use itertools::Itertools;
 use mr_bundle::Bundle;
-use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::{
     collections::HashMap, env, fs, path::PathBuf, process::Command, str::FromStr, sync::Arc,
