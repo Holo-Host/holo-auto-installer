@@ -18,7 +18,6 @@ use isahc::config::RedirectPolicy;
 use isahc::{prelude::*, HttpClient};
 use itertools::Itertools;
 use mr_bundle::Bundle;
-use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::{
     collections::HashMap, env, fs, path::PathBuf, process::Command, str::FromStr, sync::Arc,
@@ -37,11 +36,6 @@ pub struct HappBundle {
     pub jurisdictions: Vec<String>,
     pub exclude_jurisdictions: bool,
     pub categories: Vec<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct HappPreferencePayload {
-    pub happ_id: ActionHashB64,
 }
 
 /// installs a happs that are mented to be hosted
@@ -597,7 +591,7 @@ pub async fn get_happ_preferences(
             CoreAppRoleName::HHA.into(),
             ZomeName::from("hha"),
             FunctionName::from("get_happ_preferences"),
-            HappPreferencePayload { happ_id },
+            happ_id,
         )
         .await?;
 
