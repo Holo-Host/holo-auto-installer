@@ -101,7 +101,7 @@ pub async fn install_holo_hosted_happs(
         if special_installed_app_id.is_some()
             && running_happs.contains(&format!("{}::servicelogger", happ_id))
         {
-            // We do not need to install bc we never pause this app as we do not want our core-app to be uninstalled ever
+            // We do not need to install bc we never pause/disable this app as we do not want our core-app to be uninstalled ever
             trace!(
                 "Special App {:?} already installed",
                 special_installed_app_id
@@ -329,7 +329,7 @@ pub async fn uninstall_ineligible_happs(
     trace!("Unique_running_happ_ids {:?}", unique_running_happ_ids);
 
     for happ_id in unique_running_happ_ids {
-        if should_be_installed(
+        if should_be_enabled(
             happ_id,
             published_happs,
             is_kyc_level_2,
@@ -341,7 +341,7 @@ pub async fn uninstall_ineligible_happs(
         .await
         {
             info!(
-                "Skipping uninstall of {} as it should remain installed",
+                "Skipping disabling / uninstalling of {} as it should remain running",
                 happ_id
             );
             continue;
@@ -379,7 +379,7 @@ fn is_instance_of_happ(happ_id: &str, installed_app_id: &str) -> bool {
     installed_app_id.starts_with(happ_id) && !installed_app_id.ends_with("servicelogger")
 }
 
-pub async fn should_be_installed(
+pub async fn should_be_enabled(
     running_happ_id: &String,
     published_happs: &[HappBundle],
     is_kyc_level_2: bool,
@@ -388,22 +388,22 @@ pub async fn should_be_installed(
     hosting_preferences: HostingPreferences,
     publisher_jurisdictions: HashMap<String, Option<String>>,
 ) -> bool {
-    trace!("`should_be_installed check` for {}", running_happ_id);
+    trace!("`should_be_enabled check` for {}", running_happ_id);
     // This should be the first check since the core-app should never be uninstalled currently
     if !is_hosted_happ(running_happ_id) {
         trace!("Keeping infrastructure happ {}", running_happ_id);
         return true;
     }
 
-    // checks if published happ is still running
-    let published_happ = published_happs
-        .iter()
-        .find(|&happ| happ.happ_id.to_string() == *running_happ_id);
-
     if suspended_happs.contains(running_happ_id) {
         trace!("Disabling suspended happ {}", running_happ_id);
         return false;
     }
+
+    // checks if published happ is still running
+    let published_happ = published_happs
+        .iter()
+        .find(|&happ| happ.happ_id.to_string() == *running_happ_id);
 
     if let Some(jurisdiction_preferences) = hosting_preferences.jurisdiction_prefs {
         let publisher_jurisdiction = publisher_jurisdictions.get(running_happ_id);
