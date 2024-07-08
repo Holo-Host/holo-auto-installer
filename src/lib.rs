@@ -11,7 +11,9 @@ pub mod transaction_types;
 mod utils;
 use tracing::{debug, error, info};
 use utils::{
-    check_service_loggers, get_all_published_hosted_happs, get_happ_preferences, get_hosting_preferences, get_pending_transactions, get_publisher_jurisdiction, install_holo_hosted_happs, suspend_unpaid_happs, uninstall_ineligible_happs
+    check_service_loggers, get_all_published_hosted_happs, get_happ_preferences,
+    get_hosting_preferences, get_pending_transactions, get_publisher_jurisdiction,
+    install_holo_hosted_happs, suspend_unpaid_happs, uninstall_ineligible_happs,
 };
 mod hbs;
 use hbs::{HbsClient, KycLevel};

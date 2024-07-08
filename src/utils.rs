@@ -177,9 +177,9 @@ pub async fn check_service_loggers() -> Result<()> {
     let client = reqwest::Client::new();
     info!("Starting to service-logger check....");
     let response = client
-    .get("http://localhost/api/v2/apps/hosted/sl-check")
-    .send()
-    .await?;
+        .get("http://localhost/api/v2/apps/hosted/sl-check")
+        .send()
+        .await?;
     trace!("Service logger check Response {:?}", response);
     Ok(())
 }
