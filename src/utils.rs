@@ -27,7 +27,7 @@ use std::{
     time::Duration,
 };
 use tempfile::TempDir;
-use tracing::{debug, error, info, instrument, trace, warn};
+use tracing::{debug, info, instrument, trace, warn};
 use url::Url;
 
 pub struct HappBundle {
