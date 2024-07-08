@@ -222,7 +222,7 @@ pub async fn should_be_enabled(
     }
 
     if let Some(kyc) = host_credentials.kyc {
-        // happ hosting is only valid (despite price prefs) if the host is >= kyc level 2
+        // NB: Happ-hosting is only valid (despite price prefs) if the host is >= kyc level 2
         kyc == KycLevel::Level2
     } else {
         warn!(
@@ -234,7 +234,7 @@ pub async fn should_be_enabled(
     }
 }
 
-/// installs a happs that are mented to be hosted
+/// Installs all happs that are eligible for hosting
 pub async fn install_holo_hosted_happs(
     core_app_client: &mut HHAAgent,
     admin_port: u16,

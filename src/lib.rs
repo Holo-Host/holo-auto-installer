@@ -53,7 +53,7 @@ pub async fn run(config: &Config) -> Result<()> {
         let happ_prefs = get_happ_preferences(&mut core_app, happ.happ_id.clone()).await?;
         let publisher_pubkey = happ_prefs.provider_pubkey;
 
-        // If already have pubisher pubkey stored in  `publisher_jurisdictions` map, then grab the jurisdiction value and set value in `published_happ_details` map
+        // If already have publisher pubkey stored in `publisher_jurisdictions` map, then grab the jurisdiction value and set value in `published_happ_details` map
         // otherwise, make a call to hha to fetch the publisher jurisdiction and set in both the `published_happ_details` map and `publisher_jurisdictions` map
         match publisher_jurisdictions.get(&publisher_pubkey) {
             Some(jurisdiction) => {
