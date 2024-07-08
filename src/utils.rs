@@ -1,4 +1,5 @@
 pub use crate::entries;
+use crate::hbs;
 use crate::transaction_types::{
     HostingPreferences, PendingTransaction, ServiceloggerHappPreferences, POS,
 };
@@ -560,7 +561,11 @@ pub async fn suspend_unpaid_happs(
                     }
                 }
                 None => {
-                    error!("cannot get note from transaction")
+                    let notification_message = format!("An exception occured for invoice {} while getting invoice due date. Balance outstanding, hApp subject to suspension!!!", invoice.id);
+                    // we are creating and destroying hbs just to send a notification
+                    hbs::HbsClient::connect()?
+                        .send_notification(notification_message.to_string())
+                        .await?
                 }
             }
         }
