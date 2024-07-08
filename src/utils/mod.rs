@@ -7,30 +7,25 @@ pub use crate::types::{
     transaction::{InvoiceNote, PendingTransaction, POS},
     HappBundle,
 };
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result};
 use chrono::Utc;
 use core_app::{get_happs, holo_disable_happ, holo_enable_happ};
 use holochain_conductor_api::AppStatusFilter;
 use holochain_types::dna::ActionHashB64;
 use holochain_types::prelude::{AppManifest, MembraneProof, SerializedBytes, UnsafeBytes};
 use holofuel_types::fuel::Fuel;
-use hpos_hc_connect::hha_agent::HHAAgent;
-use hpos_hc_connect::AdminWebsocket;
-use isahc::config::RedirectPolicy;
-use isahc::{prelude::*, HttpClient};
+use hpos_hc_connect::{hha_agent::HHAAgent, utils::download_file, AdminWebsocket};
 use itertools::Itertools;
 use mr_bundle::Bundle;
 use std::{
     collections::{HashMap, HashSet},
-    env, fs,
-    path::PathBuf,
+    env,
     process::Command,
     str::FromStr,
     sync::Arc,
     time::Duration,
 };
-use tempfile::TempDir;
-use tracing::{debug, error, info, instrument, trace, warn};
+use tracing::{debug, error, info, trace, warn};
 use url::Url;
 
 pub async fn get_all_published_hosted_happs(
@@ -203,46 +198,6 @@ pub async fn load_mem_proof_file(bundle_url: &str) -> Result<HashMap<String, Mem
             ) // The read only memproof is [0] (or in base64 `AA==`)
         })
         .collect())
-}
-
-#[instrument(err, skip(url))]
-pub(crate) async fn download_file(url: &Url) -> Result<PathBuf> {
-    let path = if url.scheme() == "file" {
-        let p = PathBuf::from(url.path());
-        trace!("Using: {:?}", p);
-        p
-    } else {
-        trace!("downloading");
-        let mut url = Url::clone(url);
-        url.set_scheme("https")
-            .map_err(|_| anyhow!("failed to set scheme to https"))?;
-        let client = HttpClient::builder()
-            .redirect_policy(RedirectPolicy::Follow)
-            .build()
-            .context("failed to initiate download request")?;
-        let mut response = client
-            .get(url.as_str())
-            .context("failed to send GET request")?;
-        if !response.status().is_success() {
-            return Err(anyhow!(
-                "response status code {} indicated failure",
-                response.status().as_str()
-            ));
-        }
-        let dir = TempDir::new().context("failed to create tempdir")?;
-        let url_path = PathBuf::from(url.path());
-        let basename = url_path
-            .file_name()
-            .context("failed to get basename from url")?;
-        let path = dir.into_path().join(basename);
-        let mut file = fs::File::create(&path).context("failed to create target file")?;
-        response
-            .copy_to(&mut file)
-            .context("failed to write response to file")?;
-        trace!("download successful");
-        path
-    };
-    Ok(path)
 }
 
 /// installs a happs that are mented to be hosted

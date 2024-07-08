@@ -23,8 +23,8 @@ use utils::{
 
 /// 1. Gets all the holo-enabled happs from HHA
 /// 2. Suspends happs with overdue payments
-/// 2. Installs and enables (enables in holochain and holo) all new happs that were registered by a provider and holochain-disables those paused by provider in hha
-/// 3. Uninstalls happs that are ineligible for host (eg: holo-disabled, unallowed pricing for kyc level, incongruent price settings with publisher/happ)
+/// 3. Installs and enables (enables in holochain and holo) all new happs that were registered by a provider and holochain-disables those paused by provider in hha
+/// 4. Uninstalls happs that are ineligible for host (eg: holo-disabled, unallowed pricing for kyc level, incongruent price settings with publisher/happ)
 pub async fn run(config: &Config) -> Result<()> {
     info!("Activating holo hosted apps");
     let hbs_connect = HbsClient::connect()?;
