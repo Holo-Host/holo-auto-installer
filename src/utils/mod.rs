@@ -1,11 +1,10 @@
 pub mod core_app;
 
-use crate::types::PublishedHappDetails;
 pub use crate::types::{
     happ::{HappPreferences, InstallHappBody},
-    hbs::{HostCredentials, KycLevel},
+    hbs::{HbsClient, HostCredentials, KycLevel},
     transaction::{PendingTransaction, POS},
-    HappBundle,
+    HappBundle, PublishedHappDetails,
 };
 use anyhow::{Context, Result};
 use chrono::Utc;
@@ -17,7 +16,10 @@ use holochain_types::prelude::{
     ZomeName,
 };
 use holofuel_types::fuel::Fuel;
-use hpos_hc_connect::{hha_agent::HHAAgent, utils::download_file, AdminWebsocket};
+use hpos_hc_connect::{
+    app_connection::CoreAppRoleName, hha_agent::HHAAgent, hha_types::HappAndHost,
+    utils::download_file, AdminWebsocket,
+};
 use itertools::Itertools;
 use mr_bundle::Bundle;
 use std::{
@@ -159,7 +161,7 @@ pub async fn suspend_unpaid_happs(
                 None => {
                     let notification_message = format!("An exception occured for invoice {} while getting invoice due date. Balance outstanding, hApp subject to suspension!!!", invoice.id);
                     // we are creating and destroying hbs just to send a notification
-                    hbs::HbsClient::connect()?
+                    HbsClient::connect()?
                         .send_notification(notification_message.to_string())
                         .await?
                 }

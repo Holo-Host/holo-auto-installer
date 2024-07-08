@@ -27,8 +27,8 @@ struct MattermostNotificationBody {
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct HostCredentials {
-    #[allow(non_snake_case)]
-    pub accessToken: Option<String>,
+    #[serde(rename = "camel_case")]
+    pub access_token: Option<String>,
     #[allow(dead_code)]
     pub id: Option<String>,
     pub jurisdiction: Option<String>,
@@ -84,7 +84,7 @@ impl HbsClient {
                 tracing::warn!("returning default kyc level 1");
                 tracing::warn!("returning default jurisdiction of None");
                 Some(HostCredentials {
-                    accessToken: None,
+                    access_token: None,
                     id: None,
                     jurisdiction: None,
                     kyc: Some(KycLevel::Level1),
@@ -103,7 +103,7 @@ impl HbsClient {
         let json: serde_json::Value = serde_json::to_value(payload)?;
         let token = match self.get_access_token().await {
             Ok(token) => match token {
-                Some(token) => match token.accessToken {
+                Some(token) => match token.access_token {
                     Some(token) => token,
                     None => String::new(),
                 },
