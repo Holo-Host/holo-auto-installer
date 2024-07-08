@@ -38,7 +38,7 @@ pub struct HappBundle {
     pub categories: Vec<String>,
 }
 
-/// installs a happs that are mented to be hosted
+/// installs a happs that are meant to be hosted
 pub async fn install_holo_hosted_happs(
     config: &Config,
     happs: &[HappBundle],
@@ -169,6 +169,18 @@ pub async fn install_holo_hosted_happs(
             trace!("Enable app result {:?}", result);
         }
     }
+    Ok(())
+}
+
+/// runs the periodic check to make sure service-logger clone instances are correctly rotated
+pub async fn check_service_loggers() -> Result<()> {
+    let client = reqwest::Client::new();
+    info!("Starting to service-logger check....");
+    let response = client
+    .get("http://localhost/api/v2/apps/hosted/sl-check")
+    .send()
+    .await?;
+    trace!("Service logger check Response {:?}", response);
     Ok(())
 }
 
