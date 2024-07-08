@@ -10,12 +10,12 @@ use hpos_hc_connect::holo_config::Config;
 pub use hpos_hc_connect::AdminWebsocket;
 use std::collections::HashMap;
 use tracing::{debug, error, info, warn};
+use types::hbs::{HbsClient, KycLevel};
 use types::PublishedHappDetails;
 use utils::core_app::{
     get_happ_preferences, get_host_preferences, get_pending_transactions,
     get_publisher_jurisdiction,
 };
-use utils::hbs::{HbsClient, KycLevel};
 use utils::{
     get_all_published_hosted_happs, handle_ineligible_happs, install_holo_hosted_happs,
     suspend_unpaid_happs,

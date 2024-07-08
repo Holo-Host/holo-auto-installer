@@ -1,15 +1,15 @@
 pub mod core_app;
-pub mod hbs;
+
 use crate::types::PublishedHappDetails;
 pub use crate::types::{
     happ::{HappPreferences, InstallHappBody},
+    hbs::{HostCredentials, KycLevel},
     transaction::{InvoiceNote, PendingTransaction, POS},
     HappBundle,
 };
 use anyhow::{anyhow, Context, Result};
 use chrono::Utc;
 use core_app::{get_happs, holo_disable_happ, holo_enable_happ};
-use hbs::{HostCredentials, KycLevel};
 use holochain_conductor_api::AppStatusFilter;
 use holochain_types::dna::ActionHashB64;
 use holochain_types::prelude::{AppManifest, MembraneProof, SerializedBytes, UnsafeBytes};

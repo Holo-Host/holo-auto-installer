@@ -1,4 +1,5 @@
 pub mod happ;
+pub mod hbs;
 pub mod transaction;
 use holochain_types::dna::ActionHashB64;
 use holochain_types::prelude::{holochain_serial, SerializedBytes};

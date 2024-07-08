@@ -154,6 +154,6 @@ impl HbsClient {
     }
 }
 
-pub fn hbs_url() -> Result<String> {
+fn hbs_url() -> Result<String> {
     std::env::var("HBS_URL").context("Failed to read HBS_URL. Is it set in env?")
 }
