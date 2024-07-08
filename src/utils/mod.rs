@@ -28,6 +28,30 @@ use std::{
 use tracing::{debug, error, info, trace, warn};
 use url::Url;
 
+/// @TODO: Temporary read-only mem-proofs solution
+/// This fn should be replaced by calling the joining-code service and getting the appropriate proof for the agent
+pub async fn load_mem_proof_file(bundle_url: &str) -> Result<HashMap<String, MembraneProof>> {
+    let url = Url::parse(bundle_url)?;
+
+    let path = download_file(&url).await?;
+
+    let bundle = Bundle::read_from_file(&path).await?;
+
+    let AppManifest::V1(manifest) = bundle.manifest();
+
+    Ok(manifest
+        .roles
+        .clone()
+        .iter()
+        .map(|role| {
+            (
+                role.name.clone(),
+                Arc::new(SerializedBytes::from(UnsafeBytes::from(vec![0]))),
+            ) // The read only memproof is [0] (or in base64 `AA==`)
+        })
+        .collect())
+}
+
 pub async fn get_all_published_hosted_happs(
     core_app_client: &mut HHAAgent,
 ) -> Result<Vec<HappBundle>> {
@@ -99,6 +123,40 @@ fn is_instance_of_happ(happ_id: &str, installed_app_id: &str) -> bool {
         || installed_app_id.starts_with(happ_id) && !installed_app_id.ends_with("servicelogger")
 }
 
+pub async fn suspend_unpaid_happs(
+    core_app_client: &mut HHAAgent,
+    pending_transactions: PendingTransaction,
+) -> Result<Vec<String>> {
+    let mut suspended_happs: Vec<String> = Vec::new();
+
+    let holoport_id = get_holoport_id().await?;
+
+    for invoice in &pending_transactions.invoice_pending {
+        if let Some(POS::Hosting(_)) = &invoice.proof_of_service {
+            if let Some(expiration_date) = invoice.expiration_date {
+                if expiration_date.as_millis() < Utc::now().timestamp_millis() {
+                    if let Some(note) = invoice.note.clone() {
+                        let invoice_note: Result<InvoiceNote, _> = serde_yaml::from_str(&note);
+                        match invoice_note {
+                            Ok(note) => {
+                                let hha_id = note.hha_id;
+                                suspended_happs.push(hha_id.clone().to_string());
+                                holo_disable_happ(core_app_client, &hha_id, &holoport_id).await?;
+                            }
+                            Err(e) => {
+                                error!("Error parsing invoice note: {:?}", e);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    debug!("suspend happs completed: {:?}", suspended_happs);
+    Ok(suspended_happs)
+}
+
 pub async fn should_be_enabled(
     installed_happ_id: &String,
     happ_id: String,
@@ -128,7 +186,7 @@ pub async fn should_be_enabled(
             return false;
         }
 
-        // Verify that the hApp is allowed to run on the host's current jurisdiction.
+        // Verify that the host's jurisdiction matches the app's jurisdiction list - (ie: ensure that the hApp is allowed to run on the host's current jurisdiction)
         // NB: The host's jurisdiction is taken from mongodb (via hbs)
         if !host_credentials.is_host_in_valid_jurisdiction(
             happ_registration_details.should_exclude_happ_jurisdictions,
@@ -153,7 +211,7 @@ pub async fn should_be_enabled(
             return false;
         };
 
-        // If the expected happ is disabled by the host, happ shouldn't be installed
+        // Check whether the expected happ is disabled by the host.
         if happ_registration_details.is_disabled_by_host {
             trace!(
                 "Disabling happ in Holochain Conductor {} because host disabled happ it in hha",
@@ -174,30 +232,6 @@ pub async fn should_be_enabled(
         // Return false; app should not remain installed/enabled if host kyc is invalid
         false
     }
-}
-
-/// @TODO: Temporary read-only mem-proofs solution
-/// This fn should be replaced by calling the joining-code service and getting the appropriate proof for the agent
-pub async fn load_mem_proof_file(bundle_url: &str) -> Result<HashMap<String, MembraneProof>> {
-    let url = Url::parse(bundle_url)?;
-
-    let path = download_file(&url).await?;
-
-    let bundle = Bundle::read_from_file(&path).await?;
-
-    let AppManifest::V1(manifest) = bundle.manifest();
-
-    Ok(manifest
-        .roles
-        .clone()
-        .iter()
-        .map(|role| {
-            (
-                role.name.clone(),
-                Arc::new(SerializedBytes::from(UnsafeBytes::from(vec![0]))),
-            ) // The read only memproof is [0] (or in base64 `AA==`)
-        })
-        .collect())
 }
 
 /// installs a happs that are mented to be hosted
@@ -458,38 +492,4 @@ pub async fn handle_ineligible_happs(
 
     info!("Done disabling/uninstalling all ineligible happs");
     Ok(())
-}
-
-pub async fn suspend_unpaid_happs(
-    core_app_client: &mut HHAAgent,
-    pending_transactions: PendingTransaction,
-) -> Result<Vec<String>> {
-    let mut suspended_happs: Vec<String> = Vec::new();
-
-    let holoport_id = get_holoport_id().await?;
-
-    for invoice in &pending_transactions.invoice_pending {
-        if let Some(POS::Hosting(_)) = &invoice.proof_of_service {
-            if let Some(expiration_date) = invoice.expiration_date {
-                if expiration_date.as_millis() < Utc::now().timestamp_millis() {
-                    if let Some(note) = invoice.note.clone() {
-                        let invoice_note: Result<InvoiceNote, _> = serde_yaml::from_str(&note);
-                        match invoice_note {
-                            Ok(note) => {
-                                let hha_id = note.hha_id;
-                                suspended_happs.push(hha_id.clone().to_string());
-                                holo_disable_happ(core_app_client, &hha_id, &holoport_id).await?;
-                            }
-                            Err(e) => {
-                                error!("Error parsing invoice note: {:?}", e);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    debug!("suspend happs completed: {:?}", suspended_happs);
-    Ok(suspended_happs)
 }
