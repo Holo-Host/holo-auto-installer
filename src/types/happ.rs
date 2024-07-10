@@ -1,52 +1,17 @@
-use anyhow::{Context, Result};
-use holochain_types::dna::AgentPubKey;
-use holochain_types::prelude::ActionHashB64;
-use holochain_types::prelude::AgentPubKeyB64;
 use holochain_types::prelude::MembraneProof;
 use holofuel_types::fuel::Fuel;
 use serde::Deserialize;
 use serde::Serialize;
+use std::collections::HashMap;
 use std::collections::HashSet;
-use std::fs::File;
 use std::time::Duration;
-use std::{collections::HashMap, env};
-use tracing::{trace, warn};
+use tracing::warn;
 
-#[derive(Deserialize, Debug, Clone)]
-pub struct PublisherPricingPref {
-    pub cpu: Fuel,
-    pub storage: Fuel,
-    pub bandwidth: Fuel,
-}
-
-#[derive(Deserialize, Debug, Clone)]
-pub struct DnaResource {
-    pub hash: String, // hash of the dna, not a stored dht address
-    pub src_url: String,
-    pub nick: String,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct HostSettings {
-    pub is_enabled: bool,
-    pub is_host_disabled: bool,
-    pub is_auto_disabled: bool,
-}
-
-#[derive(Deserialize, Debug, Clone)]
-pub struct PresentedHappBundle {
-    pub id: ActionHashB64,
-    pub provider_pubkey: AgentPubKeyB64,
-    pub is_draft: bool,
-    pub is_paused: bool,
-    pub uid: Option<String>,
-    pub bundle_url: String,
-    pub name: String,
-    pub categories: Vec<String>,
-    pub jurisdictions: Vec<String>,
-    pub exclude_jurisdictions: bool,
-    pub special_installed_app_id: Option<String>,
-    pub host_settings: HostSettings,
+#[derive(Serialize, Debug, Clone)]
+pub struct InstallHappBody {
+    pub happ_id: String,
+    pub preferences: HappPreferences,
+    pub membrane_proofs: HashMap<String, MembraneProof>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -61,21 +26,6 @@ pub struct HappPreferences {
     pub categories_prefs: Option<ExclusivePreferences>,
 }
 impl HappPreferences {
-    /// Save preferences to a file under {SL_PREFS_PATH}
-    /// which allows hpos-api to read current values
-    pub fn save(self) -> Result<Self> {
-        if let Ok(path) = env::var("SL_PREFS_PATH") {
-            trace!("Writing default servicelogger prefs to {}", &path);
-            // create or overwrite to a file
-            let file = File::create(&path)?;
-            serde_yaml::to_writer(file, &self).context(format!(
-                "Failed writing service logger preferences to file {}",
-                path
-            ))?;
-        };
-        Ok(self)
-    }
-
     pub fn is_happ_publisher_in_valid_jurisdiction(
         &self, // host preferences
         maybe_publisher_jurisdiction: &Option<String>,
@@ -146,22 +96,27 @@ impl HappPreferences {
     }
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Debug)]
-pub struct ServiceloggerHappPreferences {
-    pub provider_pubkey: AgentPubKey,
-    pub max_fuel_before_invoice: Fuel,
-    pub price_compute: Fuel,
-    pub price_storage: Fuel,
-    pub price_bandwidth: Fuel,
-    pub max_time_before_invoice: Duration,
-    pub invoice_due_in_days: u8, // how many days after an invoice is created it it due
-}
-
-#[derive(Serialize, Debug, Clone)]
-pub struct InstallHappBody {
-    pub happ_id: String,
-    pub preferences: HappPreferences,
-    pub membrane_proofs: HashMap<String, MembraneProof>,
+impl From<hpos_hc_connect::hha_types::HappPreferences> for HappPreferences {
+    fn from(value: hpos_hc_connect::hha_types::HappPreferences) -> Self {
+        HappPreferences {
+            max_fuel_before_invoice: value.max_fuel_before_invoice,
+            max_time_before_invoice: value.max_time_before_invoice,
+            price_compute: value.price_compute,
+            price_storage: value.price_storage,
+            price_bandwidth: value.price_bandwidth,
+            invoice_due_in_days: value.invoice_due_in_days,
+            jurisdiction_prefs: if value.jurisdiction_prefs.is_some() {
+                Some(value.jurisdiction_prefs.unwrap().into())
+            } else {
+                None
+            },
+            categories_prefs: if value.categories_prefs.is_some() {
+                Some(value.categories_prefs.unwrap().into())
+            } else {
+                None
+            },
+        }
+    }
 }
 
 // NB: This struct is currently only used for categories and jurisdictions
@@ -171,7 +126,11 @@ pub struct ExclusivePreferences {
     pub is_exclusion: bool,
 }
 
-pub struct PublisherJurisdiction {
-    pub happ_id: ActionHashB64,
-    pub jurisdiction: Option<String>,
+impl From<hpos_hc_connect::hha_types::ExclusivePreferences> for ExclusivePreferences {
+    fn from(value: hpos_hc_connect::hha_types::ExclusivePreferences) -> Self {
+        ExclusivePreferences {
+            value: value.value,
+            is_exclusion: value.is_exclusion,
+        }
+    }
 }

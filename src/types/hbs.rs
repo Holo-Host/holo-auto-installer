@@ -25,16 +25,17 @@ struct MattermostNotificationBody {
     message: String,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Default)]
 pub struct HostCredentials {
     #[serde(rename = "camel_case")]
     pub access_token: Option<String>,
     #[allow(dead_code)]
     pub id: Option<String>,
     pub jurisdiction: Option<String>,
-    pub kyc: Option<KycLevel>,
-    // #[serde(rename = "camel_case")]
-    // pub public_key: Option<String>,
+    #[serde(default)]
+    pub kyc: KycLevel,
+    // The following is also returned by this hbs endpoint:
+    // pub publicKey: Option<String>,
     // pub email: String,
 }
 impl HostCredentials {
@@ -61,13 +62,15 @@ impl HostCredentials {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]
 pub enum KycLevel {
     #[serde(rename = "holo_kyc_1")]
+    #[default]
     Level1,
     #[serde(rename = "holo_kyc_2")]
     Level2,
 }
+
 pub struct HbsClient {
     pub client: reqwest::Client,
 }
@@ -83,12 +86,7 @@ impl HbsClient {
                 tracing::warn!("Unable to get kyc & jurisdiction: {:?}", e);
                 tracing::warn!("returning default kyc level 1");
                 tracing::warn!("returning default jurisdiction of None");
-                Some(HostCredentials {
-                    access_token: None,
-                    id: None,
-                    jurisdiction: None,
-                    kyc: Some(KycLevel::Level1),
-                })
+                Some(HostCredentials::default())
             }
         }
     }
@@ -179,7 +177,7 @@ impl HbsClient {
             )
             .await?;
 
-        tracing::debug!("Signature: {:?}", signature);
+        tracing::trace!("Signature: {:?}", signature);
 
         let connection = Self::connect()?;
         let mut headers = reqwest::header::HeaderMap::new();
