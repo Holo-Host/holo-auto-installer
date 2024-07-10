@@ -7,9 +7,9 @@ edition = "2021"
 [dependencies]
 again = "0.1"
 anyhow = "1.0"
-base64= "0.21.7"
+base64= "0.22.1"
 isahc = "1.7.2"
-itertools = "0.10.5"
+itertools = "0.13.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 serde_yaml = "0.9.25"
@@ -26,12 +26,12 @@ holofuel_types = "0.5.9"
 getrandom = "0.2.7"
 url2 = "0.0.6"
 sodoken = "0.0.11"
-holochain_types = {version = "0.4.0-dev.2", features = ["chc"]}
-holochain_conductor_api = { version = "0.4.0-dev.2", features = ["chc"]}
-holochain_keystore = { version = "0.4.0-dev.2" }
+holochain_types = {version = "0.4.0-dev.11", features = ["chc"]}
+holochain_conductor_api = { version = "0.4.0-dev.11", features = ["chc"]}
+holochain_keystore = { version = "0.4.0-dev.11" }
 holochain_websocket = { version = "0.4.0-dev.2"}
-mr_bundle = { version = "0.4.0-dev.1" }
+mr_bundle = { version = "0.4.0-dev.4" }
 hpos-config-core = { git = "https://github.com/Holo-Host/hpos-config", rev = "a36f862869cc162c843ac27ed617910d68f480cc" }
 hpos-config-seed-bundle-explorer ={ git = "https://github.com/Holo-Host/hpos-config", rev = "a36f862869cc162c843ac27ed617910d68f480cc" }
 chrono = "0.4.33"
-hpos_hc_connect = { git = "https://github.com/holo-host/hpos-service-crates.git", rev = "18255aa0450e463db69381aac88e8f148eab7c9c" }
+hpos_hc_connect = { git = "https://github.com/holo-host/hpos-service-crates.git", rev = "1a333b0688dbc7a2dbbe64eb25a2d98f8200b14d" }
