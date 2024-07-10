@@ -14,7 +14,7 @@ holo auto installer does 2 main things.
 - Install a happs that are supposed to be installed on the holoport but are not installed
   `install_holo_hosted_happs`
 - Uninstall happs that are not supposed to be installed on the holoport but are installed
-  `uninstall_ineligible_happs`
+  `handle_ineligible_happs`
 
 Generally if you want to restrict something so it is not installed on the holoport you can use the function inside 
 `uninstall_apps.rs` called `should_be_installed` If this returns a `false` the happ will be uninstalled form the holoport.
