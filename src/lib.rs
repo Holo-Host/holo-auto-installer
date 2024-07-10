@@ -10,7 +10,7 @@ use anyhow::Result;
 use holochain_types::dna::{hash_type::Agent, HoloHash};
 use hpos_hc_connect::{hha_agent::HHAAgent, holo_config::Config};
 use std::collections::HashMap;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, error, info};
 use types::hbs::{HbsClient, KycLevel};
 use types::PublishedHappDetails;
 use utils::{
@@ -86,15 +86,7 @@ pub async fn run(config: &Config) -> Result<()> {
 
     let host_happ_preferences = core_app.get_host_preferences().await?.into();
 
-    let is_host_kyc_level_2 = match host_credentials.clone().kyc {
-        Some(kyc) => kyc == KycLevel::Level2,
-        None => {
-            // If no host kyc is found, default to hosting being ineligible
-            // NB: Hosting is only valid (despite price prefs) if the host is >= kyc level 2
-            warn!("No host kyc found. Defaulting to KYC 1.");
-            false
-        }
-    };
+    let is_host_kyc_level_2 = host_credentials.clone().kyc == KycLevel::Level2;
 
     install_holo_hosted_happs(
         &mut core_app,

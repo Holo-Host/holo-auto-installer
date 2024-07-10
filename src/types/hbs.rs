@@ -8,12 +8,13 @@ use reqwest::Response;
 use serde::{Deserialize, Serialize};
 use tracing::warn;
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Default)]
 pub struct HostCredentials {
     #[allow(dead_code)]
     pub id: Option<String>,
     pub jurisdiction: Option<String>,
-    pub kyc: Option<KycLevel>,
+    #[serde(default)]
+    pub kyc: KycLevel,
     // #[serde(rename = "camel_case")]
     // pub public_key: Option<String>,
     // pub email: String,
@@ -42,13 +43,15 @@ impl HostCredentials {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]
 pub enum KycLevel {
     #[serde(rename = "holo_kyc_1")]
+    #[default]
     Level1,
     #[serde(rename = "holo_kyc_2")]
     Level2,
 }
+
 pub struct HbsClient {
     pub client: reqwest::Client,
 }
@@ -64,11 +67,7 @@ impl HbsClient {
                 tracing::warn!("Unable to get kyc & jurisdiction: {:?}", e);
                 tracing::warn!("returning default kyc level 1");
                 tracing::warn!("returning default jurisdiction of None");
-                Some(HostCredentials {
-                    id: None,
-                    jurisdiction: None,
-                    kyc: Some(KycLevel::Level1),
-                })
+                Some(HostCredentials::default())
             }
         }
     }

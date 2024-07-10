@@ -225,17 +225,8 @@ pub async fn should_be_enabled(
         }
     }
 
-    if let Some(kyc) = host_credentials.kyc {
-        // NB: Happ-hosting is only valid (despite price prefs) if the host is >= kyc level 2
-        kyc == KycLevel::Level2
-    } else {
-        warn!(
-            "No host kyc level found. Happ {:?} will not be installed/enabled on host.",
-            installed_happ_id
-        );
-        // Return false; app should not remain installed/enabled if host kyc is invalid
-        false
-    }
+    // NB: Happ-hosting is only valid (despite price prefs) if the host is >= kyc level 2
+    host_credentials.kyc == KycLevel::Level2
 }
 
 /// Installs all happs that are eligible for hosting
