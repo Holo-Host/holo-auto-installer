@@ -2261,7 +2261,7 @@ dependencies = [
 [[package]]
 name = "hpos_hc_connect"
 version = "0.1.0"
-source = "git+https://github.com/holo-host/hpos-service-crates.git?branch=feat/service-logger-rotate#273681b1033af30fe9fc9f21a5b80061d5a8876c"
+source = "git+https://github.com/holo-host/hpos-service-crates.git?branch=feat/service-logger-rotate#276108b7c6456ba8c5098c82c2d3381c73cc2a0f"
 dependencies = [
  "again",
  "anyhow",
