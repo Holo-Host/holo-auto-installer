@@ -10,12 +10,12 @@ use tracing::warn;
 #[derive(Serialize, Debug, Clone)]
 pub struct InstallHappBody {
     pub happ_id: String,
-    pub preferences: HappPreferences,
+    pub preferences: HostHappPreferences,
     pub membrane_proofs: HashMap<String, MembraneProof>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct HappPreferences {
+pub struct HostHappPreferences {
     pub max_fuel_before_invoice: Fuel,
     pub max_time_before_invoice: Duration,
     pub price_compute: Fuel,
@@ -25,7 +25,7 @@ pub struct HappPreferences {
     pub jurisdiction_prefs: Option<ExclusivePreferences>,
     pub categories_prefs: Option<ExclusivePreferences>,
 }
-impl HappPreferences {
+impl HostHappPreferences {
     pub fn is_happ_publisher_in_valid_jurisdiction(
         &self, // host preferences
         maybe_publisher_jurisdiction: &Option<String>,
@@ -78,17 +78,17 @@ impl HappPreferences {
             .any(|category| host_categories_list.contains(category));
 
         if is_exclusion_list {
-            // If the happ contains a category that is in an exclusion list, then happ is invalid
+            // If the happ contains a category that is in the host's exclusion list, then happ is invalid
             return !happ_category_exists_in_host_preferences;
         }
-        // Otherwise, the happ is valid if it contains a category that is in an inclusion list
+        // Otherwise, the happ is valid if it contains a category that is in the host's inclusion list
         happ_category_exists_in_host_preferences
     }
 }
 
-impl From<hpos_hc_connect::hha_types::HappPreferences> for HappPreferences {
+impl From<hpos_hc_connect::hha_types::HappPreferences> for HostHappPreferences {
     fn from(value: hpos_hc_connect::hha_types::HappPreferences) -> Self {
-        HappPreferences {
+        HostHappPreferences {
             max_fuel_before_invoice: value.max_fuel_before_invoice,
             max_time_before_invoice: value.max_time_before_invoice,
             price_compute: value.price_compute,

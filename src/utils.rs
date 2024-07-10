@@ -1,6 +1,6 @@
 use crate::types::PublishedHappDetails;
 pub use crate::types::{
-    happ::{HappPreferences, InstallHappBody},
+    happ::{HostHappPreferences, InstallHappBody},
     hbs::{HostCredentials, KycLevel},
     transaction::InvoiceNote,
     HappBundle,
@@ -176,7 +176,7 @@ pub async fn should_be_enabled(
     happ_id: String,
     suspended_happs: Vec<String>,
     host_credentials: HostCredentials, // the kyc and jurisdiction of a host
-    host_happ_preferences: HappPreferences, // the hosting preferences a host sets
+    host_happ_preferences: HostHappPreferences, // the hosting preferences a host sets
     published_happ_details: HashMap<String, PublishedHappDetails>, // the jurisdiction, categories, and publisher jurisdiction for each happ
 ) -> bool {
     trace!(
@@ -351,7 +351,7 @@ pub async fn install_holo_hosted_happs(
             );
 
             // Hardcoded servicelogger preferences for all the hosted happs installed
-            let preferences = HappPreferences {
+            let preferences = HostHappPreferences {
                 max_fuel_before_invoice: Fuel::from_str("1000")?, // MAX_TX_AMT in holofuel is currently hard-coded to 50,000
                 max_time_before_invoice: Duration::default(),
                 price_compute: Fuel::from_str("0.025")?,
@@ -399,7 +399,7 @@ pub async fn handle_ineligible_happs(
     admin_port: u16,
     suspended_happs: Vec<String>,
     host_credentials: HostCredentials,
-    host_happ_preferences: HappPreferences,
+    host_happ_preferences: HostHappPreferences,
     published_happ_details: HashMap<String, PublishedHappDetails>,
 ) -> Result<()> {
     info!("Checking to uninstall happs that were removed from the hosted list....");

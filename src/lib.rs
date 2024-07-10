@@ -3,7 +3,7 @@
 pub mod types;
 mod utils;
 
-pub use crate::types::happ::HappPreferences;
+pub use crate::types::happ::HostHappPreferences;
 pub use hpos_hc_connect::AdminWebsocket;
 
 use anyhow::Result;
