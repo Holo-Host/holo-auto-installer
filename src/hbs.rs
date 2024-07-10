@@ -25,8 +25,8 @@ struct MattermostNotificationBody {
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(non_snake_case)]
 pub struct HostingCriteria {
-    #[allow(non_snake_case)]
     pub accessToken: Option<String>,
     #[allow(dead_code)]
     pub id: Option<String>,
