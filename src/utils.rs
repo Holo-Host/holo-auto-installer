@@ -31,12 +31,12 @@ use url::Url;
 /// runs the periodic check to make sure service-logger clone instances are correctly rotated
 pub async fn check_service_loggers() -> Result<()> {
     let client = reqwest::Client::new();
-    info!("Starting to service-logger check....");
+    info!("Starting Servicelogger check...");
     let response = client
         .get("http://localhost/api/v2/apps/hosted/sl-check")
         .send()
         .await?;
-    trace!("Service logger check Response {:?}", response);
+    trace!("Servicelogger check response {:?}", response);
     Ok(())
 }
 

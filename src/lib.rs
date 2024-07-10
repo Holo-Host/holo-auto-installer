@@ -22,6 +22,9 @@ use utils::{
 /// 2. Suspends happs with overdue payments
 /// 3. Installs and enables (enables in holochain and holo) all new happs that were registered by a provider and holochain-disables those paused by provider in hha
 /// 4. Uninstalls happs that are ineligible for host (eg: holo-disabled, unallowed pricing for kyc level, incongruent price settings with publisher/happ)
+/// 5. Calls the `/v2/apps/hosted/sl-check` endpoint in hpos-api-rust to:
+///    a. create any new clones needed and
+///    b. delete all clones >= 2 time buckets old (1 month) && invoices have been paid
 pub async fn run(config: &Config) -> Result<()> {
     info!("Activating holo hosted apps");
     let hbs_connect = HbsClient::connect()?;
@@ -105,6 +108,8 @@ pub async fn run(config: &Config) -> Result<()> {
         published_happ_details,
     )
     .await?;
+
     check_service_loggers().await?;
+
     Ok(())
 }
