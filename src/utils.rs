@@ -1,20 +1,22 @@
-pub mod core_app;
-
 use crate::types::PublishedHappDetails;
 pub use crate::types::{
     happ::{HappPreferences, InstallHappBody},
     hbs::{HostCredentials, KycLevel},
-    transaction::{InvoiceNote, PendingTransaction, POS},
+    transaction::InvoiceNote,
     HappBundle,
 };
 use anyhow::{Context, Result};
 use chrono::Utc;
-use core_app::{get_happs, holo_disable_happ, holo_enable_happ};
 use holochain_conductor_api::AppStatusFilter;
 use holochain_types::dna::ActionHashB64;
 use holochain_types::prelude::{AppManifest, MembraneProof, SerializedBytes, UnsafeBytes};
 use holofuel_types::fuel::Fuel;
-use hpos_hc_connect::{hha_agent::HHAAgent, utils::download_file, AdminWebsocket};
+use hpos_hc_connect::{
+    hha_agent::HHAAgent,
+    holofuel_types::{PendingTransaction, POS},
+    utils::download_file,
+    AdminWebsocket,
+};
 use itertools::Itertools;
 use mr_bundle::Bundle;
 use std::{
@@ -57,7 +59,7 @@ pub async fn get_all_published_hosted_happs(
 ) -> Result<Vec<HappBundle>> {
     trace!("get_all_published_hosted_happs");
 
-    let happ_bundles = get_happs(core_app_client).await?;
+    let happ_bundles = core_app_client.get_happs().await?;
 
     let happ_bundle_ids = happ_bundles
         .into_iter()
@@ -141,7 +143,9 @@ pub async fn suspend_unpaid_happs(
                             Ok(note) => {
                                 let hha_id = note.hha_id;
                                 suspended_happs.push(hha_id.clone().to_string());
-                                holo_disable_happ(core_app_client, &hha_id, &holoport_id).await?;
+                                core_app_client
+                                    .holo_disable_happ(&hha_id, &holoport_id)
+                                    .await?;
                             }
                             Err(e) => {
                                 error!("Error parsing invoice note: {:?}", e);
@@ -243,19 +247,6 @@ pub async fn install_holo_hosted_happs(
 ) -> Result<()> {
     info!("Starting to install....");
 
-    // Hardcoded servicelogger preferences for all the hosted happs installed
-    let preferences = HappPreferences {
-        max_fuel_before_invoice: Fuel::from_str("1000")?, // MAX_TX_AMT in holofuel is currently hard-coded to 50,000
-        max_time_before_invoice: Duration::default(),
-        price_compute: Fuel::from_str("0.025")?,
-        price_storage: Fuel::from_str("0.025")?,
-        price_bandwidth: Fuel::from_str("0.025")?,
-        invoice_due_in_days: 7,
-        jurisdiction_prefs: None,
-        categories_prefs: None,
-    }
-    .save()?;
-
     if happs.is_empty() {
         info!("No happs registered to be enabled for hosting.");
         return Ok(());
@@ -327,7 +318,9 @@ pub async fn install_holo_hosted_happs(
                 if is_kyc_level_2 {
                     trace!("Enabling happ {} for holo hosting", happ_id);
                     let holoport_id = get_holoport_id().await?;
-                    holo_enable_happ(core_app_client, happ_id, &holoport_id).await?;
+                    core_app_client
+                        .holo_enable_happ(happ_id, &holoport_id)
+                        .await?;
                 } else {
                     trace!(
                         "Not holo-enabling {} app due to failed price check for kyc level",
@@ -360,6 +353,18 @@ pub async fn install_holo_hosted_happs(
                 happ_id,
                 mem_proof
             );
+
+            // Hardcoded servicelogger preferences for all the hosted happs installed
+            let preferences = HappPreferences {
+                max_fuel_before_invoice: Fuel::from_str("1000")?, // MAX_TX_AMT in holofuel is currently hard-coded to 50,000
+                max_time_before_invoice: Duration::default(),
+                price_compute: Fuel::from_str("0.025")?,
+                price_storage: Fuel::from_str("0.025")?,
+                price_bandwidth: Fuel::from_str("0.025")?,
+                invoice_due_in_days: 7,
+                jurisdiction_prefs: None,
+                categories_prefs: None,
+            };
 
             // The installation implementation can be found in`hpos-api` here: https://github.com/Holo-Host/hpos-api-rust/blob/develop/src/handlers/install/mod.rs#L31
             // NB: The `/install_hosted_happ` endpoint will holo-enable the app if it is already installed and enabled on hololchain,
@@ -487,7 +492,9 @@ pub async fn handle_ineligible_happs(
         info!("Holo-disabling {}", happ_id);
         let holoport_id = get_holoport_id().await?;
         let happ_id_hash = ActionHashB64::from_b64_str(&happ_id)?;
-        holo_disable_happ(core_app_client, &happ_id_hash, &holoport_id).await?;
+        core_app_client
+            .holo_disable_happ(&happ_id_hash, &holoport_id)
+            .await?;
     }
 
     info!("Done disabling/uninstalling all ineligible happs");

@@ -3,19 +3,16 @@
 pub mod types;
 mod utils;
 
+pub use crate::types::happ::HappPreferences;
+pub use hpos_hc_connect::AdminWebsocket;
+
 use anyhow::Result;
 use holochain_types::dna::{hash_type::Agent, HoloHash};
-use hpos_hc_connect::hha_agent::HHAAgent;
-use hpos_hc_connect::holo_config::Config;
-pub use hpos_hc_connect::AdminWebsocket;
+use hpos_hc_connect::{hha_agent::HHAAgent, holo_config::Config};
 use std::collections::HashMap;
 use tracing::{debug, error, info, warn};
 use types::hbs::{HbsClient, KycLevel};
 use types::PublishedHappDetails;
-use utils::core_app::{
-    get_happ_preferences, get_host_preferences, get_pending_transactions,
-    get_publisher_jurisdiction,
-};
 use utils::{
     get_all_published_hosted_happs, handle_ineligible_happs, install_holo_hosted_happs,
     suspend_unpaid_happs,
@@ -40,7 +37,7 @@ pub async fn run(config: &Config) -> Result<()> {
     let mut core_app = HHAAgent::spawn(Some(config)).await?;
 
     // Suspend happs that have overdue payments
-    let pending_transactions = get_pending_transactions(&mut core_app).await?;
+    let pending_transactions = core_app.get_pending_transactions().await?;
     let suspended_happs = suspend_unpaid_happs(&mut core_app, pending_transactions).await?;
 
     let published_happs = get_all_published_hosted_happs(&mut core_app).await?;
@@ -50,7 +47,7 @@ pub async fn run(config: &Config) -> Result<()> {
     let mut publisher_jurisdictions: HashMap<HoloHash<Agent>, Option<String>> = HashMap::new();
 
     for happ in published_happs.iter() {
-        let happ_prefs = get_happ_preferences(&mut core_app, happ.happ_id.clone()).await?;
+        let happ_prefs = core_app.get_happ_preferences(happ.happ_id.clone()).await?;
         let publisher_pubkey = happ_prefs.provider_pubkey;
 
         // If already have publisher pubkey stored in `publisher_jurisdictions` map, then grab the jurisdiction value and set value in `published_happ_details` map
@@ -69,8 +66,9 @@ pub async fn run(config: &Config) -> Result<()> {
                 );
             }
             None => {
-                let jurisdiction =
-                    get_publisher_jurisdiction(&mut core_app, publisher_pubkey.clone()).await?;
+                let jurisdiction = core_app
+                    .get_publisher_jurisdiction(publisher_pubkey.clone())
+                    .await?;
                 publisher_jurisdictions.insert(publisher_pubkey, jurisdiction.clone());
                 published_happ_details.insert(
                     happ.happ_id.clone().to_string(),
@@ -86,7 +84,7 @@ pub async fn run(config: &Config) -> Result<()> {
         }
     }
 
-    let host_happ_preferences = get_host_preferences(&mut core_app).await?;
+    let host_happ_preferences = core_app.get_host_preferences().await?.into();
 
     let is_host_kyc_level_2 = match host_credentials.clone().kyc {
         Some(kyc) => kyc == KycLevel::Level2,
