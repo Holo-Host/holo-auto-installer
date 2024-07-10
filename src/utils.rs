@@ -16,7 +16,6 @@ use hpos_hc_connect::{
     utils::download_file,
     AdminWebsocket,
 };
-use itertools::Itertools;
 use mr_bundle::Bundle;
 use std::{
     collections::{HashMap, HashSet},
@@ -290,7 +289,7 @@ pub async fn install_holo_hosted_happs(
         // If it does have a runnning SL, we consider the app ready for use and and do nothing
         // ...otherwise, we proceed to install, which leads to the installation of a sl instance for this happ
         if special_installed_app_id.is_some()
-            && enabled_happ_ids.contains(&&format!("{}::servicelogger", happ_id))
+            && enabled_happ_ids.contains(&format!("{}::servicelogger", happ_id))
         {
             // Skip the install/enable step
             // NB: We expect our core-app to already be installed and enabled as we never pause/disable/uninstall it
@@ -301,7 +300,7 @@ pub async fn install_holo_hosted_happs(
         }
         // Iterate through all currently enabled apps
         // (NB: The sole exceptions here are Hosted HoloFuel and Cloud Console, as they should always be caught by the prior condition.)
-        else if enabled_happ_ids.contains(&&format!("{}", happ_id)) {
+        else if enabled_happ_ids.contains(&format!("{}", happ_id)) {
             trace!("App {} already installed", happ_id);
             // Check if this happ was paused by the publisher in hha and disable it in holochain if so
             if *is_paused {
@@ -453,7 +452,7 @@ pub async fn handle_ineligible_happs(
             }
             None => {
                 // Filter out the infrastructure apps (ie: the core apps)
-                if !is_hosted_happ(enabled_happ_id) {
+                if !is_hosted_happ(&enabled_happ_id) {
                     trace!("Keeping infrastructure happ {}", enabled_happ_id);
                     true
                 } else {
@@ -473,13 +472,13 @@ pub async fn handle_ineligible_happs(
         } else {
             // If apps should no longer remain enabled, we need to take two steps:
             // Step 1: disable or uninstall app from Holochain Conductor (depending on instance type)
-            if is_anonymous_instance(enabled_happ_id) {
+            if is_anonymous_instance(&enabled_happ_id) {
                 // Anonymous apps are only disabled, never uninstalled, as they are currently use a readonly instance of the host's instance of the app
                 info!("Holochain-disabling {}", enabled_happ_id);
-                admin_websocket.disable_app(enabled_happ_id).await?;
+                admin_websocket.disable_app(&enabled_happ_id).await?;
             } else {
                 info!("Uninstalling {} from Holochain Conductor", enabled_happ_id);
-                admin_websocket.uninstall_app(enabled_happ_id).await?;
+                admin_websocket.uninstall_app(&enabled_happ_id).await?;
             }
         }
     }
