@@ -15,8 +15,8 @@ pub struct HostCredentials {
     pub jurisdiction: Option<String>,
     #[serde(default)]
     pub kyc: KycLevel,
-    // #[serde(rename = "camel_case")]
-    // pub public_key: Option<String>,
+    // The following is also returned by this hbs endpoint:
+    // pub publicKey: Option<String>,
     // pub email: String,
 }
 impl HostCredentials {
