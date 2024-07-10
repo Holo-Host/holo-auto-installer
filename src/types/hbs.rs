@@ -91,6 +91,7 @@ impl HbsClient {
         }
     }
 
+
     pub async fn send_notification(&self, message: String) -> Result<()> {
         let connection = Self::connect()?;
         let mut headers = reqwest::header::HeaderMap::new();
@@ -162,6 +163,7 @@ impl HbsClient {
         let pub_key = core_app.pubkey().await?;
 
         tracing::debug!("email: {:?}, pub_key: {:?}", email, pub_key);
+
         let payload = AuthenticationBody {
             email,
             timestamp: Timestamp::now().as_millis(),
