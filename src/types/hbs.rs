@@ -91,7 +91,6 @@ impl HbsClient {
         }
     }
 
-
     pub async fn send_notification(&self, message: String) -> Result<()> {
         let connection = Self::connect()?;
         let mut headers = reqwest::header::HeaderMap::new();
