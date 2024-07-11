@@ -14,8 +14,8 @@ use tracing::{debug, error, info};
 use types::hbs::{HbsClient, KycLevel};
 use types::PublishedHappDetails;
 use utils::{
-    get_all_published_hosted_happs, handle_ineligible_happs, install_holo_hosted_happs,
-    suspend_unpaid_happs,
+    get_all_published_hosted_happs, get_suspended_happs, handle_ineligible_happs,
+    install_holo_hosted_happs,
 };
 
 /// 1. Gets all the holo-enabled happs from HHA
@@ -38,7 +38,7 @@ pub async fn run(config: &Config) -> Result<()> {
 
     // Suspend happs that have overdue payments
     let pending_transactions = core_app.get_pending_transactions().await?;
-    let suspended_happs = suspend_unpaid_happs(&mut core_app, pending_transactions).await?;
+    let suspended_happs = get_suspended_happs(pending_transactions);
 
     let published_happs = get_all_published_hosted_happs(&mut core_app).await?;
 
