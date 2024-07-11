@@ -382,7 +382,7 @@ pub async fn install_holo_hosted_happs(
 /// Handles ineligible happs for 2 cases - identified and anonymous hosted agents:
 ///  - Identified: Uninstalls & removes identified instances of ineligible happs
 ///  - Anonymous: Disables anonymous instance of ineligible happs
-/// Ineligible Happs = old holo-hosted happs, holo-disabled happs (including suspended happs), or happs with one of the following:
+/// Ineligible Happs = old holo-hosted happs, holo-disabled happs, suspended happs, or happs with one of the following:
 ///  - 1. an invalid pricing for kyc level, 2. invalid pricing preference, 3. invalid uptime, or 4. invalid jurisdiction
 pub async fn handle_ineligible_happs(
     core_app_client: &mut HHAAgent,
