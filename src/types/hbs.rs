@@ -162,6 +162,7 @@ impl HbsClient {
         let pub_key = core_app.pubkey().await?;
 
         tracing::debug!("email: {:?}, pub_key: {:?}", email, pub_key);
+
         let payload = AuthenticationBody {
             email,
             timestamp: Timestamp::now().as_millis(),
