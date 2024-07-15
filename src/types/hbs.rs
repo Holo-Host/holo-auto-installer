@@ -8,8 +8,27 @@ use reqwest::Response;
 use serde::{Deserialize, Serialize};
 use tracing::warn;
 
+const MATTERMOST_NOTIFICATION_CHANNEL: &str = "rgf8oe3843r5xehhp66q58onfa";
+
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, SerializedBytes)]
+#[allow(non_snake_case)]
+struct AuthenticationBody {
+    email: String,
+    timestamp: i64,
+    pubKey: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, SerializedBytes)]
+#[allow(non_snake_case)]
+struct MattermostNotificationBody {
+    channelId: String,
+    message: String,
+}
+
 #[derive(Debug, Deserialize, Clone, Default)]
 pub struct HostCredentials {
+    #[serde(rename = "camel_case")]
+    pub access_token: Option<String>,
     #[allow(dead_code)]
     pub id: Option<String>,
     pub jurisdiction: Option<String>,
@@ -72,6 +91,41 @@ impl HbsClient {
         }
     }
 
+    pub async fn send_notification(&self, message: String) -> Result<()> {
+        let connection = Self::connect()?;
+        let mut headers = reqwest::header::HeaderMap::new();
+        let payload = MattermostNotificationBody {
+            channelId: MATTERMOST_NOTIFICATION_CHANNEL.to_string(),
+            message,
+        };
+        let json: serde_json::Value = serde_json::to_value(payload)?;
+        let token = match self.get_access_token().await {
+            Ok(token) => match token {
+                Some(token) => match token.access_token {
+                    Some(token) => token,
+                    None => String::new(),
+                },
+                None => String::new(),
+            },
+            Err(_) => String::new(),
+        };
+        headers.append("Content-Type", "application/json".parse()?);
+        headers.append("Authorization", token.parse()?);
+        let request = connection
+            .client
+            .request(
+                reqwest::Method::POST,
+                format!("{}/ops/api/v1/mattermost/notify", hbs_url()?),
+            )
+            .headers(headers)
+            .json(&json);
+        if let Err(err) = request.send().await {
+            tracing::error!("failed to send notification to mattermost: {:?}", err);
+        }
+
+        Ok(())
+    }
+
     async fn get_access_token(&self) -> Result<Option<HostCredentials>> {
         let response = self.inner_get_access_token().await?;
         tracing::debug!("response received");
@@ -109,15 +163,7 @@ impl HbsClient {
 
         tracing::debug!("email: {:?}, pub_key: {:?}", email, pub_key);
 
-        #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, SerializedBytes)]
-        #[allow(non_snake_case)]
-        struct Body {
-            email: String,
-            timestamp: i64,
-            pubKey: String,
-        }
-
-        let payload = Body {
+        let payload = AuthenticationBody {
             email,
             timestamp: Timestamp::now().as_millis(),
             pubKey: pub_key.to_string(),
