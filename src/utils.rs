@@ -135,40 +135,37 @@ fn is_instance_of_happ(happ_id: &str, installed_app_id: &str) -> bool {
         || installed_app_id.starts_with(happ_id) && !installed_app_id.ends_with("servicelogger")
 }
 
-pub async fn suspend_unpaid_happs(
-    core_app_client: &mut HHAAgent,
-    pending_transactions: PendingTransaction,
-) -> Result<Vec<String>> {
-    let mut suspended_happs: Vec<String> = Vec::new();
-
-    let holoport_id = get_holoport_id().await?;
-
-    for invoice in &pending_transactions.invoice_pending {
-        if let Some(POS::Hosting(_)) = &invoice.proof_of_service {
-            if let Some(expiration_date) = invoice.expiration_date {
-                if expiration_date.as_millis() < Utc::now().timestamp_millis() {
-                    if let Some(note) = invoice.note.clone() {
-                        let invoice_note: Result<InvoiceNote, _> = serde_yaml::from_str(&note);
-                        match invoice_note {
-                            Ok(note) => {
-                                let hha_id = note.hha_id;
-                                suspended_happs.push(hha_id.clone().to_string());
-                                core_app_client
-                                    .holo_disable_happ(&hha_id, &holoport_id)
-                                    .await?;
-                            }
-                            Err(e) => {
-                                error!("Error parsing invoice note: {:?}", e);
+// NB: Suspended happs are all happs that have invoices which remain unpaid at/after the invoice due date
+pub fn get_suspended_happs(pending_transactions: PendingTransaction) -> Vec<String> {
+    let suspended_happs = pending_transactions
+        .invoice_pending
+        .iter()
+        .filter_map(|invoice| {
+            if let Some(POS::Hosting(_)) = &invoice.proof_of_service {
+                if let Some(expiration_date) = invoice.expiration_date {
+                    if expiration_date.as_millis() < Utc::now().timestamp_millis() {
+                        if let Some(note) = invoice.note.clone() {
+                            let invoice_note: Result<InvoiceNote, _> = serde_yaml::from_str(&note);
+                            match invoice_note {
+                                Ok(note) => {
+                                    let hha_id = note.hha_id;
+                                    return Some(hha_id.clone().to_string());
+                                }
+                                Err(e) => {
+                                    error!("Error parsing invoice note: {:?}", e);
+                                    return None;
+                                }
                             }
                         }
                     }
                 }
             }
-        }
-    }
+            None
+        })
+        .collect();
 
-    debug!("suspend happs completed: {:?}", suspended_happs);
-    Ok(suspended_happs)
+    debug!("Created suspend happs list: {:?}", suspended_happs);
+    suspended_happs
 }
 
 pub async fn should_be_enabled(
@@ -393,7 +390,7 @@ pub async fn install_holo_hosted_happs(
 /// Handles ineligible happs for 2 cases - identified and anonymous hosted agents:
 ///  - Identified: Uninstalls & removes identified instances of ineligible happs
 ///  - Anonymous: Disables anonymous instance of ineligible happs
-/// Ineligible Happs = old holo-hosted happs, holo-disabled happs, or happs with one of the following:
+/// Ineligible Happs = old holo-hosted happs, holo-disabled happs, suspended happs, or happs with one of the following:
 ///  - 1. an invalid pricing for kyc level, 2. invalid pricing preference, 3. invalid uptime, or 4. invalid jurisdiction
 pub async fn handle_ineligible_happs(
     core_app_client: &mut HHAAgent,
