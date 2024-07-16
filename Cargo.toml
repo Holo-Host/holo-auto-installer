@@ -34,5 +34,4 @@ mr_bundle = { version = "0.4.0-dev.4" }
 hpos-config-core = { git = "https://github.com/Holo-Host/hpos-config", rev = "a36f862869cc162c843ac27ed617910d68f480cc" }
 hpos-config-seed-bundle-explorer ={ git = "https://github.com/Holo-Host/hpos-config", rev = "a36f862869cc162c843ac27ed617910d68f480cc" }
 chrono = "0.4.33"
-hpos_hc_connect = { git = "https://github.com/holo-host/hpos-service-crates.git", branch = "feat/service-logger-rotate" }
-#hpos_hc_connect = { git = "https://github.com/holo-host/hpos-service-crates.git", rev = "1a333b0688dbc7a2dbbe64eb25a2d98f8200b14d" }
+hpos_hc_connect = { git = "https://github.com/holo-host/hpos-service-crates.git", rev = "83b5bba4839f141a02ce5123ee7c915763f145e7" }
