@@ -12,7 +12,7 @@ use holochain_types::dna::ActionHashB64;
 use holochain_types::prelude::{AppManifest, MembraneProof, SerializedBytes, UnsafeBytes};
 use holofuel_types::fuel::Fuel;
 use hpos_hc_connect::{
-    hha_agent::HHAAgent,
+    hha_agent::CoreAppAgent,
     holofuel_types::{PendingTransaction, POS},
     utils::download_file,
     AdminWebsocket,
@@ -55,7 +55,7 @@ pub async fn load_mem_proof_file(bundle_url: &str) -> Result<HashMap<String, Mem
 }
 
 pub async fn get_all_published_hosted_happs(
-    core_app_client: &mut HHAAgent,
+    core_app_client: &mut CoreAppAgent,
 ) -> Result<Vec<HappBundle>> {
     trace!("get_all_published_hosted_happs");
 
@@ -228,7 +228,7 @@ pub async fn should_be_enabled(
 
 /// Installs all happs that are eligible for hosting
 pub async fn install_holo_hosted_happs(
-    core_app_client: &mut HHAAgent,
+    core_app_client: &mut CoreAppAgent,
     admin_port: u16,
     happs: &[HappBundle],
     is_kyc_level_2: bool,
@@ -385,7 +385,7 @@ pub async fn install_holo_hosted_happs(
 /// Ineligible Happs = old holo-hosted happs, holo-disabled happs, suspended happs, or happs with one of the following:
 ///  - 1. an invalid pricing for kyc level, 2. invalid pricing preference, 3. invalid uptime, or 4. invalid jurisdiction
 pub async fn handle_ineligible_happs(
-    core_app_client: &mut HHAAgent,
+    core_app_client: &mut CoreAppAgent,
     admin_port: u16,
     suspended_happs: Vec<String>,
     host_credentials: HostCredentials,
