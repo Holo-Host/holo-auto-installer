@@ -3,7 +3,7 @@
 pub mod types;
 mod utils;
 
-pub use crate::types::happ::HappPreferences;
+pub use crate::types::happ::HostHappPreferences;
 pub use hpos_hc_connect::AdminWebsocket;
 
 use anyhow::Result;
@@ -14,14 +14,17 @@ use tracing::{debug, error, info};
 use types::hbs::{HbsClient, KycLevel};
 use types::PublishedHappDetails;
 use utils::{
-    get_all_published_hosted_happs, get_suspended_happs, handle_ineligible_happs,
-    install_holo_hosted_happs,
+    check_service_loggers, get_all_published_hosted_happs, get_suspended_happs,
+    handle_ineligible_happs, install_holo_hosted_happs,
 };
 
 /// 1. Gets all the holo-enabled happs from HHA
 /// 2. Suspends happs with overdue payments
-/// 3. Installs and enables (enables in holochain and holo) all new happs that were registered by a provider and holochain-disables those paused by provider in hha
-/// 4. Uninstalls happs that are ineligible for host (eg: holo-disabled, unallowed pricing for kyc level, incongruent price settings with publisher/happ)
+/// 3. Installs and enables (enables in holochain and holo) the anonymous/readonly instance for all new happs that were registered by a provider, then holochain-disables those paused by provider in hha
+/// 4. Uninstalls happs that are ineligible for host (eg: holo-disabled, unallowed pricing for kyc level, incongruent price settings with publisher/happ, etc.)
+/// 5. Calls the `/v2/apps/hosted/sl-check` endpoint in hpos-api-rust to:
+///    a. create any new clones needed and
+///    b. delete all clones >= 2 time buckets old (1 month) && invoices have been paid
 pub async fn run(config: &Config) -> Result<()> {
     info!("Activating holo hosted apps");
     let hbs_connect = HbsClient::connect()?;
@@ -105,5 +108,8 @@ pub async fn run(config: &Config) -> Result<()> {
         published_happ_details,
     )
     .await?;
+
+    check_service_loggers().await?;
+
     Ok(())
 }

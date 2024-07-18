@@ -1,13 +1,12 @@
 use crate::types::PublishedHappDetails;
 pub use crate::types::{
-    happ::{HappPreferences, InstallHappBody},
+    happ::{HostHappPreferences, InstallHappBody},
     hbs::{HostCredentials, KycLevel},
     transaction::InvoiceNote,
     HappBundle,
 };
 use anyhow::{Context, Result};
 use chrono::Utc;
-use holochain_conductor_api::AppStatusFilter;
 use holochain_types::dna::ActionHashB64;
 use holochain_types::prelude::{AppManifest, MembraneProof, SerializedBytes, UnsafeBytes};
 use holofuel_types::fuel::Fuel;
@@ -17,7 +16,6 @@ use hpos_hc_connect::{
     utils::download_file,
     AdminWebsocket,
 };
-use itertools::Itertools;
 use mr_bundle::Bundle;
 use std::{
     collections::{HashMap, HashSet},
@@ -29,6 +27,18 @@ use std::{
 };
 use tracing::{debug, error, info, trace, warn};
 use url::Url;
+
+/// Runs a periodic check to make sure the service-logger clone instances for all hosted happs are correctly rotated
+pub async fn check_service_loggers() -> Result<()> {
+    let client = reqwest::Client::new();
+    info!("Starting Servicelogger check...");
+    let response = client
+        .get("http://localhost/api/v2/apps/hosted/sl-check")
+        .send()
+        .await?;
+    trace!("Servicelogger check response {:?}", response);
+    Ok(())
+}
 
 /// @TODO: Temporary read-only mem-proofs solution
 /// This fn should be replaced by calling the joining-code service and getting the appropriate proof for the agent
@@ -105,7 +115,7 @@ async fn get_holoport_id() -> Result<String> {
     Ok(holoport_id.to_string())
 }
 
-// There are core infrastructure happs that should never be uninstalled. All uninstallable happs start with "uhCkk" and don't contain ::servicelogger
+// Nb: There are core infrastructure apps that should never be uninstalled. NB: All uninstallable happs start with "uhCkk" and don't contain ::servicelogger
 fn is_hosted_happ(installed_app_id: &str) -> bool {
     installed_app_id.starts_with("uhCkk") && !installed_app_id.contains("::servicelogger")
 }
@@ -163,7 +173,7 @@ pub async fn should_be_enabled(
     happ_id: String,
     suspended_happs: Vec<String>,
     host_credentials: HostCredentials, // the kyc and jurisdiction of a host
-    host_happ_preferences: HappPreferences, // the hosting preferences a host sets
+    host_happ_preferences: HostHappPreferences, // the hosting preferences a host sets
     published_happ_details: HashMap<String, PublishedHappDetails>, // the jurisdiction, categories, and publisher jurisdiction for each happ
 ) -> bool {
     trace!(
@@ -176,7 +186,7 @@ pub async fn should_be_enabled(
         return false;
     }
 
-    // Iterate over each happ details to run credentials check between the happ, publisher, and host:
+    // Iterate over each happ's details to run credentials check between the happ details, publisher settings/preferences, and host settings/preferences:
     if let Some(happ_registration_details) = published_happ_details.get(&happ_id) {
         // Verify that the publisher's jurisdiction matches the host's jurisdiction preferences
         if !host_happ_preferences.is_happ_publisher_in_valid_jurisdiction(
@@ -201,7 +211,7 @@ pub async fn should_be_enabled(
             return false;
         }
 
-        // Verify that the hApp category is a valid host category.
+        // Verify that the happ category is a valid host category.
         if !host_happ_preferences.is_happ_valid_category(&happ_registration_details.happ_categories)
         {
             warn!(
@@ -212,7 +222,7 @@ pub async fn should_be_enabled(
             return false;
         };
 
-        // Check whether the expected happ is disabled by the host.
+        // Check whether the happ is disabled by the host.
         if happ_registration_details.is_disabled_by_host {
             trace!(
                 "Disabling happ in Holochain Conductor {} because host disabled happ it in hha",
@@ -222,11 +232,12 @@ pub async fn should_be_enabled(
         }
     }
 
-    // NB: Happ-hosting is only valid (despite price prefs) if the host is >= kyc level 2
+    // NB: Happ-hosting is only valid for hosting (despite price prefs) if the host is >= kyc level 2
+    // Return true if the host if reach here and host has valid kyc for hosting
     host_credentials.kyc == KycLevel::Level2
 }
 
-/// Installs all happs that are eligible for hosting
+/// Installs anonymous instance for all happs that are eligible for hosting
 pub async fn install_holo_hosted_happs(
     core_app_client: &mut HHAAgent,
     admin_port: u16,
@@ -244,18 +255,13 @@ pub async fn install_holo_hosted_happs(
         .await
         .context("failed to connect to holochain's admin interface")?;
 
-    let enabled_happs = Arc::new(
+    let enabled_happ_ids = Arc::new(
         admin_websocket
-            .list_apps(Some(AppStatusFilter::Enabled))
+            .list_enabled_apps()
             .await
-            .context("failed to get installed hApps")?,
+            .context("failed to get enabled hApps")?,
     );
-    let enabled_happ_ids: Vec<&String> = enabled_happs
-        .iter()
-        .map(|h| &h.installed_app_id)
-        .unique()
-        .collect();
-    trace!("enabled_happs {:?}", enabled_happ_ids);
+    trace!("enabled_happ_ids {:?}", enabled_happ_ids);
 
     let client = reqwest::Client::new();
 
@@ -281,7 +287,7 @@ pub async fn install_holo_hosted_happs(
         // If it does have a runnning SL, we consider the app ready for use and and do nothing
         // ...otherwise, we proceed to install, which leads to the installation of a sl instance for this happ
         if special_installed_app_id.is_some()
-            && enabled_happ_ids.contains(&&format!("{}::servicelogger", happ_id))
+            && enabled_happ_ids.contains(&format!("{}::servicelogger", happ_id))
         {
             // Skip the install/enable step
             // NB: We expect our core-app to already be installed and enabled as we never pause/disable/uninstall it
@@ -292,7 +298,7 @@ pub async fn install_holo_hosted_happs(
         }
         // Iterate through all currently enabled apps
         // (NB: The sole exceptions here are Hosted HoloFuel and Cloud Console, as they should always be caught by the prior condition.)
-        else if enabled_happ_ids.contains(&&format!("{}", happ_id)) {
+        else if enabled_happ_ids.contains(&format!("{}", happ_id)) {
             trace!("App {} already installed", happ_id);
             // Check if this happ was paused by the publisher in hha and disable it in holochain if so
             if *is_paused {
@@ -317,21 +323,21 @@ pub async fn install_holo_hosted_happs(
                 }
             }
         }
-        // if the expected happ is disabled by the host, we don't install
+        // If the expected happ is disabled by the host, we don't install
         else if is_host_disabled.to_owned() {
             trace!(
                 "Skipping happ installation due to host's disabled setting for happ {}",
                 happ_id
             );
         }
-        // if kyc_level is not 2 then happ hosting is not allowed and we don't install
+        // If kyc_level is not 2 then happ hosting is not allowed and we don't install
         else if !is_kyc_level_2 {
             trace!(
                 "Skipping hosting of happ {} due to host's kyc level ",
                 happ_id
             );
         } else {
-            // else, install the hosted happ read-only instance
+            // Otherwise, install the hosted happ anonymous/read-only instance
             // (NB: The read-only instance is an instance of the app that installed with the host agent pubkey and a read-only memproof.)
             trace!("Load mem-proofs for {}", happ_id);
             let mem_proof: HashMap<String, MembraneProof> =
@@ -342,8 +348,8 @@ pub async fn install_holo_hosted_happs(
                 mem_proof
             );
 
-            // Hardcoded servicelogger preferences for all the hosted happs installed
-            let preferences = HappPreferences {
+            // Hardcode servicelogger preferences for all the hosted happs installed
+            let preferences = HostHappPreferences {
                 max_fuel_before_invoice: Fuel::from_str("1000")?, // MAX_TX_AMT in holofuel is currently hard-coded to 50,000
                 max_time_before_invoice: Duration::default(),
                 price_compute: Fuel::from_str("0.025")?,
@@ -355,13 +361,15 @@ pub async fn install_holo_hosted_happs(
             };
 
             // The installation implementation can be found in`hpos-api` here: https://github.com/Holo-Host/hpos-api-rust/blob/develop/src/handlers/install/mod.rs#L31
-            // NB: The `/install_hosted_happ` endpoint will holo-enable the app if it is already installed and enabled on hololchain,
+            // NB: The `/v2/apps/hosted/install` endpoint will holo-enable the app if it is already installed and enabled on hololchain,
             // ...otherwise it takes the following 5 steps:
             // 1. installs sl for the app,
             // 2. holochain-enables the app's sl,
             // 3. installs the app on holochain (NB: The app installs with the host agent pubkey as this a read-only instance),
             // 4. holochain-enables the app,
             // 5. holo-enables the app
+
+            // Note: This call will create the first sl clone.  Additional clone handling happens above.
             let body = InstallHappBody {
                 happ_id: happ_id.to_string(),
                 preferences: preferences.clone(),
@@ -389,7 +397,7 @@ pub async fn handle_ineligible_happs(
     admin_port: u16,
     suspended_happs: Vec<String>,
     host_credentials: HostCredentials,
-    host_happ_preferences: HappPreferences,
+    host_happ_preferences: HostHappPreferences,
     published_happ_details: HashMap<String, PublishedHappDetails>,
 ) -> Result<()> {
     info!("Checking to uninstall happs that were removed from the hosted list....");
@@ -400,16 +408,11 @@ pub async fn handle_ineligible_happs(
         .await
         .context("Failed to connect to holochain's admin interface")?;
 
-    let enabled_happs = admin_websocket
-        .list_apps(Some(AppStatusFilter::Enabled))
+    let enabled_happ_ids = admin_websocket
+        .list_enabled_apps()
         .await
         .context("Failed to get installed and enabled hApps")?;
 
-    let enabled_happ_ids: Vec<&String> = enabled_happs
-        .iter()
-        .map(|h| &h.installed_app_id)
-        .unique()
-        .collect();
     trace!("enabled_happ_ids {:?}", enabled_happ_ids);
 
     let published_happ_ids: Vec<String> = published_happ_details.clone().into_keys().collect();
@@ -417,10 +420,13 @@ pub async fn handle_ineligible_happs(
 
     for enabled_happ_id in enabled_happ_ids {
         // Deteremine if the enabled happ is an instance of a published happ
-        let maybe_hosted_instance_happ_id = published_happ_ids
-            .clone()
-            .into_iter()
-            .find(|published_happ_id| is_instance_of_happ(published_happ_id, enabled_happ_id));
+        let maybe_hosted_instance_happ_id =
+            published_happ_ids
+                .clone()
+                .into_iter()
+                .find(|published_happ_id| {
+                    is_instance_of_happ(published_happ_id, enabled_happ_id.as_ref())
+                });
 
         let should_happ_remain_enabled = match maybe_hosted_instance_happ_id {
             Some(happ_id) => {
@@ -444,11 +450,12 @@ pub async fn handle_ineligible_happs(
             }
             None => {
                 // Filter out the infrastructure apps (ie: the core apps)
-                if !is_hosted_happ(enabled_happ_id) {
+                if !is_hosted_happ(&enabled_happ_id) {
                     trace!("Keeping infrastructure happ {}", enabled_happ_id);
+                    // The enabled happ is an infrastructure/core app, so it must remain installed & enabled
                     true
                 } else {
-                    // The enabled happ is not a hosted instance of the happ nor a core app, so it shouldn't remain installed/enabled
+                    // The enabled happ is not an infrastructure/core app, so it shouldn't remain installed/enabled
                     false
                 }
             }
@@ -464,18 +471,18 @@ pub async fn handle_ineligible_happs(
         } else {
             // If apps should no longer remain enabled, we need to take two steps:
             // Step 1: disable or uninstall app from Holochain Conductor (depending on instance type)
-            if is_anonymous_instance(enabled_happ_id) {
-                // Anonymous apps are only disabled, never uninstalled, as they are currently use a readonly instance of the host's instance of the app
+            if is_anonymous_instance(&enabled_happ_id) {
+                // Anonymous apps are only disabled, never uninstalled, as they are currently use a readonly instance of the host's app
                 info!("Holochain-disabling {}", enabled_happ_id);
-                admin_websocket.disable_app(enabled_happ_id).await?;
+                admin_websocket.disable_app(&enabled_happ_id).await?;
             } else {
                 info!("Uninstalling {} from Holochain Conductor", enabled_happ_id);
-                admin_websocket.uninstall_app(enabled_happ_id).await?;
+                admin_websocket.uninstall_app(&enabled_happ_id).await?;
             }
         }
     }
 
-    // Step 2: disable hosted happ in hha (holo hosting)
+    // Step 2: holo-disable all happs that should no longer remain enabled
     for happ_id in happs_to_holo_disable {
         info!("Holo-disabling {}", happ_id);
         let holoport_id = get_holoport_id().await?;
