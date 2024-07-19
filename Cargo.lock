@@ -656,6 +656,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2459377285ad874054d797f3ccebf984978aa39129f6eafde5cdc8315b612f8"
 
 [[package]]
+name = "const_env"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3e9e4f72c6e3398ca6da372abd9affd8f89781fe728869bbf986206e9af9627e"
+dependencies = [
+ "const_env_impl",
+]
+
+[[package]]
+name = "const_env_impl"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3a4f51209740b5e1589e702b3044cdd4562cef41b6da404904192ffffb852d62"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "constant_time_eq"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1794,7 +1814,7 @@ checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
 name = "holo-auto-installer"
-version = "0.3.3"
+version = "0.4.0"
 dependencies = [
  "again",
  "anyhow",
@@ -2241,11 +2261,13 @@ dependencies = [
 [[package]]
 name = "hpos_hc_connect"
 version = "0.1.0"
-source = "git+https://github.com/holo-host/hpos-service-crates.git?rev=1a333b0688dbc7a2dbbe64eb25a2d98f8200b14d#1a333b0688dbc7a2dbbe64eb25a2d98f8200b14d"
+source = "git+https://github.com/holo-host/hpos-service-crates.git?rev=81485983b949884e7a574cae519818b628f57865#81485983b949884e7a574cae519818b628f57865"
 dependencies = [
  "again",
  "anyhow",
  "base64 0.13.1",
+ "chrono",
+ "const_env",
  "ed25519-dalek",
  "getrandom 0.2.15",
  "holochain_conductor_api",
