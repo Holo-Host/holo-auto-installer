@@ -2,7 +2,7 @@ use anyhow::Context;
 use anyhow::Result;
 use base64::prelude::*;
 use holochain_types::prelude::{holochain_serial, SerializedBytes, Signature, Timestamp};
-use hpos_hc_connect::hha_agent::HHAAgent;
+use hpos_hc_connect::hha_agent::CoreAppAgent;
 use hpos_hc_connect::hpos_agent::get_hpos_config;
 use reqwest::Response;
 use serde::{Deserialize, Serialize};
@@ -158,7 +158,7 @@ impl HbsClient {
             | hpos_config_core::Config::V2 { settings, .. } => settings.admin.email,
         };
 
-        let mut core_app = HHAAgent::spawn(None).await?;
+        let mut core_app = CoreAppAgent::spawn(None).await?;
         let pub_key = core_app.pubkey().await?;
 
         tracing::debug!("email: {:?}, pub_key: {:?}", email, pub_key);

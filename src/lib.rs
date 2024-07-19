@@ -8,7 +8,7 @@ pub use hpos_hc_connect::AdminWebsocket;
 
 use anyhow::Result;
 use holochain_types::dna::{hash_type::Agent, HoloHash};
-use hpos_hc_connect::{hha_agent::HHAAgent, holo_config::Config};
+use hpos_hc_connect::{hha_agent::CoreAppAgent, holo_config::Config};
 use std::collections::HashMap;
 use tracing::{debug, error, info};
 use types::hbs::{HbsClient, KycLevel};
@@ -37,7 +37,7 @@ pub async fn run(config: &Config) -> Result<()> {
     };
     debug!("Got host credentials from hbs {:?}", host_credentials);
 
-    let mut core_app = HHAAgent::spawn(Some(config)).await?;
+    let mut core_app = CoreAppAgent::spawn(Some(config)).await?;
 
     // Suspend happs that have overdue payments
     let pending_transactions = core_app.get_pending_transactions().await?;
