@@ -101,10 +101,7 @@ impl HbsClient {
         let json: serde_json::Value = serde_json::to_value(payload)?;
         let token = match self.get_access_token().await {
             Ok(token) => match token {
-                Some(token) => match token.access_token {
-                    Some(token) => token,
-                    None => String::new(),
-                },
+                Some(token) => token.access_token.unwrap_or_default(),
                 None => String::new(),
             },
             Err(_) => String::new(),
