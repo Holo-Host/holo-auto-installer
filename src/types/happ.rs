@@ -36,15 +36,15 @@ impl HappPreferences {
                 (jurisdictions_list, c.is_exclusion)
             }
             None => {
-                warn!("Could not get publisher jurisdiction for happ.");
-                return false;
+                warn!("No host jurisdiction for happ set.");
+                return true;
             }
         };
 
         let publisher_jurisdiction = match maybe_publisher_jurisdiction {
             Some(pj) => pj,
             None => {
-                warn!("Could not get publisher jurisdiction for happ.");
+                warn!("Could not get publisher jurisdiction for happ");
                 return false;
             }
         };
@@ -74,8 +74,8 @@ impl HappPreferences {
                 (categories_list, c.is_exclusion)
             }
             None => {
-                warn!("Host's category preferences not available");
-                return false;
+                warn!("No category preferences set by host");
+                return true;
             }
         };
 
