@@ -312,6 +312,7 @@ pub async fn install_holo_hosted_happs(
                 if is_kyc_level_2 {
                     trace!("Enabling happ {} for holo hosting", happ_id);
                     let holoport_id = get_holoport_id().await?;
+                    // Questions: if its here does this not mean that the happ is already enabled?
                     core_app_client
                         .holo_enable_happ(happ_id, &holoport_id)
                         .await?;
