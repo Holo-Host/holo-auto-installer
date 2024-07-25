@@ -182,7 +182,10 @@ pub async fn should_be_enabled(
         if !host_happ_preferences.is_happ_publisher_in_valid_jurisdiction(
             &happ_registration_details.publisher_jurisdiction,
         ) {
-            warn!("Happ {} will be disabled/uninstalled", installed_happ_id);
+            warn!(
+                "Happ {} will be disabled/uninstalled because publisher is in invalid jurisdiction ",
+                installed_happ_id
+            );
             // Return false; app should not remain installed/enabled if publisher juridiction is invalid
             return false;
         }
@@ -194,7 +197,7 @@ pub async fn should_be_enabled(
             &happ_registration_details.happ_jurisdictions,
         ) {
             warn!(
-                "Happ {} will be will be disabled/uninstalled",
+                "Happ {} will be will be disabled/uninstalled because host is in invalid jurisdiction",
                 installed_happ_id
             );
             // Return false; app should not remain installed/enabled if host juridiction is invalid
@@ -205,7 +208,7 @@ pub async fn should_be_enabled(
         if !host_happ_preferences.is_happ_valid_category(&happ_registration_details.happ_categories)
         {
             warn!(
-                "Happ {} will be will be disabled/uninstalled",
+                "Happ {} will be will be disabled/uninstalled because happ category is invalid based on host preferences",
                 installed_happ_id
             );
             // Return false; app should not remain installed/enabled if happ category is invalid
