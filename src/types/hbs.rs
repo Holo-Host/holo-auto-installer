@@ -6,7 +6,7 @@ use hpos_hc_connect::hha_agent::CoreAppAgent;
 use hpos_hc_connect::hpos_agent::get_hpos_config;
 use reqwest::Response;
 use serde::{Deserialize, Serialize};
-use tracing::warn;
+use tracing::{debug, warn};
 
 const MATTERMOST_NOTIFICATION_CHANNEL: &str = "rgf8oe3843r5xehhp66q58onfa";
 
@@ -51,6 +51,13 @@ impl HostCredentials {
                 return false;
             }
         };
+        debug!(
+            "should_exclude_happ_jurisdictions {:?}",
+            should_exclude_happ_jurisdictions
+        );
+        debug!("happ_jurisdictions {:?}", happ_jurisdictions);
+        debug!("host_jurisdiction {:?}", host_jurisdiction);
+
         if should_exclude_happ_jurisdictions {
             // If the host jurisdiction is present in the list that the hApp Manager has used,
             // then the host jurisdiction is invalid
