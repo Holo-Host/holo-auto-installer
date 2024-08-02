@@ -5,6 +5,7 @@ use holochain_types::dna::ActionHashB64;
 use holochain_types::prelude::{holochain_serial, SerializedBytes};
 use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Deserialize, Clone)]
 pub struct HappBundle {
     pub happ_id: ActionHashB64,
     pub bundle_url: String,
