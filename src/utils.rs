@@ -252,14 +252,13 @@ pub async fn install_holo_hosted_happs(
             .await
             .context("failed to get installed hApps")?,
     );
+
     let enabled_happ_ids: Vec<&String> = enabled_happs
         .iter()
         .map(|h| &h.installed_app_id)
         .unique()
         .collect();
     trace!("enabled_happs {:?}", enabled_happ_ids);
-
-    let client = reqwest::Client::new();
 
     // Iterate through the vec and
     // Call http://localhost/api/v2/apps/hosted/install
@@ -355,6 +354,7 @@ pub async fn install_holo_hosted_happs(
                 preferences: preferences.clone(),
                 membrane_proofs: mem_proof.clone(),
             };
+            let client = reqwest::Client::new();
             let response = client
                 .post("http://localhost/api/v2/apps/hosted/install")
                 .json(&body)

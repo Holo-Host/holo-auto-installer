@@ -10,7 +10,7 @@ use anyhow::Result;
 use holochain_types::dna::{hash_type::Agent, HoloHash};
 use hpos_hc_connect::{hha_agent::CoreAppAgent, holo_config::Config};
 use std::collections::HashMap;
-use tracing::{debug, error, info};
+use tracing::{debug, error, info, trace};
 use types::hbs::{HbsClient, KycLevel};
 use types::PublishedHappDetails;
 use utils::{
@@ -35,12 +35,17 @@ pub async fn run(config: &Config) -> Result<()> {
     debug!("Got host credentials from hbs {:?}", host_credentials);
 
     let mut core_app = CoreAppAgent::spawn(Some(config)).await?;
+    trace!("Connected to core app interface.");
 
     // Suspend happs that have overdue payments
     let pending_transactions = core_app.get_pending_transactions().await?;
+    trace!("Got pending_transactions : {:?}", pending_transactions);
+
     let suspended_happs = get_suspended_happs(pending_transactions);
+    trace!("Got suspended_happs : {:#?}", suspended_happs);
 
     let published_happs = get_all_published_hosted_happs(&mut core_app).await?;
+    trace!("Got published_happs : {:#?}", published_happs);
 
     // Get happ jurisdictions AND publisher jurisdiction for each happ
     let mut published_happ_details: HashMap<String, PublishedHappDetails> = HashMap::new();
@@ -69,6 +74,11 @@ pub async fn run(config: &Config) -> Result<()> {
                 let jurisdiction = core_app
                     .get_publisher_jurisdiction(publisher_pubkey.clone())
                     .await?;
+                trace!(
+                    "Got jurisdiction for publisher {:?} : {:?}",
+                    publisher_pubkey,
+                    jurisdiction
+                );
                 publisher_jurisdictions.insert(publisher_pubkey, jurisdiction.clone());
                 published_happ_details.insert(
                     happ.happ_id.clone().to_string(),
