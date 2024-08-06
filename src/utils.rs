@@ -242,7 +242,6 @@ pub async fn should_be_enabled(
 
 /// Installs anonymous instance for all happs that are eligible for hosting
 pub async fn install_holo_hosted_happs(
-    core_app_client: &mut CoreAppAgent,
     admin_port: u16,
     happs: &[HappBundle],
     is_kyc_level_2: bool,
