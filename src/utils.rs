@@ -310,21 +310,6 @@ pub async fn install_holo_hosted_happs(
                     happ_id
                 );
                 admin_websocket.disable_app(&happ_id.to_string()).await?;
-            } else {
-                // Check if happ is eligible to be holo-enabled for host and if so, holo-enable happ
-                if is_kyc_level_2 {
-                    trace!("Enabling happ {} for holo hosting", happ_id);
-                    let holoport_id = get_holoport_id().await?;
-                    // Questions: if its here does this not mean that the happ is already enabled?
-                    core_app_client
-                        .holo_enable_happ(happ_id, &holoport_id)
-                        .await?;
-                } else {
-                    trace!(
-                        "Not holo-enabling {} app due to failed price check for kyc level",
-                        happ_id
-                    );
-                }
             }
         }
         // If the expected happ is disabled by the host, we don't install
