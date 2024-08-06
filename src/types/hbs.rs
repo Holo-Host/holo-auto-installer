@@ -175,8 +175,6 @@ impl HbsClient {
             )
             .await?;
 
-        tracing::trace!("Signature: {:?}", signature);
-
         let connection = Self::connect()?;
         let mut headers = reqwest::header::HeaderMap::new();
 
