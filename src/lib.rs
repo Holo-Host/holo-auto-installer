@@ -88,13 +88,7 @@ pub async fn run(config: &Config) -> Result<()> {
 
     let is_host_kyc_level_2 = host_credentials.clone().kyc == KycLevel::Level2;
 
-    install_holo_hosted_happs(
-        &mut core_app,
-        config.admin_port,
-        &published_happs,
-        is_host_kyc_level_2,
-    )
-    .await?;
+    install_holo_hosted_happs(config.admin_port, &published_happs, is_host_kyc_level_2).await?;
 
     handle_ineligible_happs(
         &mut core_app,
