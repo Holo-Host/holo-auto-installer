@@ -9,7 +9,6 @@ use anyhow::{Context, Result};
 use chrono::Utc;
 use holochain_types::dna::ActionHashB64;
 use holochain_types::prelude::{AppManifest, MembraneProof, SerializedBytes, UnsafeBytes};
-use holofuel_types::fuel::Fuel;
 use hpos_hc_connect::{
     hha_agent::CoreAppAgent,
     holofuel_types::{PendingTransaction, POS},
@@ -21,9 +20,7 @@ use std::{
     collections::{HashMap, HashSet},
     env,
     process::Command,
-    str::FromStr,
     sync::Arc,
-    time::Duration,
 };
 use tracing::{debug, error, info, trace, warn};
 use url::Url;
@@ -90,6 +87,7 @@ pub async fn get_all_published_hosted_happs(
                 jurisdictions: happ.jurisdictions,
                 exclude_jurisdictions: happ.exclude_jurisdictions,
                 categories: happ.categories,
+                host_settings: happ.host_settings,
             }
         })
         .collect();
@@ -277,6 +275,7 @@ pub async fn install_holo_hosted_happs(
         exclude_jurisdictions: _,
         jurisdictions: _,
         categories: _,
+        host_settings,
     } in happs
     {
         trace!("Trying to install {}", happ_id);
@@ -288,6 +287,7 @@ pub async fn install_holo_hosted_happs(
         // ...otherwise, we proceed to install, which leads to the installation of a sl instance for this happ
         if special_installed_app_id.is_some()
             && enabled_happ_ids.contains(&format!("{}::servicelogger", happ_id))
+            && host_settings.is_enabled
         {
             // Skip the install/enable step
             // NB: We expect our core-app to already be installed and enabled as we never pause/disable/uninstall it
@@ -298,7 +298,7 @@ pub async fn install_holo_hosted_happs(
         }
         // Iterate through all currently enabled apps
         // (NB: The sole exceptions here are Hosted HoloFuel and Cloud Console, as they should always be caught by the prior condition.)
-        else if enabled_happ_ids.contains(&format!("{}", happ_id)) {
+        else if enabled_happ_ids.contains(&format!("{}", happ_id)) && host_settings.is_enabled {
             trace!("App {} already installed", happ_id);
             // Check if this happ was paused by the publisher in hha and disable it in holochain if so
             if *is_paused {
@@ -334,18 +334,6 @@ pub async fn install_holo_hosted_happs(
                 mem_proof
             );
 
-            // Hardcode servicelogger preferences for all the hosted happs installed
-            let preferences = HostHappPreferences {
-                max_fuel_before_invoice: Fuel::from_str("1000")?, // MAX_TX_AMT in holofuel is currently hard-coded to 50,000
-                max_time_before_invoice: Duration::default(),
-                price_compute: Fuel::from_str("0.025")?,
-                price_storage: Fuel::from_str("0.025")?,
-                price_bandwidth: Fuel::from_str("0.025")?,
-                invoice_due_in_days: 7,
-                jurisdiction_prefs: None,
-                categories_prefs: None,
-            };
-
             // The installation implementation can be found in`hpos-api` here: https://github.com/Holo-Host/hpos-api-rust/blob/develop/src/handlers/install/mod.rs#L31
             // NB: The `/v2/apps/hosted/install` endpoint will holo-enable the app if it is already installed and enabled on hololchain,
             // ...otherwise it takes the following 5 steps:
@@ -358,7 +346,6 @@ pub async fn install_holo_hosted_happs(
             // Note: This call will create the first sl clone.  Additional clone handling happens above.
             let body = InstallHappBody {
                 happ_id: happ_id.to_string(),
-                preferences: preferences.clone(),
                 membrane_proofs: mem_proof.clone(),
             };
             let client = reqwest::Client::new();

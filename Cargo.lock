@@ -2261,7 +2261,7 @@ dependencies = [
 [[package]]
 name = "hpos_hc_connect"
 version = "0.1.0"
-source = "git+https://github.com/holo-host/hpos-service-crates.git?rev=2618edaaea4552713a8818dcd13b05805b5854c6#2618edaaea4552713a8818dcd13b05805b5854c6"
+source = "git+https://github.com/holo-host/hpos-service-crates.git?rev=ae7e5dbe3880b0bb03d94c767c7e15a1b3cc989e#ae7e5dbe3880b0bb03d94c767c7e15a1b3cc989e"
 dependencies = [
  "again",
  "anyhow",
@@ -2280,6 +2280,7 @@ dependencies = [
  "isahc",
  "lair_keystore_api",
  "lazy_static",
+ "log",
  "mr_bundle",
  "reqwest",
  "rmp-serde 1.3.0",
