@@ -10,7 +10,6 @@ use tracing::warn;
 #[derive(Serialize, Debug, Clone)]
 pub struct InstallHappBody {
     pub happ_id: String,
-    pub preferences: HappPreferences,
     pub membrane_proofs: HashMap<String, MembraneProof>,
 }
 
