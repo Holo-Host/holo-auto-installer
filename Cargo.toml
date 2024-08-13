@@ -31,7 +31,7 @@ holochain_conductor_api = { version = "0.4.0-dev.11", features = ["chc"]}
 holochain_keystore = { version = "0.4.0-dev.11" }
 holochain_websocket = { version = "0.4.0-dev.2"}
 mr_bundle = { version = "0.4.0-dev.4" }
-hpos-config-core = { git = "https://github.com/Holo-Host/hpos-config", rev = "a36f862869cc162c843ac27ed617910d68f480cc" }
-hpos-config-seed-bundle-explorer ={ git = "https://github.com/Holo-Host/hpos-config", rev = "a36f862869cc162c843ac27ed617910d68f480cc" }
+hpos-config-core = { git = "https://github.com/Holo-Host/hpos-config", rev = "c17067b6a4214f9646316fa681651b73c72bf7e1" }
+hpos-config-seed-bundle-explorer ={ git = "https://github.com/Holo-Host/hpos-config", rev = "c17067b6a4214f9646316fa681651b73c72bf7e1" }
 chrono = "0.4.33"
-hpos_hc_connect = { git = "https://github.com/holo-host/hpos-service-crates.git", rev = "2618edaaea4552713a8818dcd13b05805b5854c6" }
+hpos_hc_connect = { git = "https://github.com/holo-host/hpos-service-crates.git", rev = "52e6385627430f1518f06e1f104b727fa32f5835" }

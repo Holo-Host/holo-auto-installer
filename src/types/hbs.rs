@@ -152,7 +152,8 @@ impl HbsClient {
 
         let email = match config {
             hpos_config_core::Config::V1 { settings, .. }
-            | hpos_config_core::Config::V2 { settings, .. } => settings.admin.email,
+            | hpos_config_core::Config::V2 { settings, .. }
+            | hpos_config_core::Config::V3 => settings.admin.email,
         };
 
         let mut core_app = CoreAppAgent::spawn(None).await?;
