@@ -446,7 +446,7 @@ pub async fn handle_ineligible_happs(
             } else {
                 info!("Uninstalling {} from Holochain Conductor", enabled_happ_id);
                 admin_websocket
-                    .uninstall_app(&enabled_happ_id, false)
+                    .uninstall_app(enabled_happ_id, false)
                     .await?;
             }
         }
