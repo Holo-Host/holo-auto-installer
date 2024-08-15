@@ -1,6 +1,6 @@
 [package]
 name = "holo-auto-installer"
-version = "0.4.0"
+version = "0.4.1"
 authors = ["Joel U <joelulahanna@gmail.com>"]
 edition = "2021"
 
@@ -22,16 +22,17 @@ rmp-serde = "0.15"
 url = "2.5.0"
 observability = "0.1.3"
 reqwest = { version = "0.12", features = ["json"]}
-holofuel_types = "0.5.9"
 getrandom = "0.2.7"
 url2 = "0.0.6"
+
 sodoken = "0.0.11"
-holochain_types = {version = "0.4.0-dev.11", features = ["chc"]}
-holochain_conductor_api = { version = "0.4.0-dev.11", features = ["chc"]}
-holochain_keystore = { version = "0.4.0-dev.11" }
-holochain_websocket = { version = "0.4.0-dev.2"}
-mr_bundle = { version = "0.4.0-dev.4" }
+holofuel_types = "0.5.12"
+holochain_types = {version = "0.4.0-dev.18", features = ["chc"]}
+holochain_conductor_api = { version = "0.4.0-dev.18", features = ["chc"]}
+holochain_keystore = { version = "0.4.0-dev.16" }
+holochain_websocket = { version = "0.4.0-dev.18"}
+mr_bundle = { version = "0.4.0-dev.5" }
 hpos-config-core = { git = "https://github.com/Holo-Host/hpos-config", rev = "86411bdaabe7061a4b150d36c062fddc2c6c74cc" }
 hpos-config-seed-bundle-explorer ={ git = "https://github.com/Holo-Host/hpos-config", rev = "86411bdaabe7061a4b150d36c062fddc2c6c74cc" }
 chrono = "0.4.33"
-hpos_hc_connect = { git = "https://github.com/holo-host/hpos-service-crates.git", rev = "ae7e5dbe3880b0bb03d94c767c7e15a1b3cc989e" }
+hpos_hc_connect = { git = "https://github.com/holo-host/hpos-service-crates.git", rev = "b86a56a87bdc53d9b42e1f690462d2c557375908" }
