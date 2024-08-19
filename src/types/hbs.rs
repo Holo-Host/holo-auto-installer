@@ -150,11 +150,7 @@ impl HbsClient {
     async fn inner_get_access_token(&self) -> Result<Response> {
         let config: hpos_config_core::Config = get_hpos_config()?;
 
-        let email = match config {
-            hpos_config_core::Config::V1 { settings, .. }
-            | hpos_config_core::Config::V2 { settings, .. }
-            | hpos_config_core::Config::V3 { settings, .. } => settings.admin.email,
-        };
+        let email = config.email();
 
         let mut core_app = CoreAppAgent::spawn(None).await?;
         let pub_key = core_app.pubkey().await?;
