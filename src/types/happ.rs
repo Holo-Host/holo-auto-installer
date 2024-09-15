@@ -14,7 +14,7 @@ pub struct InstallHappBody {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct HappPreferences {
+pub struct HostHappPreferences {
     pub max_fuel_before_invoice: Fuel,
     pub max_time_before_invoice: Duration,
     pub price_compute: Fuel,
@@ -24,7 +24,7 @@ pub struct HappPreferences {
     pub jurisdiction_prefs: Option<ExclusivePreferences>,
     pub categories_prefs: Option<ExclusivePreferences>,
 }
-impl HappPreferences {
+impl HostHappPreferences {
     pub fn is_happ_publisher_in_valid_jurisdiction(
         &self, // host preferences
         maybe_publisher_jurisdiction: &Option<String>,
@@ -95,9 +95,9 @@ impl HappPreferences {
     }
 }
 
-impl From<hpos_hc_connect::hha_types::HappPreferences> for HappPreferences {
+impl From<hpos_hc_connect::hha_types::HappPreferences> for HostHappPreferences {
     fn from(value: hpos_hc_connect::hha_types::HappPreferences) -> Self {
-        HappPreferences {
+        HostHappPreferences {
             max_fuel_before_invoice: value.max_fuel_before_invoice,
             max_time_before_invoice: value.max_time_before_invoice,
             price_compute: value.price_compute,
