@@ -204,6 +204,10 @@ pub async fn should_be_enabled(
         }
 
         // Verify that the hApp category is a valid host category.
+        trace!(
+            "Happ registered categories {}",
+            happ_registration_details.happ_categories
+        );
         if !host_happ_preferences.is_happ_valid_category(&happ_registration_details.happ_categories)
         {
             warn!(
