@@ -67,7 +67,7 @@ impl HostHappPreferences {
         &self, // host preferences
         happ_categories: &[String],
     ) -> bool {
-        trace!("Host's category settings: {:#?}", self.categories_prefs);
+        tracing::trace!("Host's category settings: {:#?}", self.categories_prefs);
 
         let (categories_list, is_exclusive_list) = match self.categories_prefs.to_owned() {
             Some(c) => {
