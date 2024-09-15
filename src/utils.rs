@@ -78,7 +78,7 @@ pub async fn get_all_published_hosted_happs(
                 categories: happ.categories,
                 host_settings: happ.host_settings,
                 provider_pubkey: happ.provider_pubkey,
-                network_seed: happ.uid
+                network_seed: happ.uid,
             }
         })
         .collect();
@@ -271,6 +271,7 @@ pub async fn install_holo_hosted_happs(
         jurisdictions: _,
         categories: _,
         host_settings,
+        ..
     } in happs
     {
         trace!("Trying to install {}", happ_id);

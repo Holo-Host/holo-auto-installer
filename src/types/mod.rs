@@ -2,9 +2,10 @@ pub mod happ;
 pub mod hbs;
 pub mod transaction;
 use holochain_types::dna::ActionHashB64;
-use holochain_types::prelude::{holochain_serial, SerializedBytes};
+use holochain_types::prelude::{holochain_serial, SerializedBytes, AgentPubKeyB64};
 use hpos_hc_connect::hha_types::HostSettings;
 use serde::{Deserialize, Serialize};
+
 #[derive(Debug, Deserialize, Clone)]
 pub struct HappBundle {
     pub happ_id: ActionHashB64,
@@ -15,8 +16,8 @@ pub struct HappBundle {
     pub exclude_jurisdictions: bool,
     pub categories: Vec<String>,
     pub host_settings: HostSettings, // host "enabled" settings
-    pub provider_pubkey: AgentPubKeyB64
-    pub network_seed: Option<String>
+    pub provider_pubkey: AgentPubKeyB64,
+    pub network_seed: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, SerializedBytes)]
