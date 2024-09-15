@@ -2,7 +2,7 @@ pub mod happ;
 pub mod hbs;
 pub mod transaction;
 use holochain_types::dna::ActionHashB64;
-use holochain_types::prelude::{holochain_serial, SerializedBytes, AgentPubKeyB64};
+use holochain_types::prelude::{holochain_serial, AgentPubKeyB64, SerializedBytes};
 use hpos_hc_connect::hha_types::HostSettings;
 use serde::{Deserialize, Serialize};
 
