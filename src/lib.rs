@@ -3,7 +3,6 @@
 pub mod types;
 mod utils;
 
-pub use crate::types::happ::HappPreferences;
 pub use hpos_hc_connect::AdminWebsocket;
 
 use anyhow::Result;
@@ -66,7 +65,7 @@ pub async fn run(config: &Config) -> Result<()> {
                         happ_jurisdictions: happ.jurisdictions.clone(),
                         should_exclude_happ_jurisdictions: happ.exclude_jurisdictions,
                         happ_categories: happ.categories.clone(),
-                        is_disabled_by_host: happ.is_host_disabled,
+                        is_disabled_by_host: happ.host_settings.is_host_disabled,
                     },
                 );
             }
@@ -87,7 +86,7 @@ pub async fn run(config: &Config) -> Result<()> {
                         happ_jurisdictions: happ.jurisdictions.clone(),
                         should_exclude_happ_jurisdictions: happ.exclude_jurisdictions,
                         happ_categories: happ.categories.clone(),
-                        is_disabled_by_host: happ.is_host_disabled,
+                        is_disabled_by_host: happ.host_settings.is_host_disabled,
                     },
                 );
             }
@@ -95,6 +94,10 @@ pub async fn run(config: &Config) -> Result<()> {
     }
 
     let host_happ_preferences = core_app.get_host_preferences().await?.into();
+    trace!(
+        "Got host's hosting preferences : {:#?}",
+        host_happ_preferences
+    );
 
     let is_host_kyc_level_2 = host_credentials.clone().kyc == KycLevel::Level2;
 

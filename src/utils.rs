@@ -1,6 +1,6 @@
 use crate::types::PublishedHappDetails;
 pub use crate::types::{
-    happ::{HappPreferences, InstallHappBody},
+    happ::{HostHappPreferences, InstallHappBody},
     hbs::{HostCredentials, KycLevel},
     transaction::InvoiceNote,
     HappBundle,
@@ -72,12 +72,13 @@ pub async fn get_all_published_hosted_happs(
                 happ_id: happ.id,
                 bundle_url: happ.bundle_url,
                 is_paused: happ.is_paused,
-                is_host_disabled: happ.host_settings.is_host_disabled,
                 special_installed_app_id: happ.special_installed_app_id,
                 jurisdictions: happ.jurisdictions,
                 exclude_jurisdictions: happ.exclude_jurisdictions,
                 categories: happ.categories,
                 host_settings: happ.host_settings,
+                provider_pubkey: happ.provider_pubkey,
+                network_seed: happ.uid,
             }
         })
         .collect();
@@ -161,7 +162,7 @@ pub async fn should_be_enabled(
     happ_id: String,
     suspended_happs: Vec<String>,
     host_credentials: HostCredentials, // the kyc and jurisdiction of a host
-    host_happ_preferences: HappPreferences, // the hosting preferences a host sets
+    host_happ_preferences: HostHappPreferences, // the hosting preferences a host sets
     published_happ_details: HashMap<String, PublishedHappDetails>, // the jurisdiction, categories, and publisher jurisdiction for each happ
 ) -> bool {
     trace!(
@@ -203,6 +204,10 @@ pub async fn should_be_enabled(
         }
 
         // Verify that the hApp category is a valid host category.
+        trace!(
+            "Happ registered categories {:?}",
+            happ_registration_details.happ_categories
+        );
         if !host_happ_preferences.is_happ_valid_category(&happ_registration_details.happ_categories)
         {
             warn!(
@@ -265,12 +270,12 @@ pub async fn install_holo_hosted_happs(
         happ_id,
         bundle_url,
         is_paused,
-        is_host_disabled,
         special_installed_app_id,
         exclude_jurisdictions: _,
         jurisdictions: _,
         categories: _,
         host_settings,
+        ..
     } in happs
     {
         trace!("Trying to install {}", happ_id);
@@ -305,7 +310,7 @@ pub async fn install_holo_hosted_happs(
             }
         }
         // if the expected happ is disabled by the host, we don't install
-        else if is_host_disabled.to_owned() {
+        else if host_settings.is_host_disabled.to_owned() {
             trace!(
                 "Skipping happ installation due to host's disabled setting for happ {}",
                 happ_id
@@ -364,7 +369,7 @@ pub async fn handle_ineligible_happs(
     admin_port: u16,
     suspended_happs: Vec<String>,
     host_credentials: HostCredentials,
-    host_happ_preferences: HappPreferences,
+    host_happ_preferences: HostHappPreferences,
     published_happ_details: HashMap<String, PublishedHappDetails>,
 ) -> Result<()> {
     info!("Checking to uninstall happs that were removed from the hosted list....");
@@ -385,10 +390,10 @@ pub async fn handle_ineligible_happs(
         .map(|h| &h.installed_app_id)
         .unique()
         .collect();
-    trace!("enabled_happ_ids {:?}", enabled_happ_ids);
+    trace!("Holochain enabled happ ids: {:?}", enabled_happ_ids);
 
     let published_happ_ids: Vec<String> = published_happ_details.clone().into_keys().collect();
-    trace!("published_happ_ids {:?}", published_happ_ids);
+    trace!("Published happ ids {:?}", published_happ_ids);
 
     for enabled_happ_id in enabled_happ_ids {
         // Deteremine if the enabled happ is an instance of a published happ

@@ -14,7 +14,7 @@ pub struct InstallHappBody {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct HappPreferences {
+pub struct HostHappPreferences {
     pub max_fuel_before_invoice: Fuel,
     pub max_time_before_invoice: Duration,
     pub price_compute: Fuel,
@@ -24,7 +24,7 @@ pub struct HappPreferences {
     pub jurisdiction_prefs: Option<ExclusivePreferences>,
     pub categories_prefs: Option<ExclusivePreferences>,
 }
-impl HappPreferences {
+impl HostHappPreferences {
     pub fn is_happ_publisher_in_valid_jurisdiction(
         &self, // host preferences
         maybe_publisher_jurisdiction: &Option<String>,
@@ -67,6 +67,8 @@ impl HappPreferences {
         &self, // host preferences
         happ_categories: &[String],
     ) -> bool {
+        tracing::trace!("Host's category settings: {:#?}", self.categories_prefs);
+
         let (categories_list, is_exclusive_list) = match self.categories_prefs.to_owned() {
             Some(c) => {
                 let categories_list: HashSet<String> = c.value.iter().cloned().collect();
@@ -95,9 +97,9 @@ impl HappPreferences {
     }
 }
 
-impl From<hpos_hc_connect::hha_types::HappPreferences> for HappPreferences {
+impl From<hpos_hc_connect::hha_types::HappPreferences> for HostHappPreferences {
     fn from(value: hpos_hc_connect::hha_types::HappPreferences) -> Self {
-        HappPreferences {
+        HostHappPreferences {
             max_fuel_before_invoice: value.max_fuel_before_invoice,
             max_time_before_invoice: value.max_time_before_invoice,
             price_compute: value.price_compute,
