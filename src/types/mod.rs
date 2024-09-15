@@ -10,12 +10,13 @@ pub struct HappBundle {
     pub happ_id: ActionHashB64,
     pub bundle_url: String,
     pub is_paused: bool,
-    pub is_host_disabled: bool,
     pub special_installed_app_id: Option<String>,
     pub jurisdictions: Vec<String>,
     pub exclude_jurisdictions: bool,
     pub categories: Vec<String>,
-    pub host_settings: HostSettings,
+    pub host_settings: HostSettings, // host "enabled" settings
+    pub provider_pubkey: AgentPubKeyB64
+    pub network_seed: Option<String>
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, SerializedBytes)]

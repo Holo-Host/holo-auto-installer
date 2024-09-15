@@ -72,12 +72,13 @@ pub async fn get_all_published_hosted_happs(
                 happ_id: happ.id,
                 bundle_url: happ.bundle_url,
                 is_paused: happ.is_paused,
-                is_host_disabled: happ.host_settings.is_host_disabled,
                 special_installed_app_id: happ.special_installed_app_id,
                 jurisdictions: happ.jurisdictions,
                 exclude_jurisdictions: happ.exclude_jurisdictions,
                 categories: happ.categories,
                 host_settings: happ.host_settings,
+                provider_pubkey: happ.provider_pubkey,
+                network_seed: happ.uid
             }
         })
         .collect();
@@ -265,7 +266,6 @@ pub async fn install_holo_hosted_happs(
         happ_id,
         bundle_url,
         is_paused,
-        is_host_disabled,
         special_installed_app_id,
         exclude_jurisdictions: _,
         jurisdictions: _,
@@ -305,7 +305,7 @@ pub async fn install_holo_hosted_happs(
             }
         }
         // if the expected happ is disabled by the host, we don't install
-        else if is_host_disabled.to_owned() {
+        else if host_settings.is_host_disabled.to_owned() {
             trace!(
                 "Skipping happ installation due to host's disabled setting for happ {}",
                 happ_id

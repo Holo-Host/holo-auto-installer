@@ -66,7 +66,7 @@ pub async fn run(config: &Config) -> Result<()> {
                         happ_jurisdictions: happ.jurisdictions.clone(),
                         should_exclude_happ_jurisdictions: happ.exclude_jurisdictions,
                         happ_categories: happ.categories.clone(),
-                        is_disabled_by_host: happ.is_host_disabled,
+                        is_disabled_by_host: happ.host_settings.is_host_disabled,
                     },
                 );
             }
@@ -87,7 +87,7 @@ pub async fn run(config: &Config) -> Result<()> {
                         happ_jurisdictions: happ.jurisdictions.clone(),
                         should_exclude_happ_jurisdictions: happ.exclude_jurisdictions,
                         happ_categories: happ.categories.clone(),
-                        is_disabled_by_host: happ.is_host_disabled,
+                        is_disabled_by_host: happ.host_settings.is_host_disabled,
                     },
                 );
             }
