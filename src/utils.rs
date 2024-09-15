@@ -386,10 +386,10 @@ pub async fn handle_ineligible_happs(
         .map(|h| &h.installed_app_id)
         .unique()
         .collect();
-    trace!("enabled_happ_ids {:?}", enabled_happ_ids);
+    trace!("Holochain enabled happ ids: {:?}", enabled_happ_ids);
 
     let published_happ_ids: Vec<String> = published_happ_details.clone().into_keys().collect();
-    trace!("published_happ_ids {:?}", published_happ_ids);
+    trace!("Published happ ids {:?}", published_happ_ids);
 
     for enabled_happ_id in enabled_happ_ids {
         // Deteremine if the enabled happ is an instance of a published happ

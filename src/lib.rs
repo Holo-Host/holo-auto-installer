@@ -94,6 +94,10 @@ pub async fn run(config: &Config) -> Result<()> {
     }
 
     let host_happ_preferences = core_app.get_host_preferences().await?.into();
+    trace!(
+        "Got host's hosting preferences : {:#?}",
+        host_happ_preferences
+    );
 
     let is_host_kyc_level_2 = host_credentials.clone().kyc == KycLevel::Level2;
 
