@@ -1518,9 +1518,9 @@ dependencies = [
 
 [[package]]
 name = "hdi"
-version = "0.5.0"
+version = "0.5.0-rc.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bb6eb9cfea1989545cad28a57a99b45450eb944ecfd69a8e16b66938c4fde0b4"
+checksum = "60c3e7a067ee10f42db15bee27fb44482f93a43ff2b131fee31ac4fd8f49ccc2"
 dependencies = [
  "getrandom 0.2.15",
  "hdk_derive",
@@ -1993,8 +1993,9 @@ dependencies = [
 
 [[package]]
 name = "holofuel_types"
-version = "0.5.15"
-source = "git+https://github.com/holo-host/holofuel.git?rev=f0804f2fef01af394772a4dc177b8385ab13e6a4#f0804f2fef01af394772a4dc177b8385ab13e6a4"
+version = "0.5.14"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1516851e7f399b5f96ae49f25a545045b2c9747a82d6767ba52454d9394aa128"
 dependencies = [
  "hdi",
  "lazy_static",
@@ -2042,7 +2043,7 @@ dependencies = [
 [[package]]
 name = "hpos_hc_connect"
 version = "0.1.0"
-source = "git+https://github.com/holo-host/hpos-service-crates.git?rev=8e1ef1e5fed9c302a87813af7cb8c4865c3b8fce#8e1ef1e5fed9c302a87813af7cb8c4865c3b8fce"
+source = "git+https://github.com/holo-host/hpos-service-crates.git?rev=d2c6a5f2a4b9aa5d7a66bc952dddbe2f810b7045#d2c6a5f2a4b9aa5d7a66bc952dddbe2f810b7045"
 dependencies = [
  "again",
  "anyhow",
