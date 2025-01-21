@@ -27,7 +27,7 @@ getrandom = "0.2.7"
 sodoken = "0.0.11"
 url2 = "0.0.6"
 
-holofuel_types = "0.5.14"
+holofuel_types = { git = "https://github.com/holo-host/holofuel.git", rev = "f0804f2fef01af394772a4dc177b8385ab13e6a4" }
 holochain_types = {version = "0.4.0"}
 holochain_conductor_api = { version = "0.4.0", features = ["chc"]}
 holochain_keystore = { version = "0.4.0" }
@@ -35,4 +35,4 @@ holochain_websocket = { version = "0.4.0"}
 mr_bundle = { version = "0.4.0" }
 hpos-config-core = { git = "https://github.com/Holo-Host/hpos-config", rev = "77d740c83a02e322e670e360eb450076b593b328" }
 hpos-config-seed-bundle-explorer ={ git = "https://github.com/Holo-Host/hpos-config", rev = "77d740c83a02e322e670e360eb450076b593b328" }
-hpos_hc_connect = { git = "https://github.com/holo-host/hpos-service-crates.git", rev = "cc02294f7dec6ec20f91eae3af7b8ad62d73322e" }
+hpos_hc_connect = { git = "https://github.com/holo-host/hpos-service-crates.git", rev = "8e1ef1e5fed9c302a87813af7cb8c4865c3b8fce" }
