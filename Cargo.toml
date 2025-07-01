@@ -35,5 +35,5 @@ holochain_websocket = { version = "0.5.3"}
 mr_bundle = { version = "0.5.3" }
 hpos-config-core = { git = "https://github.com/Holo-Host/hpos-config", rev = "77d740c83a02e322e670e360eb450076b593b328" }
 hpos-config-seed-bundle-explorer ={ git = "https://github.com/Holo-Host/hpos-config", rev = "77d740c83a02e322e670e360eb450076b593b328" }
-hpos_hc_connect = { git = "https://github.com/holo-host/hpos-service-crates.git", rev = "e89f8012ecaaa6b84e73bf4dafd81b93a9200e72" }
+hpos_hc_connect = { git = "https://github.com/holo-host/hpos-service-crates.git", rev = "b79cdd7e6f2d70b14fe677ece08546c13d924838" }
 holochain_serialized_bytes = "*"
