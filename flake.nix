@@ -16,6 +16,16 @@
     perSystem = { system, inputs', pkgs, ... }: {
       formatter = pkgs.nixpkgs-fmt;
 
+      # Custom Holochain with unstable functions and sharding enabled
+      packages.customHolochain = inputs'.holonix.packages.holochain.override {
+        cargoExtraArgs = "--features chc,unstable-sharding,unstable-functions,unstable-countersigning";
+      };
+
+      # Custom hc CLI with chc feature
+      packages.customHc = inputs'.holonix.packages.hc.override {
+        cargoExtraArgs = "--features chc";
+      };
+
       devShells.default =
         let
           overlays = [ (import rust-overlay) ];
@@ -35,9 +45,11 @@
         pkgs.mkShell {
           packages = [
             rust
+          ] ++ [
+            # Use custom Holochain builds with unstable features
+            inputs.self.packages.${system}.customHolochain
+            inputs.self.packages.${system}.customHc
           ] ++ (with inputs'.holonix.packages; [
-            holochain
-            hc
             hcterm
             bootstrap-srv
             lair-keystore
@@ -48,6 +60,8 @@
           ]) ++ (with pkgs; [
             nodejs_20 # For UI development
             binaryen # For WASM optimisation
+            wasm-strip
+            git
             # Add any other packages you need here
           ]);
 
